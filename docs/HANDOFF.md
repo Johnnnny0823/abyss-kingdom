@@ -71,7 +71,7 @@ docs/                  SETUP.md（環境安裝）、ACCOUNTS.md（帳號註冊�
 | 服務 | 狀態 |
 | --- | --- |
 | GitHub | repo：`https://github.com/Johnnnny0823/abyss-kingdom`（Private），已設為 git remote；由使用者用 GitHub Desktop 上傳 |
-| Supabase | 專案已建立。Security：Data API 開、Automatically expose new tables 關、automatic RLS 開。`db/001_players.sql` 是否已執行：**待確認** |
+| Supabase | 專案已建立。Security：Data API 開、Automatically expose new tables 關、automatic RLS 開。`db/001_players.sql` 已執行（2026-10-08）；Project URL = https://bqgpiibomfktlrasuupb.supabase.co。本機開發機已在 Windows 使用者環境變數設好 `Supabase__Url`、`Supabase__ServiceKey` |
 | Firebase | 專案 ID **`abyss-kingdom`**（注意：`project-abyss-kingdom` 是公開顯示名稱，不是 ID）。已啟用匿名與 Google 登入；**匿名帳號自動清理刻意不開**（會刪掉 30 天以上的訪客帳號 → 玩家 UID 改變、進度遺失），待做「訪客綁定 Google」後再評估 |
 | Oracle Cloud | 註冊時出現「禁止／已超過要求數目」被限流。建議等待、無痕視窗、關 VPN 後重試。**備案**：伺服器先跑在本機 + Cloudflare Tunnel 給朋友連；或 Google Cloud e2-micro（僅美國機房） |
 
@@ -80,14 +80,14 @@ docs/                  SETUP.md（環境安裝）、ACCOUNTS.md（帳號註冊�
 ## 6. 尚未驗證的部分（接手後優先確認）
 
 1. ~~Unity 客戶端從未實際編譯過~~ → 2026-10-08 已在 Windows 用 Unity 6000.4.8f1 編譯通過，Play 登入、升級、完成推播皆正常，編輯器內中文顯示正常。**手機上的 IMGUI 中文字型仍未驗證**。
-2. **SupabasePlayerStore 只用假 HTTP 測過**，需對真實 Supabase 跑一次（建表 → `Storage__Mode=Supabase` → 登入、升級、重啟伺服器確認存檔還在）。
+2. ~~SupabasePlayerStore 只用假 HTTP 測過~~ → 2026-10-08 已對真實 Supabase 驗證：建表、登入寫入、30 秒定時存檔、重啟伺服器後讀回狀態皆正常。
 3. **FirebaseAuthVerifier 未用真實 ID Token 測過**，等 Unity 接上 Firebase SDK 後驗證。
 4. Android 預設禁止明文連線，正式部署要用 **wss://**（TLS），例如 Caddy 反向代理 + 網域，或 Cloudflare Tunnel。
 
 ## 7. 接下來的工作（依優先順序）
 
 1. ~~**本機跑通**~~（2026-10-08 完成）：`dotnet run --project tests/AbyssKingdom.Tests`（22 passed）→ 啟動伺服器 → Unity 開 `client/` 按 Play 登入升級；修掉 Unity 編譯問題。
-2. **接真實 Supabase**：執行 SQL、用環境變數設定 URL 與 key，驗證讀寫。
+2. ~~**接真實 Supabase**~~（2026-10-08 完成）：執行 SQL、用環境變數設定 URL 與 key，驗證讀寫。
 3. **部署**：Oracle（或備案）上用 Docker 跑伺服器，加 TLS（wss），寫部署文件與 systemd / docker compose。
 4. **Unity 接 Firebase 登入**：Firebase Unity SDK、匿名登入、之後加「綁定 Google」；伺服器改 `Auth__Mode=Firebase`。
 5. **第 3–4 週**：城建完善（多建築隊列？兵營訓練部隊、資源 UI）。
