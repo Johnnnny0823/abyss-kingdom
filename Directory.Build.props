@@ -1,0 +1,9 @@
+<Project>
+  <!--
+    所有編譯產物（bin/obj）集中放到根目錄的 artifacts/，
+    這樣 shared/ 資料夾只有原始碼，Unity 可以把它當成本機套件直接引用。
+  -->
+  <PropertyGroup>
+    <UseArtifactsOutput>true</UseArtifactsOutput>
+  </PropertyGroup>
+</Project>

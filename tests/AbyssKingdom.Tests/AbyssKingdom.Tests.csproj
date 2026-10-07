@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    測試專案：不依賴任何 NuGet 套件（自帶迷你測試框架），所以離線也能跑。
+    執行：在專案根目錄執行 dotnet run，並指定 tests/AbyssKingdom.Tests 專案
+    全部通過時結束碼為 0，CI 會用它判斷成功或失敗。
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\AbyssKingdom.Shared\AbyssKingdom.Shared.csproj" />
+    <ProjectReference Include="..\..\server\AbyssKingdom.Server\AbyssKingdom.Server.csproj" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

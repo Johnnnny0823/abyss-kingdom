@@ -1,0 +1,7 @@
+{
+  "name": "com.abysskingdom.shared",
+  "version": "0.1.0",
+  "displayName": "Abyss Kingdom Shared",
+  "description": "伺服器與客戶端共用的遊戲規則（城建、資源、協定）。由 client/Packages/manifest.json 以本機套件引用。",
+  "unity": "6000.0"
+}

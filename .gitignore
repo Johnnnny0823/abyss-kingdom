@@ -1,0 +1,33 @@
+# .NET 編譯產物
+artifacts/
+bin/
+obj/
+*.user
+.vs/
+.idea/
+
+# 秘密設定（絕對不要提交）
+.env
+*.env
+appsettings.*.local.json
+google-services.json
+GoogleService-Info.plist
+*service-account*.json
+
+# Unity
+client/[Ll]ibrary/
+client/[Tt]emp/
+client/[Oo]bj/
+client/[Bb]uild/
+client/[Bb]uilds/
+client/[Ll]ogs/
+client/[Uu]ser[Ss]ettings/
+client/*.csproj
+client/*.sln
+client/.vsconfig
+client/Packages/packages-lock.json
+*.apk
+*.aab
+
+.DS_Store
+Thumbs.db

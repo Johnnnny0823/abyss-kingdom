@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    共用邏輯：伺服器與 Unity 客戶端用同一份程式碼。
+    目標 netstandard2.1 + C# 9，Unity 6 可直接編譯這些原始檔。
+    規則：這個專案裡不可引用任何 NuGet 套件或 Unity API，只能是純 C# 邏輯。
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <RootNamespace>AbyssKingdom.Shared</RootNamespace>
+  </PropertyGroup>
+
+</Project>
