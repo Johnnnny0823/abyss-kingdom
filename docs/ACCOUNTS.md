@@ -12,6 +12,7 @@
 
 1. 到 https://supabase.com 用 GitHub 帳號登入 → New project。
 2. 名稱 `abyss-kingdom`、Region 選 **Northeast Asia (Tokyo)**、方案 Free；設一組資料庫密碼並自己保存。
+   Security 區塊：**Enable Data API 勾選**（伺服器透過它存檔）、**Automatically expose new tables 不勾**、**Enable automatic RLS 勾選**。
 3. 建立資料表：左側 **SQL Editor** → New query → 貼上專案裡 `db/001_players.sql` 全部內容 → Run。
 4. 之後伺服器需要的兩個值（部署時再用，先不用動）：
    - Project Settings → API → **Project URL**（`https://xxxx.supabase.co`，不是秘密）

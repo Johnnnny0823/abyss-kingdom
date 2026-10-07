@@ -28,3 +28,8 @@ $$;
 drop trigger if exists players_touch on public.players;
 create trigger players_touch before update on public.players
 for each row execute function public.touch_updated_at();
+
+-- 權限：只有伺服器用的 service_role 可以存取；客戶端角色（anon、authenticated）一律拿不到。
+-- （建立專案時若關閉了「Automatically expose new tables」，就必須靠這段授權伺服器存取。）
+revoke all on public.players from anon, authenticated;
+grant select, insert, update, delete on public.players to service_role;
