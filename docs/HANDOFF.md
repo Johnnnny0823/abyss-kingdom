@@ -1,0 +1,115 @@
+# 交接文件：深淵王國 Abyss Kingdom
+
+> 給接手的 AI（Claude Code）與開發者本人。先讀這份，再讀 `CLAUDE.md`（開發規則）與 `README.md`（怎麼跑）。
+> 最後更新：2026-10-08
+
+## 1. 專案是什麼
+
+手機 4X / SLG 策略遊戲，參考《王國之歌》（Top Heroes）、《寒霜啟示錄》（Whiteout Survival）、《萬國覺醒》（Rise of Kingdoms）。
+差異化：把平面大地圖改成「**垂直分層的深淵**」——玩家在巨大裂口邊建城，派探窟隊往下探索；越深資源越稀有，但從深層返回要付出「**回響**」代價。
+
+設計三支柱：
+1. **向下探索**：每一層深淵是一張獨立地圖。
+2. **上升代價**：從深層撤回要支付回響成本，行軍與補給成為策略決策。
+3. **聯盟共存**：聯盟一起打通樓層、共建升降井，賽季末比誰先抵達深淵之底。
+
+世界觀（原創草案）：三百年前大陸中央塌陷出垂直裂口「永暗之喉」，玩家是新任「端座領主」。陣營：銀繩公會、鐵錘同盟、暗潮教團、自由探窟團。英雄以「繩級」分品質（綠→藍→紫→金→黑）。
+
+**版權紅線**：只借用《來自深淵》的「垂直深淵探勘」概念。不得使用其名詞（如奈落、白笛）、角色、造型、劇情或畫風；美術與文案（含 AI 生圖）都必須原創。
+
+完整企劃書（含競品研究、系統清單、商業化、技術架構圖、路線圖）在 claude.ai 的 Claude Docs：《深淵王國》SLG 手遊企劃書與技術架構。
+
+## 2. 開發方式（已定案）
+
+- **一人 + AI 全程開發**（Vibe Coding），不組團隊。
+- **零成本起步**：只用免費方案；玩家變多、開始有收入後才付費升級。
+- 先做出能多人連線的「單層深淵」原型，再逐步擴充。
+
+## 3. 技術決策（已定案，勿隨意更換）
+
+| 項目 | 選擇 | 理由 / 備註 |
+| --- | --- | --- |
+| 客戶端 | Unity 6 LTS（Personal 免費） | 先出 Android / PC；WebGL 不支援 `ClientWebSocket` |
+| 伺服器 | ASP.NET Core 8（C#）+ WebSocket | 與 Unity 同語言，規則程式碼共用 |
+| 共用規則 | `shared/AbyssKingdom.Shared`（netstandard2.1、C# 9） | Unity 以本機 UPM 套件引用；不得引用 NuGet 或 UnityEngine |
+| 架構 | 模組化單體、伺服器權威 | 之後人多再拆服務 |
+| 主資料庫 | Supabase（託管 PostgreSQL） | 伺服器用 service_role key 走 REST（PostgREST）；客戶端不可直連 |
+| 登入 / 推播 / 當機 | Firebase Auth（匿名 + Google）、FCM、Crashlytics、Remote Config | **不用 Firestore**（按讀寫計費、不適合 SLG） |
+| 快取 | Redis（之後才加，同主機 Docker） | 目前狀態都在伺服器記憶體 |
+| 主機 | Oracle Cloud Always Free（Ampere A1，ARM64） | 註冊卡關中，見第 5 節備案 |
+| CI | GitHub Actions（`.github/workflows/ci.yml`） | 跑建置與測試 |
+| 測試 | 自製迷你測試框架（無 NuGet） | 雲端開發環境當時無法連 NuGet，故維持零套件 |
+
+## 4. 目前完成的內容（第 1–2 週里程碑）
+
+```
+shared/AbyssKingdom.Shared/
+  City/Types.cs        資源 4 種、建築 7 種（主堡 + 伐木場/採石場/農田/晶礦場/倉庫/兵營）、升級結果碼
+  City/CityConfig.cs   數值：上限 10 級、成本 ×1.5/級、時間 ×1.4/級、產量 100/級/小時、倉庫容量
+  City/CityState.cs    玩家城市狀態（時間用 Unix 毫秒，資源用 long）
+  City/CityLogic.cs    Advance（惰性結算 + 餘數防流失 + 升級完成時分段產量）、CanUpgrade、StartUpgrade
+  Protocol/Messages.cs 訊息類型與資料結構
+  package.json / .asmdef  讓 Unity 當本機套件引用
+server/AbyssKingdom.Server/
+  GameServer.cs        組裝（設定決定 Auth / Storage 模式），/ws、/healthz
+  Auth/                DevAuthVerifier（"dev:名字"）、FirebaseAuthVerifier（手寫 RS256 JWT 驗證，無套件）
+  Game/SessionManager  上線管理、每秒 Tick 推進並推播升級完成、30 秒存 dirty、下線/關機存檔、重複登入踢舊連線
+  Net/WebSocketHandler JSON 信封 {type, reqId, data}，分派 login / city.get / city.upgrade / ping
+  Persistence/         InMemoryPlayerStore、SupabasePlayerStore（REST upsert，snake_case 欄位）
+  Dockerfile           多階段建置，ARM64 可用
+tests/AbyssKingdom.Tests/  22 個測試：規則單元測試、真實 WebSocket 端到端、Supabase 假 HTTP 測試
+client/                Unity 專案：Packages/manifest.json（引用 shared）、GameConnection（WebSocket + Newtonsoft）、
+                       CityDebugPanel（IMGUI 開發面板，按 Play 自動出現）
+db/001_players.sql     players 表（jsonb 存城市）、開 RLS、只授權 service_role
+docs/                  SETUP.md（環境安裝）、ACCOUNTS.md（帳號註冊）、本文件
+```
+
+設定（`appsettings.json`，可用環境變數覆寫）：`Auth__Mode`（Dev/Firebase）、`Firebase__ProjectId`=`abyss-kingdom`、`Storage__Mode`（Memory/Supabase）、`Supabase__Url`、`Supabase__ServiceKey`（只放環境變數）。
+
+## 5. 帳號與外部服務狀態
+
+| 服務 | 狀態 |
+| --- | --- |
+| GitHub | repo：`https://github.com/Johnnnny0823/abyss-kingdom`（Private），已設為 git remote；由使用者用 GitHub Desktop 上傳 |
+| Supabase | 專案已建立。Security：Data API 開、Automatically expose new tables 關、automatic RLS 開。`db/001_players.sql` 是否已執行：**待確認** |
+| Firebase | 專案 ID **`abyss-kingdom`**（注意：`project-abyss-kingdom` 是公開顯示名稱，不是 ID）。已啟用匿名與 Google 登入；**匿名帳號自動清理刻意不開**（會刪掉 30 天以上的訪客帳號 → 玩家 UID 改變、進度遺失），待做「訪客綁定 Google」後再評估 |
+| Oracle Cloud | 註冊時出現「禁止／已超過要求數目」被限流。建議等待、無痕視窗、關 VPN 後重試。**備案**：伺服器先跑在本機 + Cloudflare Tunnel 給朋友連；或 Google Cloud e2-micro（僅美國機房） |
+
+秘密（資料庫密碼、service_role key、Firebase 服務帳號）**從未也不應**出現在聊天或程式碼中。
+
+## 6. 尚未驗證的部分（接手後優先確認）
+
+1. **Unity 客戶端從未實際編譯過**（雲端無 Unity）。第一次開 `client/` 可能有小錯誤需修：本機套件路徑、Newtonsoft 版本、IMGUI 中文字型（手機上可能顯示方塊）。
+2. **SupabasePlayerStore 只用假 HTTP 測過**，需對真實 Supabase 跑一次（建表 → `Storage__Mode=Supabase` → 登入、升級、重啟伺服器確認存檔還在）。
+3. **FirebaseAuthVerifier 未用真實 ID Token 測過**，等 Unity 接上 Firebase SDK 後驗證。
+4. Android 預設禁止明文連線，正式部署要用 **wss://**（TLS），例如 Caddy 反向代理 + 網域，或 Cloudflare Tunnel。
+
+## 7. 接下來的工作（依優先順序）
+
+1. **本機跑通**：`dotnet run --project tests/AbyssKingdom.Tests`（22 passed）→ 啟動伺服器 → Unity 開 `client/` 按 Play 登入升級；修掉 Unity 編譯問題。
+2. **接真實 Supabase**：執行 SQL、用環境變數設定 URL 與 key，驗證讀寫。
+3. **部署**：Oracle（或備案）上用 Docker 跑伺服器，加 TLS（wss），寫部署文件與 systemd / docker compose。
+4. **Unity 接 Firebase 登入**：Firebase Unity SDK、匿名登入、之後加「綁定 Google」；伺服器改 `Auth__Mode=Firebase`。
+5. **第 3–4 週**：城建完善（多建築隊列？兵營訓練部隊、資源 UI）。
+6. **第 5–7 週**：第 1 層大地圖（約 200×200 格）、AOI 九宮格視野、行軍（伺服器只存起點/終點/出發時間/速度，客戶端插值）、採集與野怪。
+7. **第 8–9 週**：英雄 5 名、3 兵種克制、確定性戰鬥（定點數、伺服器結算、下發戰報）。
+8. **第 10–11 週**：聯盟（建立/加入、聊天）、攻城。
+9. **第 12 週**：10–20 位朋友封測、錄 Demo。
+
+MVP 刻意不做：抽卡、陣營羈絆、多層深淵與回響、升降井、集結、偵察、內購（保留設計）。
+
+## 8. 已定案的遊戲設計細節（實作時遵守）
+
+- **行軍呈現**：地圖上每支行軍只用 1–5 個小兵模型代表（依兵力分級），依鏡頭距離切換（近：英雄+小兵；中：軍旗；遠：光點或「× N 支」聚合）。點擊才查詢詳細兵力。自己與盟友顯示精確數字，敵方只顯示「約 5,000」，偵察後才精確。伺服器平時只推摘要（防外掛偷看）。
+- **PvP 低懲罰**：新手護盾、戰敗傷兵進醫院而非死亡。
+- **商業化（之後）**：首儲、月卡、賽季通行證、英雄招募（保底）、成長禮包、外觀；訂單必須在同一筆資料庫交易內「驗收據 → 寫訂單 → 發貨」，以訂單號冪等。
+- **經濟**：基礎資源可掠奪、稀有資源不可掠奪；回響（抵響劑、醫療）作為長期消耗池。
+
+## 9. 給 Claude Code 的開場提示（可直接貼上）
+
+```
+這是《深淵王國》手機 SLG 專案。請先讀 docs/HANDOFF.md、CLAUDE.md、README.md，
+然後執行 dotnet run --project tests/AbyssKingdom.Tests 確認 22 個測試全部通過。
+接著依 HANDOFF.md 第 7 節的優先順序，從第 1 項開始協助我。
+每次只做一個小功能、規則改動都要加測試、秘密一律用環境變數。
+```
