@@ -97,6 +97,7 @@ public sealed class SessionManager : BackgroundService
         var session = new PlayerSession(record, connection);
         // 舊存檔（加入道具前建立的帳號）補發一次新手道具
         if (CityLogic.GrantStarterItemsOnce(record.City)) session.Dirty = true;
+        if (CityLayout.EnsureLayout(record.City)) session.Dirty = true;
         if (HeroLogic.EnsureStarterHeroes(record.City)) session.Dirty = true;
         if (GearLogic.EnsureStarterGear(record.City)) session.Dirty = true;
         if (MapLogic.EnsureStarted(record.City, playerId)) session.Dirty = true;

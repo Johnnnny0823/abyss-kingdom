@@ -174,6 +174,13 @@ public sealed class WebSocketHandler
                     Fail(CityLogic.StartUpgrade(city, up.Building, now), UpgradeResult.Ok));
                 break;
 
+            case MessageTypes.CityMove:
+                var move = Deserialize<MoveBuildingRequest>(data);
+                if (move == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "building, x, y required"); break; }
+                await RunCityAction(conn, session, reqId, ErrorCodes.MoveRejected, ct, (city, now) =>
+                    Fail(CityLayout.Move(city, move.Building, move.X, move.Y), MoveResult.Ok));
+                break;
+
             case MessageTypes.CityTrain:
                 var train = Deserialize<TrainRequest>(data);
                 if (train == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "troop and count required"); break; }

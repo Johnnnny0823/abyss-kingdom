@@ -228,6 +228,28 @@ public static class ServerIntegrationTests
     }
 
     [Test]
+    public static async Task MoveBuilding_SavesLayout_AndRejectsOverlap()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        await using var client = new TestClient();
+        await client.ConnectAsync(server.WsUri);
+        await client.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:mason" });
+        var city = City(await client.ExpectAsync(MessageTypes.CityState));
+        Assert.Equal(CityConfig.AllBuildings.Length, city.Layout.Count, "登入就有完整擺放");
+
+        await client.SendAsync(MessageTypes.CityMove, new MoveBuildingRequest { Building = BuildingType.Farm, X = 0, Y = 21 });
+        var moved = City(await client.ExpectAsync(MessageTypes.CityState));
+        Assert.Equal(21, moved.Layout[BuildingType.Farm].Y);
+
+        var keep = moved.Layout[BuildingType.Keep];
+        await client.SendAsync(MessageTypes.CityMove, new MoveBuildingRequest { Building = BuildingType.Farm, X = keep.X, Y = keep.Y });
+        var err = await client.ExpectAsync(MessageTypes.Error);
+        Assert.Equal(ErrorCodes.MoveRejected, err.GetProperty("data").GetProperty("code").GetString());
+        Assert.Equal("Overlaps", err.GetProperty("data").GetProperty("detail").GetString());
+    }
+
+    [Test]
     public static async Task Speedup_CompletesImmediately_AndCancelRefunds()
     {
         await using var server = new TestServer();

@@ -18,6 +18,9 @@ namespace AbyssKingdom.Shared.City
 
         public Dictionary<BuildingType, int> Buildings { get; set; } = new Dictionary<BuildingType, int>();
 
+        /// <summary>城內畫面的建築位置（格子左上角），見 CityLayout。</summary>
+        public Dictionary<BuildingType, Cell> Layout { get; set; } = new Dictionary<BuildingType, Cell>();
+
         /// <summary>目前的升級工程（MVP 只有一條建築隊列）；null 代表空閒。</summary>
         public UpgradeJob Upgrade { get; set; }
 
@@ -88,6 +91,7 @@ namespace AbyssKingdom.Shared.City
                 s.Buildings[b] = CityConfig.StartingLevel(b);
             foreach (var t in CityConfig.AllTroops)
                 s.Troops[t] = 0;
+            CityLayout.EnsureLayout(s);
             CityLogic.GrantStarterItemsOnce(s);
             HeroLogic.EnsureStarterHeroes(s);
             GearLogic.EnsureStarterGear(s);

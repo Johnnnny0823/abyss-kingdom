@@ -19,6 +19,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string CityTrain = "city.train";
         public const string CityCancel = "city.cancel";
         public const string CitySpeedup = "city.speedup";
+        public const string CityMove = "city.move";
         public const string HeroLevelUp = "hero.levelUp";
         public const string GearEquip = "gear.equip";
         public const string GearUnequip = "gear.unequip";
@@ -60,6 +61,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string ExpeditionRejected = "expedition_rejected";
         public const string DomainRejected = "domain_rejected";
         public const string MapRejected = "map_rejected";
+        public const string MoveRejected = "move_rejected";
     }
 
     public class LoginRequest
@@ -79,6 +81,14 @@ namespace AbyssKingdom.Shared.Protocol
     public class UpgradeRequest
     {
         public BuildingType Building { get; set; }
+    }
+
+    /// <summary>把建築移到城內格子 (X, Y)（佔地左上角）。</summary>
+    public class MoveBuildingRequest
+    {
+        public BuildingType Building { get; set; }
+        public int X { get; set; }
+        public int Y { get; set; }
     }
 
     public class TrainRequest
