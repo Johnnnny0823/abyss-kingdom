@@ -29,6 +29,7 @@ namespace AbyssKingdom.Client.World
         private readonly Dictionary<int, EdgeView> _edges = new Dictionary<int, EdgeView>();
         private readonly Dictionary<string, Material> _mats = new Dictionary<string, Material>();
         private GameObject _selectRing;
+        private readonly List<GameObject> _marchMarks = new List<GameObject>();
         private Font _font;
         private Vector3 _dragStart, _camStart;
         private bool _dragging, _pressed;
@@ -237,9 +238,29 @@ namespace AbyssKingdom.Client.World
                 _nodes[n.Id] = view;
             }
 
-            _selectRing = Prim(PrimitiveType.Cylinder, "Select", Vector3.zero, new Vector3(1.3f, 0.02f, 1.3f), _root);
+            _selectRing = Prim(PrimitiveType.Cylinder, "Select", Vector3.zero, new Vector3(0.78f, 0.02f, 0.78f), _root);
             _selectRing.transform.localRotation = Quaternion.Euler(90, 0, 0);
             _selectRing.SetActive(false);
+        }
+
+        /// <summary>行軍標記：每支行軍一顆帶燈的光點，沿隧道移動（返回中為藍色）。座標為 2D 地圖座標。</summary>
+        public void SetMarches(List<(Vector2 pos, bool returning)> marches)
+        {
+            while (_marchMarks.Count < marches.Count)
+            {
+                var go = Prim(PrimitiveType.Sphere, "Gate", Vector3.zero, new Vector3(0.32f, 0.32f, 0.32f), _root);
+                Lamp(go.transform, new Vector3(0, 0, -0.5f), new Color(1f, 0.85f, 0.5f), 2.2f, 2.2f);
+                _marchMarks.Add(go);
+            }
+            for (int i = 0; i < _marchMarks.Count; i++)
+            {
+                bool on = i < marches.Count;
+                _marchMarks[i].SetActive(on);
+                if (!on) continue;
+                var (pos, returning) = marches[i];
+                _marchMarks[i].transform.localPosition = new Vector3((pos.x - _map.Width / 2f) * Scale, -pos.y * Scale, -0.35f);
+                _marchMarks[i].GetComponent<Renderer>().sharedMaterial = M(returning ? "Hub" : "Gate");
+            }
         }
 
         private static Color ElementColor(Element e)

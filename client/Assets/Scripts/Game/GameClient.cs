@@ -143,7 +143,10 @@ namespace AbyssKingdom.Client.Game
 
         public void ClaimExpeditionIdle() => _conn.Send(MessageTypes.ExpeditionClaimIdle);
 
-        public void ExploreNode(int node) => _conn.Send(MessageTypes.MapExplore, new MapExploreRequest { Node = node });
+        public void StartMarch(HeroId hero, Dictionary<TroopType, long> troops, int destination) =>
+            _conn.Send(MessageTypes.MapMarch, new MapMarchRequest { Hero = hero, Troops = troops, Destination = destination });
+
+        public void RecallMarch(long march) => _conn.Send(MessageTypes.MapRecall, new MapRecallRequest { March = march });
 
         public void StarUp(HeroId hero) => _conn.Send(MessageTypes.HeroStarUp, new HeroStarUpRequest { Hero = hero });
 
@@ -201,6 +204,13 @@ namespace AbyssKingdom.Client.Game
                     var trial = msg.DataAs<DomainTrialResult>();
                     string who = DisplayNames.Heroes[trial.Hero], dom = DisplayNames.Domains[trial.Domain];
                     Notice?.Invoke(trial.Success ? $"{who} 通過斷索試煉，{dom}編成！" : $"{who} 的 {dom} 斷索試煉失敗，修練值保留，變強後再來", !trial.Success);
+                    break;
+                case MessageTypes.MarchArrived:
+                    var ma = msg.DataAs<MarchArrivedMessage>();
+                    var node = AbyssKingdom.Shared.Map.MapConfig.Layer(1).Nodes[ma.Node];
+                    Notice?.Invoke(ma.Disbanded ? $"{DisplayNames.Heroes[ma.Hero]} 的部隊已回到兵營"
+                        : ma.Discovered ? $"{DisplayNames.Heroes[ma.Hero]} 抵達並揭開了「{DisplayNames.NodeName(node)}」"
+                        : $"{DisplayNames.Heroes[ma.Hero]} 抵達「{DisplayNames.NodeName(node)}」，駐紮中", false);
                     break;
                 case MessageTypes.ExpeditionIdleClaimed:
                     var idle = msg.DataAs<ExpeditionRewards>();

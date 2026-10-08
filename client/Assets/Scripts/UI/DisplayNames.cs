@@ -320,10 +320,15 @@ namespace AbyssKingdom.Client.UI
                 case "invalid token": return "登入驗證失敗，請重新登入";
                 case "MaxLevel": return "主將已達等級上限";
                 case "StageLocked": return "要先通關前一關";
-                case "NotAdjacent": return "只能探索和已探索節點相鄰的地方";
-                case "Sealed": return "封鎖力場擋住了這條廊道";
-                case "AlreadyExplored": return "這裡已經探索過了";
                 case "UnknownNode": return "找不到這個節點";
+                case "Unreachable": return "到不了：只能走已探索的廊道，封鎖力場要繞路";
+                case "HeroBusy": return "這位主將正在行軍";
+                case "NoTroops": return "至少要帶一名士兵";
+                case "NotEnoughTroops": return "兵營的部隊不足";
+                case "ExceedsLeadership": return "超過主將的統率";
+                case "TooManyMarches": return "同時最多 3 支行軍";
+                case "NotStationed": return "行軍抵達後才能召回";
+                case "AlreadyThere": return "已經在這裡了";
                 case "NotReady": return "修練值還沒滿，還不能挑戰斷索試煉";
                 case "AlreadyMastered": return "這股索已經編成";
                 case "StarsRequired": return "要先把對應的星色升滿，才能挑戰下一股索";
