@@ -75,6 +75,27 @@ public static class GearTests
     }
 
     [Test]
+    public static void TotalPower_CountsHeroesTroopsAndBuildings()
+    {
+        var c = CityState.CreateNew(T0);
+        long before = PowerLogic.TotalPower(c);
+        Assert.Equal(PowerLogic.HeroesPower(c) + PowerLogic.TroopsPower(c) + PowerLogic.BuildingsPower(c), before);
+
+        c.Troops[TroopType.Rider] = 100;
+        Assert.Equal(before + 100 * PowerLogic.TroopUnitPower(TroopType.Rider), PowerLogic.TotalPower(c), "訓練完成的部隊計入總戰力");
+
+        long beforeBuild = PowerLogic.TotalPower(c);
+        c.Buildings[BuildingType.Keep] = 2; // 50×1² → 50×2²
+        Assert.Equal(beforeBuild + 150, PowerLogic.TotalPower(c), "建築升級計入總戰力");
+    }
+
+    [Test]
+    public static void TroopUnitPower_IsPositiveForAllTypes()
+    {
+        foreach (var t in CityConfig.AllTroops) Assert.True(PowerLogic.TroopUnitPower(t) > 0, t.ToString());
+    }
+
+    [Test]
     public static void OldSave_GetsStarterGearOnce()
     {
         var c = CityState.CreateNew(T0);

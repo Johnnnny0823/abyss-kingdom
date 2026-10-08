@@ -161,11 +161,37 @@ namespace AbyssKingdom.Shared.Heroes
 
         public static long HeroPower(CityState city, HeroId id) => Power(TotalStats(city, id));
 
-        public static long TotalPower(CityState city)
+        public static long HeroesPower(CityState city)
         {
             long sum = 0;
             foreach (var id in city.Heroes.Keys) sum += HeroPower(city, id);
             return sum;
         }
+
+        /// <summary>每名士兵的戰力：(攻×5 + 防×4 + 生命÷4) ÷ 10，與主將戰力同一套公式。</summary>
+        public static long TroopUnitPower(TroopType t) =>
+            (Battle.BattleConfig.TroopAttack(t) * 5 + Battle.BattleConfig.TroopDefense(t) * 4 + Battle.BattleConfig.TroopHp(t) / 4) / 10;
+
+        public static long TroopsPower(CityState city)
+        {
+            long sum = 0;
+            foreach (var t in CityConfig.AllTroops) sum += city.GetTroops(t) * TroopUnitPower(t);
+            return sum;
+        }
+
+        /// <summary>建築戰力：每座建築 = 50 × 等級²（高等級建築的分量更重）。</summary>
+        public static long BuildingsPower(CityState city)
+        {
+            long sum = 0;
+            foreach (var b in CityConfig.AllBuildings)
+            {
+                long lv = city.GetLevel(b);
+                sum += 50 * lv * lv;
+            }
+            return sum;
+        }
+
+        /// <summary>總戰力 = 主將 + 部隊 + 建築。顯示在頂部列，之後排行榜也用它。</summary>
+        public static long TotalPower(CityState city) => HeroesPower(city) + TroopsPower(city) + BuildingsPower(city);
     }
 }

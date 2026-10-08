@@ -25,7 +25,8 @@ namespace AbyssKingdom.Client.UI
 
         private VisualElement _root, _login, _game, _toasts, _dialog;
         private TextField _urlField, _nameField;
-        private Label _loginStatus, _playerName, _troopTotal;
+        private Label _loginStatus, _playerName, _troopTotal, _powerDelta;
+        private long _lastTotalPower;
         private readonly Dictionary<ResourceType, (Label amount, Label cap)> _resChips = new Dictionary<ResourceType, (Label, Label)>();
         private readonly List<BuildingCard> _cards = new List<BuildingCard>();
         private VisualElement _cityPage;
@@ -171,9 +172,13 @@ namespace AbyssKingdom.Client.UI
             }
             var player = El("player-chip");
             _playerName = Lbl("", "player-name");
-            _troopTotal = Lbl("", "muted");
+            _troopTotal = Lbl("", "total-power");
+            _powerDelta = Lbl("", "power-delta", "small");
             player.Add(_playerName);
-            player.Add(_troopTotal);
+            var powerRow = El("row");
+            powerRow.Add(_powerDelta);
+            powerRow.Add(_troopTotal);
+            player.Add(powerRow);
             top.Add(player);
             game.Add(top);
 
@@ -245,7 +250,17 @@ namespace AbyssKingdom.Client.UI
                 capLabel.text = "/ " + cap.ToString("N0");
             }
             _playerName.text = G.PlayerName;
-            _troopTotal.text = $"兵力 {CityConfig.AllTroops.Sum(t => city.GetTroops(t)):N0}";
+            long total = PowerLogic.TotalPower(city);
+            _troopTotal.text = $"總戰力 {total:N0}";
+            _troopTotal.tooltip = $"主將 {PowerLogic.HeroesPower(city):N0}　部隊 {PowerLogic.TroopsPower(city):N0}　建築 {PowerLogic.BuildingsPower(city):N0}";
+            if (_lastTotalPower > 0 && total != _lastTotalPower)
+            {
+                long d = total - _lastTotalPower;
+                _powerDelta.text = (d > 0 ? "+" : "") + d.ToString("N0");
+                _powerDelta.EnableInClassList("down", d < 0);
+                _powerDelta.experimental.animation.Start(1f, 0f, 2000, (e, v) => e.style.opacity = v);
+            }
+            _lastTotalPower = total;
 
             for (int i = 0; i < _tabs.Count; i++) _tabs[i].EnableInClassList("selected", i == _tab);
             Show(_cityPage, _tab == 0);

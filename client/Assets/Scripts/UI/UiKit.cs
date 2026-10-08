@@ -34,10 +34,11 @@ namespace AbyssKingdom.Client.UI
             return b;
         }
 
-        public static Label ResIcon(ResourceType r, bool small)
+        /// <summary>資源圖示（向量繪製，見 Icons.cs）。</summary>
+        public static VisualElement ResIcon(ResourceType r, bool small)
         {
-            var icon = Lbl(DisplayNames.ResourceGlyphs[r], "res-icon", "res-" + r);
-            icon.EnableInClassList("small", small);
+            var icon = new IconElement(IconElement.For(r), small ? 18 : 28);
+            icon.AddToClassList(small ? "icon-small" : "icon");
             return icon;
         }
 
