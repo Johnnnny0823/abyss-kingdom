@@ -163,13 +163,34 @@ public sealed class WebSocketHandler
                 break;
 
             case MessageTypes.CityUpgrade:
-                await HandleUpgrade(conn, session, reqId, data, ct);
+                var up = Deserialize<UpgradeRequest>(data);
+                if (up == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "building required"); break; }
+                await RunCityAction(conn, session, reqId, ErrorCodes.UpgradeRejected, ct, (city, now) =>
+                    Fail(CityLogic.StartUpgrade(city, up.Building, now), UpgradeResult.Ok));
                 break;
 
             case MessageTypes.CityTrain:
-                await HandleTrain(conn, session, reqId, data, ct);
+                var train = Deserialize<TrainRequest>(data);
+                if (train == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "troop and count required"); break; }
+                await RunCityAction(conn, session, reqId, ErrorCodes.TrainRejected, ct, (city, now) =>
+                    Fail(CityLogic.StartTraining(city, train.Troop, train.Count, now), TrainResult.Ok));
                 break;
 
+            case MessageTypes.CityCancel:
+                var cancel = Deserialize<CancelRequest>(data);
+                if (cancel == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "queue required"); break; }
+                await RunCityAction(conn, session, reqId, ErrorCodes.CancelRejected, ct, (city, now) =>
+                    Fail(CityLogic.Cancel(city, cancel.Queue, now), CancelResult.Ok));
+                break;
+
+            case MessageTypes.CitySpeedup:
+                var speed = Deserialize<SpeedupRequest>(data);
+                if (speed == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "queue required"); break; }
+                await RunCityAction(conn, session, reqId, ErrorCodes.SpeedupRejected, ct, (city, now) =>
+                    Fail(speed.Item == null
+                        ? CityLogic.SpeedupFree(city, speed.Queue, now)
+                        : CityLogic.UseSpeedupItem(city, speed.Queue, speed.Item.Value, speed.Count, now), SpeedupResult.Ok));
+                break;
             default:
                 await SendError(conn, reqId, ErrorCodes.UnknownType, type);
                 break;
@@ -211,72 +232,50 @@ public sealed class WebSocketHandler
         return newSession;
     }
 
-    private async Task HandleUpgrade(WsConnection conn, PlayerSession session, int reqId, JsonElement data, CancellationToken ct)
-    {
-        var req = Deserialize<UpgradeRequest>(data);
-        if (req == null)
-        {
-            await SendError(conn, reqId, ErrorCodes.BadRequest, "building required");
-            return;
-        }
+    /// <summary>結果碼不是 ok 就回傳錯誤字串（給客戶端顯示），否則 null。</summary>
+    private static string? Fail<T>(T result, T ok) where T : struct, Enum
+        => EqualityComparer<T>.Default.Equals(result, ok) ? null : result.ToString();
 
-        UpgradeResult result;
+    /// <summary>
+    /// 在玩家鎖內執行一個城市操作：先推進到現在（把已完成的工程收下來並通知），再執行操作。
+    /// 成功回傳最新城市（帶 reqId），失敗回傳錯誤。
+    /// </summary>
+    private async Task RunCityAction(WsConnection conn, PlayerSession session, int reqId, string errorCode,
+        CancellationToken ct, Func<CityState, long, string?> action)
+    {
+        UpgradeJob? done;
+        TrainingJob? trained;
+        string? error;
         await session.Gate.WaitAsync(ct);
         try
         {
-            result = CityLogic.StartUpgrade(session.Record.City, req.Building, _clock.NowMs);
-            if (result == UpgradeResult.Ok) session.Dirty = true;
+            var now = _clock.NowMs;
+            done = CityLogic.Advance(session.Record.City, now, out trained);
+            error = action(session.Record.City, now);
+            if (done != null || trained != null || error == null) session.Dirty = true;
         }
         finally
         {
             session.Gate.Release();
         }
 
-        if (result != UpgradeResult.Ok)
-        {
-            await SendError(conn, reqId, ErrorCodes.UpgradeRejected, result.ToString());
-            return;
-        }
-        await SendCity(conn, session, reqId, ct);
+        await NotifyCompleted(conn, done, trained);
+        if (error != null) await SendError(conn, reqId, errorCode, error);
+        else await SendCity(conn, session, reqId, ct);
     }
 
-    private async Task HandleTrain(WsConnection conn, PlayerSession session, int reqId, JsonElement data, CancellationToken ct)
-    {
-        var req = Deserialize<TrainRequest>(data);
-        if (req == null)
-        {
-            await SendError(conn, reqId, ErrorCodes.BadRequest, "troop and count required");
-            return;
-        }
-
-        TrainResult result;
-        await session.Gate.WaitAsync(ct);
-        try
-        {
-            result = CityLogic.StartTraining(session.Record.City, req.Troop, req.Count, _clock.NowMs);
-            if (result == TrainResult.Ok) session.Dirty = true;
-        }
-        finally
-        {
-            session.Gate.Release();
-        }
-
-        if (result != TrainResult.Ok)
-        {
-            await SendError(conn, reqId, ErrorCodes.TrainRejected, result.ToString());
-            return;
-        }
-        await SendCity(conn, session, reqId, ct);
-    }
-
+    /// <summary>送出最新城市狀態；推進時若有工程完成（例如剛被加速），先推播完成通知。</summary>
     private async Task SendCity(WsConnection conn, PlayerSession session, int reqId, CancellationToken ct)
     {
         byte[] snapshot;
+        UpgradeJob? done;
+        TrainingJob? trained;
         var now = _clock.NowMs;
         await session.Gate.WaitAsync(ct);
         try
         {
-            CityLogic.Advance(session.Record.City, now);
+            done = CityLogic.Advance(session.Record.City, now, out trained);
+            if (done != null || trained != null) session.Dirty = true;
             // 在鎖內序列化成快照，避免送出途中狀態被其他操作修改
             snapshot = JsonSerializer.SerializeToUtf8Bytes(session.Record.City, _json);
         }
@@ -284,8 +283,17 @@ public sealed class WebSocketHandler
         {
             session.Gate.Release();
         }
+        await NotifyCompleted(conn, done, trained);
         var city = JsonSerializer.Deserialize<CityState>(snapshot, _json);
         await conn.SendAsync(MessageTypes.CityState, reqId, new CityStateMessage { ServerTimeMs = now, City = city });
+    }
+
+    private static async Task NotifyCompleted(WsConnection conn, UpgradeJob? done, TrainingJob? trained)
+    {
+        if (done != null)
+            await conn.SendAsync(MessageTypes.UpgradeCompleted, 0, new UpgradeCompletedMessage { Building = done.Building, Level = done.TargetLevel });
+        if (trained != null)
+            await conn.SendAsync(MessageTypes.TrainingCompleted, 0, new TrainingCompletedMessage { Troop = trained.Troop, Count = trained.Count });
     }
 
     private T? Deserialize<T>(JsonElement data) where T : class

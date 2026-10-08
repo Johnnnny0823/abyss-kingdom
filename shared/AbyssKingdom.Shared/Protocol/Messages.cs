@@ -14,6 +14,8 @@ namespace AbyssKingdom.Shared.Protocol
         public const string CityGet = "city.get";
         public const string CityUpgrade = "city.upgrade";
         public const string CityTrain = "city.train";
+        public const string CityCancel = "city.cancel";
+        public const string CitySpeedup = "city.speedup";
         public const string Ping = "ping";
 
         // 伺服器 → 客戶端
@@ -33,6 +35,8 @@ namespace AbyssKingdom.Shared.Protocol
         public const string UnknownType = "unknown_type";
         public const string UpgradeRejected = "upgrade_rejected";
         public const string TrainRejected = "train_rejected";
+        public const string CancelRejected = "cancel_rejected";
+        public const string SpeedupRejected = "speedup_rejected";
     }
 
     public class LoginRequest
@@ -58,6 +62,19 @@ namespace AbyssKingdom.Shared.Protocol
     {
         public TroopType Troop { get; set; }
         public long Count { get; set; }
+    }
+
+    public class CancelRequest
+    {
+        public QueueType Queue { get; set; }
+    }
+
+    /// <summary>Item 為 null 代表免費加速（剩餘 5 分鐘內）；否則使用 Count 個該道具。</summary>
+    public class SpeedupRequest
+    {
+        public QueueType Queue { get; set; }
+        public ItemType? Item { get; set; }
+        public long Count { get; set; } = 1;
     }
 
     public class TrainingCompletedMessage

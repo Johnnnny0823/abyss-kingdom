@@ -24,6 +24,9 @@ namespace AbyssKingdom.Shared.City
         /// <summary>兵營訓練隊列（一條，與建築隊列分開）；null 代表空閒。</summary>
         public TrainingJob Training { get; set; }
 
+        /// <summary>背包道具數量（加速道具等）。</summary>
+        public Dictionary<ItemType, long> Items { get; set; } = new Dictionary<ItemType, long>();
+
         /// <summary>資源最後結算到的時間。</summary>
         public long LastSettledAtMs { get; set; }
 
@@ -42,6 +45,11 @@ namespace AbyssKingdom.Shared.City
             return Troops.TryGetValue(type, out var v) ? v : 0;
         }
 
+        public long GetItemCount(ItemType type)
+        {
+            return Items.TryGetValue(type, out var v) ? v : 0;
+        }
+
         public static CityState CreateNew(long nowMs)
         {
             var s = new CityState { LastSettledAtMs = nowMs };
@@ -54,6 +62,8 @@ namespace AbyssKingdom.Shared.City
                 s.Buildings[b] = CityConfig.StartingLevel(b);
             foreach (var t in CityConfig.AllTroops)
                 s.Troops[t] = 0;
+            foreach (var item in ItemConfig.StarterItems)
+                s.Items[item.Key] = item.Value;
             return s;
         }
     }

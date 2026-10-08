@@ -6,7 +6,7 @@ namespace AbyssKingdom.Shared.City
     /// 城建規則。純函式風格：輸入狀態與時間，修改狀態，不依賴系統時鐘。
     /// 伺服器是唯一權威；客戶端只用它來預測顯示（例如倒數、預估產量）。
     /// </summary>
-    public static class CityLogic
+    public static partial class CityLogic
     {
         /// <summary>
         /// 把城市推進到 nowMs：先產資源到升級完成那一刻、完成升級，再產到 nowMs。

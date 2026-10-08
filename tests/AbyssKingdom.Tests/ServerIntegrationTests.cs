@@ -225,6 +225,49 @@ public static class ServerIntegrationTests
     }
 
     [Test]
+    public static async Task Speedup_CompletesImmediately_AndCancelRefunds()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        await using var client = new TestClient();
+        await client.ConnectAsync(server.WsUri);
+        await client.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:speedy" });
+        Assert.Equal(10L, City(await client.ExpectAsync(MessageTypes.CityState)).GetItemCount(ItemType.SpeedupGeneral1m), "新手道具");
+
+        // 兵營 1 級工期 30 秒 < 5 分鐘 → 免費加速，不需要等 tick 就推播完成
+        await client.SendAsync(MessageTypes.CityUpgrade, new UpgradeRequest { Building = BuildingType.Barracks });
+        await client.ExpectAsync(MessageTypes.CityState);
+        int req = await client.SendAsync(MessageTypes.CitySpeedup, new SpeedupRequest { Queue = QueueType.Building });
+        var done = await client.ExpectAsync(MessageTypes.UpgradeCompleted);
+        Assert.Equal("Barracks", done.GetProperty("data").GetProperty("building").GetString());
+        var city = await client.ExpectAsync(MessageTypes.CityState);
+        Assert.Equal(req, city.GetProperty("reqId").GetInt32(), "回應帶回 reqId");
+        Assert.Equal(1, City(city).GetLevel(BuildingType.Barracks));
+
+        // 用道具加速訓練
+        await client.SendAsync(MessageTypes.CityTrain, new TrainRequest { Troop = TroopType.Crossbow, Count = 20 });
+        await client.ExpectAsync(MessageTypes.CityState);
+        await client.SendAsync(MessageTypes.CitySpeedup, new SpeedupRequest { Queue = QueueType.Training, Item = ItemType.SpeedupTraining30m });
+        await client.ExpectAsync(MessageTypes.TrainingCompleted);
+        var afterItem = City(await client.ExpectAsync(MessageTypes.CityState));
+        Assert.Equal(20L, afterItem.GetTroops(TroopType.Crossbow));
+        Assert.Equal(2L, afterItem.GetItemCount(ItemType.SpeedupTraining30m), "道具 3 → 2");
+
+        // 取消訓練退一半
+        long foodBefore = afterItem.GetResource(ResourceType.Food);
+        await client.SendAsync(MessageTypes.CityTrain, new TrainRequest { Troop = TroopType.Crossbow, Count = 10 });
+        await client.ExpectAsync(MessageTypes.CityState);
+        await client.SendAsync(MessageTypes.CityCancel, new CancelRequest { Queue = QueueType.Training });
+        var afterCancel = City(await client.ExpectAsync(MessageTypes.CityState));
+        Assert.True(afterCancel.Training == null, "訓練已取消");
+        Assert.Equal(foodBefore - 200 + 100, afterCancel.GetResource(ResourceType.Food), "糧 20×10 扣掉，退一半");
+
+        await client.SendAsync(MessageTypes.CityCancel, new CancelRequest { Queue = QueueType.Training });
+        var err = await client.ExpectAsync(MessageTypes.Error);
+        Assert.Equal("NothingToCancel", err.GetProperty("data").GetProperty("detail").GetString());
+    }
+
+    [Test]
     public static async Task SecondLogin_KicksFirstConnection()
     {
         await using var server = new TestServer();

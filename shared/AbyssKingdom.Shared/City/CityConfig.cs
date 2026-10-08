@@ -87,6 +87,14 @@ namespace AbyssKingdom.Shared.City
             return seconds * 1000;
         }
 
+        // ───── 隊列 ─────
+
+        /// <summary>取消建築／訓練時退還的資源比例（%）。</summary>
+        public const long CancelRefundPercent = 50;
+
+        /// <summary>剩餘時間在這之內可免費立即完成（5 分鐘）。</summary>
+        public const long FreeSpeedupMs = 5 * 60_000;
+
         // ───── 部隊（數值為測試用，之後統一調平衡） ─────
 
         public static readonly TroopType[] AllTroops = (TroopType[])Enum.GetValues(typeof(TroopType));
