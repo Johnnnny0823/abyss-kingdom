@@ -100,34 +100,34 @@ namespace AbyssKingdom.Client.UI
             { RopeGrade.Mythic, "黑繩 · 神秘" },
         };
 
-        // ───── 五行陰陽（十天干） ─────
+        // ───── 淵脈與浮沉（程式內部 = 五行陰陽，2026-10-08 使用者定案改用深淵風格名稱） ─────
+        // 根剋層、層剋潮、潮剋燼、燼剋鐘、鐘剋根；根→燼→層→鐘→潮→根 相生。浮 = 陽、沉 = 陰。
 
         public static readonly Dictionary<Element, string> Elements = new Dictionary<Element, string>
         {
-            { Element.None, "無" }, { Element.Wood, "木" }, { Element.Fire, "火" },
-            { Element.Earth, "土" }, { Element.Metal, "金" }, { Element.Water, "水" },
+            { Element.None, "無" }, { Element.Wood, "根" }, { Element.Fire, "燼" },
+            { Element.Earth, "層" }, { Element.Metal, "鐘" }, { Element.Water, "潮" },
         };
 
-        /// <summary>天干：甲乙木、丙丁火、戊己土、庚辛金、壬癸水（陽在前）。</summary>
-        public static string Stem(Element e, Polarity p)
-        {
-            const string stems = "甲乙丙丁戊己庚辛壬癸";
-            if (e == Element.None) return "";
-            int i = ((int)e - 1) * 2 + (p == Polarity.Yin ? 1 : 0);
-            return stems[i].ToString();
-        }
+        public static string PolarityName(Polarity p) => p == Polarity.Yin ? "沉" : "浮";
 
-        /// <summary>例如「戊・陽土」。</summary>
+        /// <summary>例如「浮層」「沉鐘」。</summary>
         public static string ElementLabel(Element e, Polarity p) =>
-            e == Element.None ? "無屬性" : $"{Stem(e, p)}・{(p == Polarity.Yin ? "陰" : "陽")}{Elements[e]}";
+            e == Element.None ? "無脈" : PolarityName(p) + Elements[e];
 
         public static readonly Dictionary<Synergy, string> Synergies = new Dictionary<Synergy, string>
         {
-            { Synergy.Triad, "三合" }, { Synergy.Quintet, "五同" },
-            { Synergy.ThreeTalents, "三才" }, { Synergy.FiveComplete, "五行俱全" },
-            { Synergy.Chain3, "相生三環" }, { Synergy.Chain4, "相生四環" }, { Synergy.Chain5, "相生五環" },
-            { Synergy.Harmony, "陰陽調和" }, { Synergy.PureYang, "純陽" }, { Synergy.PureYin, "純陰" },
+            { Synergy.Triad, "三鳴" }, { Synergy.Quintet, "五鳴" },
+            { Synergy.ThreeTalents, "交響" }, { Synergy.FiveComplete, "全脈" },
+            { Synergy.Chain3, "脈流三" }, { Synergy.Chain4, "脈流四" }, { Synergy.Chain5, "脈流五" },
+            { Synergy.Harmony, "浮沉調和" }, { Synergy.PureYang, "全浮" }, { Synergy.PureYin, "全沉" },
         };
+
+        /// <summary>戰報用：脈剋標籤。</summary>
+        public static string ElementTag(int percent) =>
+            percent == AbyssKingdom.Shared.Battle.Elements.SamePolarityOvercome ? "（共鳴剋制 +25%）"
+            : percent > 100 ? $"（脈剋 +{percent - 100}%）"
+            : percent < 100 ? "（脈被剋）" : "";
 
         public static string SynergyList(IEnumerable<Synergy> list)
         {

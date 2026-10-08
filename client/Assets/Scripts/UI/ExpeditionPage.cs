@@ -189,7 +189,7 @@ namespace AbyssKingdom.Client.UI
                 if (!System.Enum.TryParse<HeroId>(chip.name, out var id) || !_assign.TryGetValue(id, out var team)) continue;
                 string where = team < 0 ? "不出戰" : def.Branches.Count > 1 ? TeamNames[team] : "出戰";
                 HeroConfig.TryGet(id, out var hd);
-                chip.text = $"{DisplayNames.Heroes[id]}〔{DisplayNames.Stem(hd.Element, hd.Polarity)}{DisplayNames.Elements[hd.Element]}〕 {PowerLogic.HeroPower(city, id):N0} · {where}";
+                chip.text = $"{DisplayNames.Heroes[id]}〔{DisplayNames.ElementLabel(hd.Element, hd.Polarity)}〕 {PowerLogic.HeroPower(city, id):N0} · {where}";
                 chip.EnableInClassList("on", team >= 0);
                 chip.EnableInClassList("team2", team == 1);
             }
@@ -267,7 +267,7 @@ namespace AbyssKingdom.Client.UI
                 {
                     var enemySide = a.Side == BattleSide.Attacker ? BattleSide.Defender : BattleSide.Attacker;
                     string tag = (a.CounterPercent > 100 ? "（兵種克制）" : a.CounterPercent < 100 ? "（兵種被克）" : "")
-                        + (a.ElementPercent > 100 ? $"（五行剋 {a.ElementPercent}%）" : a.ElementPercent < 100 ? "（五行被剋）" : "");
+                        + DisplayNames.ElementTag(a.ElementPercent);
                     var line = Lbl($"第{a.Round}回合　{Name(a.Side, a.Actor)} → {Name(enemySide, a.Target)}　{a.Damage:N0} 傷害{tag}", "log-line");
                     line.EnableInClassList("enemy", a.Side == BattleSide.Defender);
                     log.Add(line);

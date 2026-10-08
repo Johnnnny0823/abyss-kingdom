@@ -43,7 +43,7 @@ namespace AbyssKingdom.Client.UI
             return icon;
         }
 
-        /// <summary>五行陰陽徽章，例如「戊・陽土」。陰屬性用空心樣式。</summary>
+        /// <summary>淵脈徽章，例如「浮層」「沉鐘」。沉（陰）用空心樣式。</summary>
         public static Label ElementBadge(Element e, Polarity p)
         {
             var l = Lbl(DisplayNames.ElementLabel(e, p), "el-badge", "el-" + e);
