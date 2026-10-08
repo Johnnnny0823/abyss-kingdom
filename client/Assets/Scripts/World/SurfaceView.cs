@@ -99,6 +99,7 @@ namespace AbyssKingdom.Client.World
                     float h = 0.5f + Hash(i, b * 7 + 2) % 6 * 0.12f;
                     float wdt = 0.9f + Hash(i, b * 7 + 3) % 4 * 0.15f;
                     var p = TilePos(x, y);
+                    if (ModelLibrary.Spawn("World/Mountain", ChunkOf(x, y), p, S, Hash(i, b * 7 + 4), Hash(i, b * 7 + 5) % 360) != null) continue;
                     _w.Prim(PrimitiveType.Sphere, new Color32(118, 108, 96, 255), p + Vector3.up * h * 0.35f, new Vector3(wdt, h, wdt), ChunkOf(x, y));
                     if (h > 0.9f) _w.Prim(PrimitiveType.Sphere, new Color32(220, 224, 228, 255), p + Vector3.up * h * 0.72f, new Vector3(wdt * 0.4f, h * 0.25f, wdt * 0.4f), ChunkOf(x, y));
                 }
@@ -113,6 +114,7 @@ namespace AbyssKingdom.Client.World
                     foreach (var s in new[] { -1f, 1f })
                     {
                         var tower = center + side * (SurfaceConfig.PassRadius * S * s);
+                        if (ModelLibrary.Spawn("World/PassTower", t, tower, S, 0, Mathf.Atan2(radial.x, radial.z) * Mathf.Rad2Deg) != null) continue;
                         _w.Prim(PrimitiveType.Cylinder, stone, tower + Vector3.up * 0.35f, new Vector3(0.35f, 0.35f, 0.35f), t);
                         _w.Prim(PrimitiveType.Cylinder, new Color32(150, 60, 50, 255), tower + Vector3.up * 0.76f, new Vector3(0.42f, 0.06f, 0.42f), t);
                     }
@@ -121,8 +123,29 @@ namespace AbyssKingdom.Client.World
             }
         }
 
+        private static string ModelOf(Feature f)
+        {
+            switch (f.Type)
+            {
+                case FeatureType.ResourceField: return "World/Field_" + f.Resource;
+                case FeatureType.MonsterCamp: return "World/MonsterCamp";
+                default: return "World/AbyssGate";
+            }
+        }
+
         private void BuildFeature(Feature f)
         {
+            // 有美術模型就用模型（文字標籤另外放），沒有就用下面的灰盒
+            var pos = TilePos(f.X, f.Y);
+            if (ModelLibrary.Spawn(ModelOf(f), ChunkOf(f.X, f.Y), pos, S, f.X * 31 + f.Y, Hash(f.X, f.Y) % 4 * 90) != null)
+            {
+                var chunk = ChunkOf(f.X, f.Y);
+                if (f.Type == FeatureType.ResourceField) _w.Text(chunk, pos + Vector3.up * 0.45f, 0.033f, new Color(1f, 0.97f, 0.9f)).text = "Lv." + f.Level;
+                else if (f.Type == FeatureType.MonsterCamp) _w.Text(chunk, pos + Vector3.up * 0.5f, 0.033f, new Color(1f, 0.7f, 0.65f)).text = "怪 Lv." + f.Level;
+                else _w.Text(chunk, pos + Vector3.up * 1.1f, 0.048f, new Color(0.8f, 0.78f, 1f)).text = "深淵入口";
+                return;
+            }
+
             var t = _w.Group("Feature", ChunkOf(f.X, f.Y), TilePos(f.X, f.Y));
             t.localScale = Vector3.one * 1.5f;
             var label = new Color(1f, 0.97f, 0.9f);
@@ -202,7 +225,11 @@ namespace AbyssKingdom.Client.World
                     var t = ChunkOf(x, y);
                     var p = TilePos(x, y);
                     for (int i = 0; i < 3; i++)
-                        TreeAt(t, p + new Vector3((i - 1) * 0.18f, 0, (i % 2) * 0.16f), 2.2f + i % 2 * 0.5f);
+                    {
+                        var tp = p + new Vector3((i - 1) * 0.18f, 0, (i % 2) * 0.16f);
+                        if (ModelLibrary.Spawn("World/Tree", t, tp, S, Hash(cx * 3 + i, cy), Hash(cy, cx * 3 + i) % 360) == null)
+                            TreeAt(t, tp, 2.2f + i % 2 * 0.5f);
+                    }
                 }
         }
 
@@ -210,6 +237,12 @@ namespace AbyssKingdom.Client.World
         {
             var root = _w.Group("Castle", parent, pos).gameObject;
             var t = root.transform;
+            if (ModelLibrary.Spawn("World/City", t, Vector3.zero, S) != null)
+            {
+                var ring = _w.Prim(PrimitiveType.Cylinder, mine ? new Color32(230, 190, 90, 255) : new Color32(190, 70, 60, 255), Vector3.up * 0.002f, new Vector3(0.62f, 0.002f, 0.62f), t);
+                ring.name = "OwnerRing";
+                return root;
+            }
             t.localScale = Vector3.one * 1.25f;
             var wall = mine ? new Color32(226, 196, 130, 255) : new Color32(176, 150, 130, 255);
             var roof = mine ? new Color32(70, 110, 190, 255) : new Color32(150, 60, 50, 255);
@@ -337,6 +370,13 @@ namespace AbyssKingdom.Client.World
             while (_troops.Count <= i)
             {
                 var t = _w.Group("Troop", Root, Vector3.zero);
+                if (ModelLibrary.Spawn("World/Troop", t, Vector3.zero, S) != null)
+                {
+                    // 模型之外仍保留一面小旗：顏色表示出征（金）或返回（藍）
+                    _w.Prim(PrimitiveType.Cube, Color.white, new Vector3(0.1f, 0.5f, 0), new Vector3(0.16f, 0.1f, 0.008f), t).name = "Flag";
+                    _troops.Add(t);
+                    continue;
+                }
                 t.localScale = Vector3.one * 1.6f;
                 for (int k = 0; k < 3; k++)
                     _w.Prim(PrimitiveType.Cube, new Color32(70, 70, 80, 255), new Vector3((k - 1) * 0.09f, 0.06f, (k % 2) * 0.07f), new Vector3(0.05f, 0.12f, 0.05f), t);
