@@ -32,6 +32,8 @@ namespace AbyssKingdom.Shared.Expedition
     {
         public MonsterId Monster;
         public TroopType Troop;
+        public Element Element;
+        public Polarity Polarity;
         public long Count, Attack, Defense, Hp;
     }
 
@@ -68,6 +70,9 @@ namespace AbyssKingdom.Shared.Expedition
         public bool Win { get; set; }
         /// <summary>每條岔路一份戰報（順序同隊伍）。</summary>
         public List<BattleResult> Reports { get; set; } = new List<BattleResult>();
+        /// <summary>每條岔路雙方觸發的五行陰陽隊伍加成。</summary>
+        public List<List<Synergy>> OurSynergies { get; set; } = new List<List<Synergy>>();
+        public List<List<Synergy>> EnemySynergies { get; set; } = new List<List<Synergy>>();
         public ExpeditionRewards Rewards { get; set; }
     }
 
@@ -132,10 +137,17 @@ namespace AbyssKingdom.Shared.Expedition
         static EnemySquad Squad(MonsterId m, int s, long scalePercent)
         {
             TroopType troop = m == MonsterId.MossChild ? TroopType.Shield : m == MonsterId.BellRat ? TroopType.Rider : TroopType.Crossbow;
+            // 苔面童：乙・陰木；燈魅：丙・陽火；骨鈴鼠：庚・陽金；百眼紙傘：癸・陰水
+            var (element, polarity) = m == MonsterId.MossChild ? (Element.Wood, Polarity.Yin)
+                : m == MonsterId.LanternWisp ? (Element.Fire, Polarity.Yang)
+                : m == MonsterId.BellRat ? (Element.Metal, Polarity.Yang)
+                : (Element.Water, Polarity.Yin);
             return new EnemySquad
             {
                 Monster = m,
                 Troop = troop,
+                Element = element,
+                Polarity = polarity,
                 Count = (60 + 45L * s) * scalePercent / 100,
                 Attack = (50 + 24L * s) * scalePercent / 100,
                 Defense = (40 + 15L * s) * scalePercent / 100,
@@ -161,6 +173,7 @@ namespace AbyssKingdom.Shared.Expedition
             Leader = e.Monster.ToString(),
             LeaderAttack = e.Attack, LeaderDefense = e.Defense, LeaderHp = e.Hp,
             Troop = e.Troop, Count = e.Count,
+            Element = e.Element, Polarity = e.Polarity,
         };
 
         /// <summary>
@@ -195,6 +208,8 @@ namespace AbyssKingdom.Shared.Expedition
                 foreach (var h in teams[i]) ours.Add(HeroSquad(city, h));
                 var theirs = new List<SquadInput>();
                 foreach (var e in def.Branches[i]) theirs.Add(EnemySquadInput(e));
+                result.OurSynergies.Add(Elements.ApplyTeamSynergy(ours));
+                result.EnemySynergies.Add(Elements.ApplyTeamSynergy(theirs));
                 var report = BattleEngine.Run(ours, theirs, seed + (ulong)i);
                 result.Reports.Add(report);
                 DomainLogic.AwardFromBattle(city, teams[i], report); // 輸贏都會累積四境修練

@@ -165,6 +165,8 @@ namespace AbyssKingdom.Shared.Heroes
                 LeaderAttack = s.Attack, LeaderDefense = s.Defense, LeaderHp = s.Hp,
                 Troop = def.Specialty,
                 Count = s.Leadership,
+                Element = def.Element,
+                Polarity = def.Polarity,
             };
             if (city.Heroes.TryGetValue(id, out var hero)) ApplyBonuses(hero, squad);
             return squad;

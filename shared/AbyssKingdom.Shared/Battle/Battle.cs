@@ -53,6 +53,10 @@ namespace AbyssKingdom.Shared.Battle
         public int SpeedBonus { get; set; }
         /// <summary>巧境：克制倍率加成；被克制時也減少同樣的懲罰。</summary>
         public int CounterBonus { get; set; }
+
+        /// <summary>五行與陰陽（十天干），見 Elements.cs。</summary>
+        public Element Element { get; set; }
+        public Polarity Polarity { get; set; }
     }
 
     /// <summary>每支小隊的戰後結果。DamageDealt / DamageTaken / FirstStrikes 之後用來發放「四境」修練值。</summary>
@@ -75,8 +79,10 @@ namespace AbyssKingdom.Shared.Battle
         public int Target { get; set; }
         public long Damage { get; set; }
         public long TroopsKilled { get; set; }
-        /// <summary>100 = 無克制，130 = 克制，80 = 被克制。</summary>
+        /// <summary>兵種克制：100 = 無，130 = 克制，80 = 被克制（含巧境加成）。</summary>
         public int CounterPercent { get; set; }
+        /// <summary>五行克制：100 = 無，125 = 同性相剋，115 = 異性相剋，85 = 被剋。</summary>
+        public int ElementPercent { get; set; } = 100;
     }
 
     public sealed class BattleResult
@@ -254,7 +260,8 @@ namespace AbyssKingdom.Shared.Battle
             else if (counter < 100) counter = System.Math.Min(100, counter + actor.In.CounterBonus);
             long roll = rng.Range(BattleConfig.RandomMinPercent, BattleConfig.RandomMaxPercent);
             long defense = BattleConfig.TroopDefense(target.In.Troop) + target.In.LeaderDefense / 10;
-            long damage = power * counter / 100 * roll / 100 * 100 / (100 + defense) * target.In.DamageTakenPercent / 100;
+            int element = Elements.Percent(actor.In.Element, actor.In.Polarity, target.In.Element, target.In.Polarity);
+            long damage = power * counter / 100 * element / 100 * roll / 100 * 100 / (100 + defense) * target.In.DamageTakenPercent / 100;
             if (damage < 1) damage = 1;
 
             long before = target.Troops;
@@ -265,7 +272,7 @@ namespace AbyssKingdom.Shared.Battle
             return new BattleAction
             {
                 Round = round, Side = actor.Side, Actor = actor.Index, Target = target.Index,
-                Damage = dealt, TroopsKilled = before - target.Troops, CounterPercent = counter,
+                Damage = dealt, TroopsKilled = before - target.Troops, CounterPercent = counter, ElementPercent = element,
             };
         }
 

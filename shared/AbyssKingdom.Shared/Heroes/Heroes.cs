@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AbyssKingdom.Shared.Battle;
 using AbyssKingdom.Shared.City;
 
 namespace AbyssKingdom.Shared.Heroes
@@ -43,6 +44,8 @@ namespace AbyssKingdom.Shared.Heroes
         public HeroId Id;
         public RopeGrade Grade;
         public TroopType Specialty;
+        public Element Element;
+        public Polarity Polarity;
         public long BaseAttack, BaseDefense, BaseHp;
         public long AttackGrowth, DefenseGrowth, HpGrowth;
     }
@@ -74,11 +77,12 @@ namespace AbyssKingdom.Shared.Heroes
 
         public static readonly HeroDef[] All =
         {
-            new HeroDef { Id = HeroId.Hold, Grade = RopeGrade.Uncommon, Specialty = TroopType.Shield,
+            // 霍德：戊・陽土；薇絲珀：辛・陰金；卡斯特：甲・陽木
+            new HeroDef { Id = HeroId.Hold, Grade = RopeGrade.Uncommon, Specialty = TroopType.Shield, Element = Element.Earth, Polarity = Polarity.Yang,
                 BaseAttack = 80, BaseDefense = 140, BaseHp = 1600, AttackGrowth = 8, DefenseGrowth = 14, HpGrowth = 160 },
-            new HeroDef { Id = HeroId.Vesper, Grade = RopeGrade.Uncommon, Specialty = TroopType.Crossbow,
+            new HeroDef { Id = HeroId.Vesper, Grade = RopeGrade.Uncommon, Specialty = TroopType.Crossbow, Element = Element.Metal, Polarity = Polarity.Yin,
                 BaseAttack = 150, BaseDefense = 70, BaseHp = 1100, AttackGrowth = 16, DefenseGrowth = 7, HpGrowth = 110 },
-            new HeroDef { Id = HeroId.Karst, Grade = RopeGrade.Uncommon, Specialty = TroopType.Rider,
+            new HeroDef { Id = HeroId.Karst, Grade = RopeGrade.Uncommon, Specialty = TroopType.Rider, Element = Element.Wood, Polarity = Polarity.Yang,
                 BaseAttack = 120, BaseDefense = 100, BaseHp = 1300, AttackGrowth = 12, DefenseGrowth = 10, HpGrowth = 130 },
         };
 
