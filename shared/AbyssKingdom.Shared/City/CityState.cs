@@ -51,6 +51,9 @@ namespace AbyssKingdom.Shared.City
         /// <summary>是否已發過新手護盾。</summary>
         public bool NewbieShieldGranted { get; set; }
 
+        /// <summary>新手護盾的版本：0/1 = 舊版 24 小時，2 = 7 天。</summary>
+        public int NewbieShieldVersion { get; set; }
+
         /// <summary>地表：主城位置。</summary>
         public SurfaceState Surface { get; set; } = new SurfaceState();
 

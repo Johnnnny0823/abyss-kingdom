@@ -9,8 +9,11 @@ namespace AbyssKingdom.Shared.Map
     /// <summary>攻城的數值（測試用，之後統一調平衡）。</summary>
     public static class PvpConfig
     {
-        /// <summary>新手護盾：建立帳號（或這個功能上線後第一次登入）起 24 小時，不能被攻打。</summary>
-        public const long NewbieShieldMs = 24 * 3_600_000L;
+        /// <summary>新手護盾：建立帳號（或這個功能上線後第一次登入）起 7 天，不能被攻打（2026-10-08 使用者定案）。</summary>
+        public const long NewbieShieldMs = 7 * 24 * 3_600_000L;
+
+        /// <summary>早期版本只發 24 小時；還在護盾中的帳號補足到 7 天。</summary>
+        public const long OldNewbieShieldMs = 24 * 3_600_000L;
 
         /// <summary>每種基礎資源受保護的量（倉庫等級越高保護越多），超過的部分才能被掠奪。</summary>
         public static long Protected(int warehouseLevel) => 1000 + 500L * Math.Max(0, warehouseLevel);
@@ -47,12 +50,19 @@ namespace AbyssKingdom.Shared.Map
     {
         public static bool IsShielded(CityState city, long nowMs) => city.ShieldUntilMs > nowMs;
 
-        /// <summary>發新手護盾（每個城市一次）。回傳這次是否有發。</summary>
+        /// <summary>
+        /// 發新手護盾（每個城市一次）。回傳這次是否有改動。
+        /// 拿過舊版 24 小時護盾、而且護盾還在（沒有攻打過別人）的帳號，補足到 7 天。
+        /// </summary>
         public static bool GrantNewbieShieldOnce(CityState city, long nowMs)
         {
-            if (city.NewbieShieldGranted) return false;
+            if (city.NewbieShieldVersion >= 2) return false;
+            if (!city.NewbieShieldGranted)
+                city.ShieldUntilMs = Math.Max(city.ShieldUntilMs, nowMs + PvpConfig.NewbieShieldMs);
+            else if (city.ShieldUntilMs > nowMs)
+                city.ShieldUntilMs += PvpConfig.NewbieShieldMs - PvpConfig.OldNewbieShieldMs;
             city.NewbieShieldGranted = true;
-            city.ShieldUntilMs = Math.Max(city.ShieldUntilMs, nowMs + PvpConfig.NewbieShieldMs);
+            city.NewbieShieldVersion = 2;
             return true;
         }
 

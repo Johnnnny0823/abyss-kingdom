@@ -41,9 +41,27 @@ public static class PvpTests
     public static void NewCity_HasNewbieShield_OnlyOnce()
     {
         var c = CityState.CreateNew(T0);
-        Assert.True(PvpLogic.IsShielded(c, T0 + PvpConfig.NewbieShieldMs - 1), "24 小時內有護盾");
+        Assert.Equal(7 * 24 * 3_600_000L, PvpConfig.NewbieShieldMs, "新手護盾 7 天");
+        Assert.True(PvpLogic.IsShielded(c, T0 + PvpConfig.NewbieShieldMs - 1), "7 天內有護盾");
         Assert.True(!PvpLogic.IsShielded(c, T0 + PvpConfig.NewbieShieldMs), "之後就沒了");
         Assert.True(!PvpLogic.GrantNewbieShieldOnce(c, T0 + 999_999_999), "只發一次");
+    }
+
+    [Test]
+    public static void OldShield_StillActive_IsExtendedToSevenDays_Once()
+    {
+        var c = CityState.CreateNew(T0);
+        c.NewbieShieldVersion = 0;
+        c.ShieldUntilMs = T0 + PvpConfig.OldNewbieShieldMs; // 舊版：24 小時
+        Assert.True(PvpLogic.GrantNewbieShieldOnce(c, T0 + 1000), "補發");
+        Assert.Equal(T0 + PvpConfig.NewbieShieldMs, c.ShieldUntilMs, "補足到 7 天");
+        Assert.True(!PvpLogic.GrantNewbieShieldOnce(c, T0 + 2000), "只補一次");
+
+        var attacked = CityState.CreateNew(T0);
+        attacked.NewbieShieldVersion = 0;
+        attacked.ShieldUntilMs = 0; // 攻打過別人，護盾已經解除
+        PvpLogic.GrantNewbieShieldOnce(attacked, T0 + 1000);
+        Assert.Equal(0L, attacked.ShieldUntilMs, "自己解除的護盾不會補回來");
     }
 
     [Test]
