@@ -29,6 +29,14 @@ public static class Assert
     {
         return value ?? throw new AssertException($"{what} 不應為 null");
     }
+
+    public static void Throws<TException>(Action action) where TException : Exception
+    {
+        try { action(); }
+        catch (TException) { return; }
+        catch (Exception ex) { throw new AssertException($"預期 {typeof(TException).Name}，實際 {ex.GetType().Name}：{ex.Message}"); }
+        throw new AssertException($"預期 {typeof(TException).Name}，但沒有拋出例外");
+    }
 }
 
 /// <summary>極簡測試執行器：找出所有 [Test] 方法逐一執行，回報結果。</summary>
