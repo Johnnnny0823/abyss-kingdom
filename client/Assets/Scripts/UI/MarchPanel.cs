@@ -140,7 +140,12 @@ namespace AbyssKingdom.Client.UI
             else _eta.text = "";
 
             var field = SurfaceLogic.FeatureAt(_x, _y);
-            if (reason == null && field != null && field.Type == FeatureType.ResourceField)
+            if (reason == null && field != null && field.Type == FeatureType.MonsterCamp)
+            {
+                var lineup = CampConfig.Lineup(field.Level, SurfaceLogic.Tile(field.X, field.Y));
+                _status.text = $"敵方 {lineup.Count} 支小隊、共 {lineup.Sum(e => e.Count):N0} 隻魔物（{string.Join("、", lineup.Select(e => DisplayNames.Troops[e.Troop]))}型）。抵達就開打，打完自動回城；倒下的士兵七成進醫館。";
+            }
+            else if (reason == null && field != null && field.Type == FeatureType.ResourceField)
             {
                 long load = GatherConfig.Load(troops);
                 long rate = GatherConfig.RatePerMinute(field.Level);

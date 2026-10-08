@@ -23,7 +23,7 @@ PC 先行（Steam＋自架下載、手遊之後）的 4X / SLG：玩家在深淵
 | 資料庫 | Supabase（PostgreSQL，伺服器用 service_role 走 REST） | 城市整包 jsonb；客戶端不可直連 |
 | 登入 | Firebase Auth：PC 版走 **REST API** 匿名登入（Unity SDK 桌面版不可上線） | 之後加綁定 Google、Steam 登入；手遊版再用 Firebase SDK、FCM、Crashlytics |
 | 主機 | **本機 Docker＋Cloudflare Quick Tunnel**（`docs/DEPLOY.md`） | Oracle 註冊被拒；找到雲端主機後沿用同一份 compose |
-| 測試 | 自製迷你框架（無 NuGet），`dotnet run --project tests/AbyssKingdom.Tests` | 目前 143 個測試 |
+| 測試 | 自製迷你框架（無 NuGet），`dotnet run --project tests/AbyssKingdom.Tests` | 目前 154 個測試 |
 | CI | GitHub Actions（`.github/workflows/ci.yml`） | |
 
 ## 4. 程式結構（2026-10-08）
@@ -75,14 +75,14 @@ docker-compose.yml   伺服器＋Cloudflare Quick Tunnel
 
 ## 7. 接下來的工作
 
-依 **GDD 第 6 節**的開發路線。**目前專心做地表**（GDD 5a：S1 大陸地圖與主城 ✅ → S2 地表行軍 ✅ → S3 採集 ✅ → **S4 怪物營地／傷兵／醫院** → S5 PvP 攻城 → S6 聯盟盟旗）；賽季與深淵各層延後（深淵每層都會是和地表一樣的大陸）。
+依 **GDD 第 6 節**的開發路線。**目前專心做地表**（GDD 5a：S1 大陸地圖與主城 ✅ → S2 地表行軍 ✅ → S3 採集 ✅ → S4 怪物營地／傷兵／醫院 ✅ → **S5 PvP 攻城** → S6 聯盟盟旗）；賽季與深淵各層延後（深淵每層都會是和地表一樣的大陸）。
 
 ## 8. 開發小抄（給 AI）
 
 - 測試：`dotnet run --project tests/AbyssKingdom.Tests`（可加名稱片段當過濾，例如 `-- Probe`）。
 - 編譯客戶端（Unity 必須先關）：`Unity.exe -batchmode -quit -nographics -projectPath client -logFile <log>`；打包加 `-executeMethod BuildScript.BuildWindows`。
 - 更新線上伺服器：先把 Windows 使用者環境變數讀進 `$env:`，再 `docker compose up -d --build server`（tunnel 網址不變）。
-- 打包版測試參數：`-server <url>`、`-autologin`（訪客）、`-devlogin`（開發模式）、`-continent`（開大地圖）、`-heroes`／`-expedition`（直接開面板）、`-building <Keep|Barracks…>`、`-tile <x> <y>`（大地圖選取並移過去）、`-movetest <建築> <x> <y>`（自動走一次移動建築流程）、`-marchtest <x> <y>`（用出征面板自動配兵出征）、`-gathertest`（派部隊去最近的資源田採集）、`-autofight`（自動出征）。截圖前在本機 5090 埠開 Dev 伺服器（可設 `Admin__Token` 用 GM 工具準備資料），**不要用使用者的訪客帳號做測試**。
+- 打包版測試參數：`-server <url>`、`-autologin`（訪客）、`-devlogin`（開發模式）、`-continent`（開大地圖）、`-heroes`／`-expedition`（直接開面板）、`-building <Keep|Barracks…>`、`-tile <x> <y>`（大地圖選取並移過去）、`-movetest <建築> <x> <y>`（自動走一次移動建築流程）、`-marchtest <x> <y>`（用出征面板自動配兵出征）、`-gathertest`（派部隊去最近的資源田採集）、`-camptest`（對最近的 Lv.1 營地派兵）、`-hospital`（直接開醫館）、`-autofight`（自動出征）。截圖前在本機 5090 埠開 Dev 伺服器（可設 `Admin__Token` 用 GM 工具準備資料），**不要用使用者的訪客帳號做測試**。
 - 給朋友的 zip：`client/Builds/AbyssKingdom-Windows.zip`（排除 `*DoNotShip*` 資料夾）。
 
 ## 9. 給 Claude Code 的開場提示（可直接貼上）

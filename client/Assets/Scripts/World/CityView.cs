@@ -143,6 +143,7 @@ namespace AbyssKingdom.Client.World
             { BuildingType.CrystalMine, new Color32(90, 140, 220, 255) },
             { BuildingType.Warehouse, new Color32(176, 150, 110, 255) },
             { BuildingType.Barracks, new Color32(170, 80, 66, 255) },
+            { BuildingType.Hospital, new Color32(230, 226, 214, 255) },
         };
 
         private Transform BuildBuilding(BuildingType type, int level, bool upgrading)
@@ -225,6 +226,10 @@ namespace AbyssKingdom.Client.World
                 case BuildingType.Warehouse:
                     for (int i = 0; i < 4; i++)
                         _w.Prim(PrimitiveType.Cube, new Color32(150, 110, 70, 255), new Vector3(e - (i % 2) * 0.13f, 0.06f + (i / 2) * 0.12f, -e), new Vector3(0.11f, 0.11f, 0.11f), t);
+                    break;
+                case BuildingType.Hospital:
+                    _w.Prim(PrimitiveType.Cube, new Color32(200, 50, 50, 255), new Vector3(0, 0.45f, -f * 0.3f), new Vector3(0.3f, 0.09f, 0.02f), t);
+                    _w.Prim(PrimitiveType.Cube, new Color32(200, 50, 50, 255), new Vector3(0, 0.45f, -f * 0.3f), new Vector3(0.09f, 0.3f, 0.02f), t);
                     break;
                 case BuildingType.Barracks:
                     _w.Prim(PrimitiveType.Cylinder, new Color32(80, 70, 60, 255), new Vector3(e, 0.4f, -e), new Vector3(0.03f, 0.4f, 0.03f), t);

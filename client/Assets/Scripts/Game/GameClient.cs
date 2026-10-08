@@ -127,6 +127,8 @@ namespace AbyssKingdom.Client.Game
         public void MoveBuilding(BuildingType building, int x, int y) =>
             _conn.Send(MessageTypes.CityMove, new MoveBuildingRequest { Building = building, X = x, Y = y });
 
+        public void Heal(Dictionary<TroopType, long> troops) => _conn.Send(MessageTypes.CityHeal, new HealRequest { Troops = troops });
+
         public void Train(TroopType troop, long count) => _conn.Send(MessageTypes.CityTrain, new TrainRequest { Troop = troop, Count = count });
 
         public void Cancel(QueueType queue) => _conn.Send(MessageTypes.CityCancel, new CancelRequest { Queue = queue });
@@ -221,6 +223,9 @@ namespace AbyssKingdom.Client.Game
                 case MessageTypes.WorldCities:
                     Cities = msg.DataAs<WorldCitiesMessage>().Cities ?? new List<CityPin>();
                     break;
+                case MessageTypes.HealingCompleted:
+                    Notice?.Invoke($"治療完成：{DisplayNames.TroopsText(msg.DataAs<HealingCompletedMessage>().Troops)} 回到兵營", false);
+                    break;
                 case MessageTypes.WorldTile:
                     Tile = msg.DataAs<TileInfoMessage>();
                     break;
@@ -229,7 +234,17 @@ namespace AbyssKingdom.Client.Game
                     var (tx, ty) = AbyssKingdom.Shared.Map.SurfaceLogic.FromTile(ma.Tile);
                     string hero = DisplayNames.Heroes[ma.Hero];
                     string carry = DisplayNames.CarryText(ma.Carry);
-                    Notice?.Invoke(ma.Disbanded ? (carry != "" ? $"{hero} 回到主城，帶回 {carry}" : $"{hero} 的部隊已回到兵營")
+                    string loot = DisplayNames.ItemsText(ma.LootItems);
+                    string losses = (DisplayNames.TroopsText(ma.Wounded) is var w && w != "" ? $"傷兵 {w}" : "")
+                        + (DisplayNames.TroopsText(ma.Dead) is var d && d != "" ? $"　陣亡 {d}" : "");
+                    if (ma.BattleWon || ma.BattleLost || ma.CampGone)
+                    {
+                        Notice?.Invoke(ma.CampGone ? $"{hero} 抵達時營地已經被清空了，原地駐紮"
+                            : ma.BattleWon ? $"{hero} 擊敗了怪物營地！戰利品：{carry}{(loot != "" ? "、" + loot : "")}。{losses}"
+                            : $"{hero} 打輸了，倖存的部隊撤回主城。{losses}", ma.BattleLost);
+                        break;
+                    }
+                    Notice?.Invoke(ma.Disbanded ? (carry != "" || loot != "" ? $"{hero} 回到主城，帶回 {carry}{(loot != "" ? "、" + loot : "")}" : $"{hero} 的部隊已回到兵營")
                         : ma.GatherDone ? $"{hero} 採滿了，帶著 {carry} 返回主城"
                         : ma.Gathering ? $"{hero} 抵達資源田，開始採集"
                         : ma.Occupied ? $"{hero} 抵達，但這塊資源田已經有人在採（或採空了），原地駐紮"

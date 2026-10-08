@@ -44,9 +44,13 @@ namespace AbyssKingdom.Client.UI
         private QueueView _buildQueue, _hudTrainQueue, _trainQueue;
 
         // 彈出面板（主將、遠征、兵營、背包；出征面板從大地圖的資訊卡打開）
-        private const int PageHeroes = 0, PageExpedition = 1, PageBarracks = 2, PageBag = 3, PageMarch = 4;
+        private const int PageHeroes = 0, PageExpedition = 1, PageBarracks = 2, PageBag = 3, PageMarch = 4, PageHospital = 5;
         private const int HudPages = 4;
-        private static readonly string[] PageNames = { "主將", "遠征", "兵營", "背包", "出征" };
+        private static readonly string[] PageNames = { "主將", "遠征", "兵營", "背包", "出征", "醫館" };
+        private HospitalPanel _hospital;
+        private QueueView _hudHealQueue, _healQueue;
+        private VisualElement _healPanel;
+        private Label _woundedLabel;
         private VisualElement[] _pageRoots;
         private VisualElement _pageOverlay, _pageBody;
         private Label _pageTitle;
@@ -139,6 +143,21 @@ namespace AbyssKingdom.Client.UI
                     _march.AutoFillAndGo();
                     _continent.Select(f.X, f.Y);
                 }).StartingIn(4000);
+            // 測試用：-camptest 對最近的 Lv.1 營地派一支滿編（會贏）和一支 20 兵（會輸、產生傷兵）；-hospital 直接開醫館
+            if (Array.IndexOf(args, "-camptest") >= 0)
+                _root.schedule.Execute(() =>
+                {
+                    var c = G.Predicted();
+                    var (hx, hy) = SurfaceLogic.CityCenter(c.Surface);
+                    var f = SurfaceLogic.Features().Where(x => x.Type == FeatureType.MonsterCamp && x.Level == 1 && SurfaceLogic.Zone(x.X, x.Y) == SurfaceLogic.Zone(hx, hy))
+                        .OrderBy(x => SurfaceLogic.Dist2(hx, hy, x.X, x.Y)).First();
+                    G.StartMarch(HeroId.Vesper, new Dictionary<TroopType, long> { [TroopType.Crossbow] = 20 }, f.X, f.Y);
+                    _march.SetTarget(f.X, f.Y, DisplayNames.FeatureName(f));
+                    _march.Refresh(c, G.ServerNowMs);
+                    _march.AutoFillAndGo();
+                    _continent.Select(f.X, f.Y);
+                }).StartingIn(4000);
+            if (Array.IndexOf(args, "-hospital") >= 0) OpenPage(PageHospital);
             int ti = Array.IndexOf(args, "-tile");
             if (ti >= 0 && ti + 2 < args.Length && int.TryParse(args[ti + 1], out var tx) && int.TryParse(args[ti + 2], out var ty))
                 _root.schedule.Execute(() => { _continent.Select(tx, ty); _continent.FocusTile(tx, ty); }).StartingIn(3000);
@@ -257,6 +276,16 @@ namespace AbyssKingdom.Client.UI
             _hudTrainQueue = new QueueView(QueueType.Training, OpenSpeedupDialog);
             trainPanel.Add(_hudTrainQueue.Root);
             left.Add(trainPanel);
+            _healPanel = El("panel", "hud-panel");
+            var healHead = El("row");
+            healHead.Add(Lbl("醫館", "panel-title", "grow"));
+            _woundedLabel = Lbl("", "muted");
+            healHead.Add(_woundedLabel);
+            _healPanel.Add(healHead);
+            _hudHealQueue = new QueueView(QueueType.Healing, OpenSpeedupDialog);
+            _healPanel.Add(_hudHealQueue.Root);
+            _healPanel.Add(Btn("前往醫館", () => OpenPage(PageHospital), "btn-small"));
+            left.Add(_healPanel);
             var marchPanel = El("panel", "hud-panel");
             _marchList = new MarchList();
             marchPanel.Add(_marchList.Root);
@@ -289,7 +318,7 @@ namespace AbyssKingdom.Client.UI
             actions.Add(Btn("✕", () => _selBuilding = null, "btn-small"));
             _moveBtn = Btn("移動", () => { if (_selBuilding.HasValue) _world.City.BeginMove(_selBuilding.Value); }, "btn-small");
             actions.Add(_moveBtn);
-            _trainBtn = Btn("訓練", () => OpenPage(PageBarracks), "btn-primary", "btn-small");
+            _trainBtn = Btn("訓練", () => OpenPage(_selBuilding == BuildingType.Hospital ? PageHospital : PageBarracks), "btn-primary", "btn-small");
             actions.Add(_trainBtn);
             selRow.Add(actions);
             _buildingSel.Add(selRow);
@@ -320,7 +349,9 @@ namespace AbyssKingdom.Client.UI
             var bag = El("panel");
             _itemList = El();
             bag.Add(_itemList);
-            _pageRoots = new[] { _heroPage.Root, _expPage.Root, _training.Root, bag, _march.Root };
+            _healQueue = new QueueView(QueueType.Healing, OpenSpeedupDialog);
+            _hospital = new HospitalPanel(_healQueue);
+            _pageRoots = new[] { _heroPage.Root, _expPage.Root, _training.Root, bag, _march.Root, _hospital.Root };
 
             _pageOverlay = El("page-overlay");
             var window = El("page-window");
@@ -420,7 +451,9 @@ namespace AbyssKingdom.Client.UI
                         _cardHost.Add(card.Root);
                     }
                     card.Refresh(city);
-                    Show(_trainBtn, _selBuilding == BuildingType.Barracks && city.GetLevel(BuildingType.Barracks) > 0);
+                    bool barracks = _selBuilding == BuildingType.Barracks && city.GetLevel(BuildingType.Barracks) > 0;
+                    Show(_trainBtn, barracks || _selBuilding == BuildingType.Hospital);
+                    _trainBtn.text = barracks ? "訓練" : "治療";
                 }
             }
             else
@@ -431,6 +464,10 @@ namespace AbyssKingdom.Client.UI
 
             _buildQueue.Refresh(city, now);
             _hudTrainQueue.Refresh(city, now);
+            _hudHealQueue.Refresh(city, now);
+            long woundedTotal = CityLogic.WoundedTotal(city);
+            Show(_healPanel, woundedTotal > 0 || city.Healing != null);
+            _woundedLabel.text = $"傷兵 {woundedTotal:N0}";
             _marchList.Refresh(city, now);
             switch (_page)
             {
@@ -439,6 +476,7 @@ namespace AbyssKingdom.Client.UI
                 case PageBarracks: _training.Refresh(city, now); break;
                 case PageBag: RefreshItems(city); break;
                 case PageMarch: _march.Refresh(city, now); break;
+                case PageHospital: _hospital.Refresh(city, now); break;
             }
             if (_dialog != null) RefreshDialog(city, now);
         }
@@ -487,7 +525,8 @@ namespace AbyssKingdom.Client.UI
 
         private void RefreshDialog(CityState city, long now)
         {
-            long? finish = _dialogQueue == QueueType.Building ? city?.Upgrade?.FinishAtMs : city?.Training?.FinishAtMs;
+            long? finish = _dialogQueue == QueueType.Building ? city?.Upgrade?.FinishAtMs
+                : _dialogQueue == QueueType.Healing ? city?.Healing?.FinishAtMs : city?.Training?.FinishAtMs;
             if (finish == null)
             {
                 CloseDialog();
@@ -637,7 +676,7 @@ namespace AbyssKingdom.Client.UI
             public QueueView(QueueType queue, Action<QueueType> openSpeedup)
             {
                 _queue = queue;
-                _idle = Lbl(queue == QueueType.Building ? "空閒中 — 點城內的建築開始升級" : "訓練隊列空閒中", "queue-idle");
+                _idle = Lbl(queue == QueueType.Building ? "空閒中 — 點城內的建築開始升級" : queue == QueueType.Healing ? "沒有在治療" : "訓練隊列空閒中", "queue-idle");
                 Root.Add(_idle);
                 _active = El();
                 _title = Lbl("", "queue-title");
@@ -673,6 +712,12 @@ namespace AbyssKingdom.Client.UI
                     _title.text = $"訓練中：{DisplayNames.Troops[city.Training.Troop]}  {done:N0} / {city.Training.Count:N0}";
                     start = city.Training.StartedAtMs;
                     finish = city.Training.FinishAtMs;
+                }
+                else if (_queue == QueueType.Healing && city.Healing != null)
+                {
+                    _title.text = $"治療中：{DisplayNames.TroopsText(city.Healing.Troops)}";
+                    start = city.Healing.StartedAtMs;
+                    finish = city.Healing.FinishAtMs;
                 }
                 else
                 {
@@ -792,6 +837,98 @@ namespace AbyssKingdom.Client.UI
                 _train.text = check == TrainResult.Ok ? $"訓練 {n:N0} 名{DisplayNames.Troops[_selected]}"
                     : check == TrainResult.QueueBusy ? "訓練隊列忙碌中"
                     : check == TrainResult.NotEnoughResources ? "資源不足" : "無法訓練";
+                _queue.Refresh(city, now);
+            }
+        }
+
+        /// <summary>醫館：各兵種傷兵的滑桿、成本與時間、治療隊列。</summary>
+        private sealed class HospitalPanel
+        {
+            public readonly VisualElement Root = El("panel");
+            private readonly Label _cap, _time;
+            private readonly VisualElement _none, _controls;
+            private readonly Dictionary<TroopType, (VisualElement row, SliderInt slider, Label count)> _rows = new Dictionary<TroopType, (VisualElement, SliderInt, Label)>();
+            private readonly CostRow _cost = new CostRow();
+            private readonly Button _heal;
+            private readonly QueueView _queue;
+
+            public HospitalPanel(QueueView queue)
+            {
+                _queue = queue;
+                var head = El("row");
+                head.Add(Lbl("傷兵", "panel-title", "grow"));
+                _cap = Lbl("", "muted");
+                head.Add(_cap);
+                Root.Add(head);
+                Root.Add(Lbl("戰鬥中倒下的士兵有七成會被送來這裡（醫館滿了就直接陣亡）。治療花訓練成本與時間的一半。", "muted"));
+                _none = Lbl("醫館裡沒有傷兵", "queue-idle");
+                Root.Add(_none);
+                _controls = El();
+                foreach (var t in CityConfig.AllTroops)
+                {
+                    var row = El("row");
+                    row.Add(Lbl(DisplayNames.Troops[t], "march-troop-name"));
+                    var slider = new SliderInt(0, 0) { value = 0 };
+                    slider.AddToClassList("grow");
+                    slider.AddToClassList("count-slider");
+                    row.Add(slider);
+                    var count = Lbl("0", "march-troop-count");
+                    row.Add(count);
+                    _rows[t] = (row, slider, count);
+                    _controls.Add(row);
+                }
+                var costRow = El("row");
+                costRow.Add(Btn("全部", () => { foreach (var r in _rows.Values) r.slider.value = r.slider.highValue; }, "btn-small"));
+                costRow.Add(_cost.Root);
+                costRow.Add(El("spacer"));
+                _time = Lbl("", "muted");
+                costRow.Add(_time);
+                _controls.Add(costRow);
+                _heal = Btn("治療", Heal, "btn-primary");
+                _heal.style.marginLeft = 0;
+                _heal.style.marginTop = 8;
+                _controls.Add(_heal);
+                Root.Add(_controls);
+                var queueBox = El();
+                queueBox.style.marginTop = 14;
+                queueBox.Add(_queue.Root);
+                Root.Add(queueBox);
+            }
+
+            private Dictionary<TroopType, long> Selected()
+            {
+                var d = new Dictionary<TroopType, long>();
+                foreach (var kv in _rows) if (kv.Value.slider.value > 0) d[kv.Key] = kv.Value.slider.value;
+                return d;
+            }
+
+            private void Heal()
+            {
+                G.Heal(Selected());
+                foreach (var r in _rows.Values) r.slider.value = 0;
+            }
+
+            public void Refresh(CityState city, long now)
+            {
+                long total = CityLogic.WoundedTotal(city);
+                _cap.text = $"{total:N0} / {CityConfig.HospitalCapacity(city.GetLevel(BuildingType.Hospital)):N0}";
+                Show(_none, total == 0);
+                Show(_controls, total > 0);
+                foreach (var t in CityConfig.AllTroops)
+                {
+                    var (row, slider, count) = _rows[t];
+                    long w = city.Wounded.TryGetValue(t, out var v) ? v : 0;
+                    Show(row, w > 0);
+                    if (slider.highValue != (int)w) slider.highValue = (int)w;
+                    if (slider.value > w) slider.value = (int)w;
+                    count.text = $"{slider.value:N0}/{w:N0}";
+                }
+                var sel = Selected();
+                _cost.Refresh(r => CityLogic.HealCost(sel, r), city);
+                _time.text = "需時 " + DisplayNames.Duration(CityLogic.HealDurationMs(sel));
+                var check = CityLogic.CanHeal(city, sel);
+                _heal.SetEnabled(check == HealResult.Ok);
+                _heal.text = check == HealResult.Ok ? $"治療 {sel.Values.Sum():N0} 名" : check == HealResult.QueueBusy ? "治療中" : check == HealResult.NotEnoughResources ? "資源不足" : "選擇要治療的傷兵";
                 _queue.Refresh(city, now);
             }
         }

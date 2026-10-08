@@ -107,6 +107,17 @@ namespace AbyssKingdom.Client.UI
                 _centered = true;
             }
             _view.SetMarches(city.Surface.Marches, now);
+            if (_feature != null && _feature.Type == FeatureType.MonsterCamp)
+            {
+                if (Time.unscaledTime >= _nextTile)
+                {
+                    _nextTile = Time.unscaledTime + 3f;
+                    G.RequestTile(_feature.X, _feature.Y);
+                }
+                var info = G.Tile;
+                if (info != null && info.X == _feature.X && info.Y == _feature.Y)
+                    _owner.text = info.CampBackAt > now ? $"已被擊敗，{DisplayNames.Duration(info.CampBackAt - now)} 後重生" : $"魔物 {CampConfig.Lineup(_feature.Level, 0).Count} 支小隊";
+            }
             if (_feature != null && _feature.Type == FeatureType.ResourceField)
             {
                 if (Time.unscaledTime >= _nextTile)

@@ -39,6 +39,7 @@ namespace AbyssKingdom.Client.UI
             { BuildingType.CrystalMine, "響晶礦脈" },
             { BuildingType.Warehouse, "倉庫" },
             { BuildingType.Barracks, "兵營" },
+            { BuildingType.Hospital, "醫館" },
         };
 
         public static readonly Dictionary<BuildingType, string> BuildingDescriptions = new Dictionary<BuildingType, string>
@@ -50,6 +51,7 @@ namespace AbyssKingdom.Client.UI
             { BuildingType.CrystalMine, "採集凝固的回響，生產響晶。" },
             { BuildingType.Warehouse, "提高每種資源的存放上限。" },
             { BuildingType.Barracks, "訓練部隊。等級越高，單批可訓練越多。" },
+            { BuildingType.Hospital, "收容戰鬥中倒下的士兵（七成成為傷兵、其餘陣亡），花資源與時間治療後回到兵營。等級越高收得越多。" },
         };
 
         // 兵種名稱（2026-10-08 使用者定案）
@@ -118,6 +120,23 @@ namespace AbyssKingdom.Client.UI
             if (carry == null) return "";
             var parts = new List<string>();
             foreach (var kv in carry) if (kv.Value > 0) parts.Add($"{Resources[kv.Key]} {kv.Value:N0}");
+            return string.Join("、", parts);
+        }
+
+        /// <summary>「磐盾衛 30、裂蹄騎 5」這樣的文字；沒有回傳空字串。</summary>
+        public static string TroopsText(Dictionary<TroopType, long> troops)
+        {
+            if (troops == null) return "";
+            var parts = new List<string>();
+            foreach (var kv in troops) if (kv.Value > 0) parts.Add($"{Troops[kv.Key]} {kv.Value:N0}");
+            return string.Join("、", parts);
+        }
+
+        public static string ItemsText(Dictionary<ItemType, long> items)
+        {
+            if (items == null) return "";
+            var parts = new List<string>();
+            foreach (var kv in items) if (kv.Value > 0) parts.Add($"{Item(kv.Key)} ×{kv.Value}");
             return string.Join("、", parts);
         }
 
@@ -269,6 +288,7 @@ namespace AbyssKingdom.Client.UI
         {
             { QueueType.Building, "建築隊列" },
             { QueueType.Training, "訓練隊列" },
+            { QueueType.Healing, "治療隊列" },
         };
 
         public static string Item(ItemType item)
@@ -334,6 +354,8 @@ namespace AbyssKingdom.Client.UI
                 case "NothingToClaim": return "目前沒有可領取的掛機收益";
                 case "HeroNotOwned": return "尚未擁有這位主將";
                 case "Overlaps": return "這裡和其他建築重疊了";
+                case "NothingToHeal": return "至少選一名傷兵";
+                case "NotEnoughWounded": return "傷兵數量不足";
                 case "OutOfBounds": return "超出城牆範圍";
             }
             return $"{code}：{detail}";
