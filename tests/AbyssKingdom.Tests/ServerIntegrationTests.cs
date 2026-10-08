@@ -7,6 +7,7 @@ using AbyssKingdom.Server;
 using AbyssKingdom.Server.Game;
 using AbyssKingdom.Server.Infrastructure;
 using AbyssKingdom.Shared.City;
+using AbyssKingdom.Shared.Map;
 using AbyssKingdom.Shared.Heroes;
 using AbyssKingdom.Shared.Protocol;
 using Microsoft.AspNetCore.Builder;
@@ -366,31 +367,32 @@ public static class ServerIntegrationTests
         await server.StartAsync();
         await using var client = new TestClient();
         await client.ConnectAsync(server.WsUri);
-        await client.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:delver" });
+        await client.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:rider" });
         var city = City(await client.ExpectAsync(MessageTypes.CityState));
-        int home = city.Map.HomeGate;
-        Assert.True(home >= 0, "登入時分配垂降口");
+        Assert.True(city.Surface.Placed, "登入時分配主城位置");
 
         // 測試用：直接在伺服器端給部隊
-        await server.Sessions.ModifyCityAsync("dev-delver", c => c.Troops[TroopType.Rider] = 100, CancellationToken.None);
+        await server.Sessions.ModifyCityAsync("dev-rider", c => c.Troops[TroopType.Rider] = 100, CancellationToken.None);
         await client.ExpectAsync(MessageTypes.CityState);
 
-        var map = AbyssKingdom.Shared.Map.MapConfig.Layer(1);
-        int dest = map.Nodes[home].Edges.Select(ei => map.Edges[ei]).First(e => e.Field != AbyssKingdom.Shared.Map.ForceField.Seal).Other(home);
-        await client.SendAsync(MessageTypes.MapMarch, new MapMarchRequest { Hero = HeroId.Karst, Troops = new() { [TroopType.Rider] = 60 }, Destination = dest });
+        // 目標：主城旁邊 6 格內第一個能站的格子
+        var (hx, hy) = SurfaceLogic.CityCenter(city.Surface);
+        var dest = Enumerable.Range(-6, 13).SelectMany(dx => Enumerable.Range(-6, 13).Select(dy => (x: hx + dx, y: hy + dy)))
+            .First(p => Math.Abs(p.x - hx) + Math.Abs(p.y - hy) >= 5 && SurfaceLogic.Walkable(p.x, p.y));
+        await client.SendAsync(MessageTypes.MapMarch, new MapMarchRequest { Hero = HeroId.Karst, Troops = new() { [TroopType.Rider] = 60 }, X = dest.x, Y = dest.y });
         var started = City(await client.ExpectAsync(MessageTypes.CityState));
         Assert.Equal(40L, started.GetTroops(TroopType.Rider), "部隊出征");
-        var march = started.Map.Marches[0];
+        var march = started.Surface.Marches[0];
 
         server.Clock.Advance(march.ArriveAt - T0 + 1);
         await server.Sessions.TickAsync(CancellationToken.None);
         var arrived = await client.ExpectAsync(MessageTypes.MarchArrived);
-        Assert.Equal(dest, arrived.GetProperty("data").GetProperty("node").GetInt32());
-        Assert.True(City(await client.ExpectAsync(MessageTypes.CityState)).Map.Explored.Contains(dest), "抵達揭開迷霧");
+        Assert.Equal(SurfaceLogic.Tile(dest.x, dest.y), arrived.GetProperty("data").GetProperty("tile").GetInt32());
+        Assert.True(City(await client.ExpectAsync(MessageTypes.CityState)).Surface.Marches[0].Stationed, "駐紮");
 
         await client.SendAsync(MessageTypes.MapRecall, new MapRecallRequest { March = march.Id });
         var recalled = City(await client.ExpectAsync(MessageTypes.CityState));
-        server.Clock.Advance(recalled.Map.Marches[0].ArriveAt - (T0 + march.ArriveAt - T0 + 1) + 1);
+        server.Clock.Advance(recalled.Surface.Marches[0].ArriveAt - march.ArriveAt);
         await server.Sessions.TickAsync(CancellationToken.None);
         var back = await client.ExpectAsync(MessageTypes.MarchArrived);
         Assert.True(back.GetProperty("data").GetProperty("disbanded").GetBoolean(), "召回解散");
@@ -405,23 +407,45 @@ public static class ServerIntegrationTests
         await using var a = new TestClient();
         await a.ConnectAsync(server.WsUri);
         await a.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:north", DisplayName = "北境" });
-        int siteA = City(await a.ExpectAsync(MessageTypes.CityState)).Surface.Site;
+        var sa = City(await a.ExpectAsync(MessageTypes.CityState)).Surface;
         await using var b = new TestClient();
         await b.ConnectAsync(server.WsUri);
         await b.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:south", DisplayName = "南境" });
-        int siteB = City(await b.ExpectAsync(MessageTypes.CityState)).Surface.Site;
+        var sb = City(await b.ExpectAsync(MessageTypes.CityState)).Surface;
 
-        var map = AbyssKingdom.Shared.Map.SurfaceConfig.Map();
-        Assert.True(siteA >= 0 && siteB >= 0, "都分到主城位置");
-        Assert.True(siteA != siteB, "位置不重複");
-        Assert.Equal(AbyssKingdom.Shared.Map.NodeType.CitySite, map.Nodes[siteA].Type);
+        Assert.True(sa.Placed && sb.Placed, "都分到主城位置");
+        Assert.True(sa.X != sb.X || sa.Y != sb.Y, "位置不重複");
+        Assert.Equal(SurfaceZone.Outer, SurfaceLogic.Zone(sa.X, sa.Y), "新手在外環");
 
         await a.SendAsync(MessageTypes.WorldCities, null);
         var pins = (await a.ExpectAsync(MessageTypes.WorldCities)).GetProperty("data").GetProperty("cities");
         Assert.Equal(2, pins.GetArrayLength(), "看得到兩座城");
         var mine = pins.EnumerateArray().Single(p => p.GetProperty("mine").GetBoolean());
-        Assert.Equal(siteA, mine.GetProperty("site").GetInt32());
+        Assert.Equal(sa.X, mine.GetProperty("x").GetInt32());
+        Assert.Equal(sa.Y, mine.GetProperty("y").GetInt32());
         Assert.True(pins.EnumerateArray().Any(p => p.GetProperty("name").GetString() == "南境"), "看得到鄰居的名字");
+    }
+
+    [Test]
+    public static async Task Login_ReturnsTroopsFromLegacyAbyssMarches()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        await using (var c1 = new TestClient())
+        {
+            await c1.ConnectAsync(server.WsUri);
+            await c1.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:oldsave" });
+            await c1.ExpectAsync(MessageTypes.CityState);
+            await server.Sessions.ModifyCityAsync("dev-oldsave", c =>
+                c.Map = new LegacyMapState { Marches = { new LegacyMarch { Troops = { [TroopType.Shield] = 70 } } } }, CancellationToken.None);
+        }
+        await server.Sessions.SaveAllAsync(true, CancellationToken.None);
+        await using var c2 = new TestClient();
+        await c2.ConnectAsync(server.WsUri);
+        await c2.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:oldsave" });
+        var city = City(await c2.ExpectAsync(MessageTypes.CityState));
+        Assert.Equal(70L, city.GetTroops(TroopType.Shield), "舊深淵行軍的部隊回到兵營");
+        Assert.True(city.Map == null, "舊狀態清掉");
     }
 
     [Test]

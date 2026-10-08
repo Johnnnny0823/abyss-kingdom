@@ -100,7 +100,7 @@ public sealed class SessionManager : BackgroundService
         if (CityLayout.EnsureLayout(record.City)) session.Dirty = true;
         if (HeroLogic.EnsureStarterHeroes(record.City)) session.Dirty = true;
         if (GearLogic.EnsureStarterGear(record.City)) session.Dirty = true;
-        if (MapLogic.EnsureStarted(record.City, playerId)) session.Dirty = true;
+        if (LegacyMigration.Run(record.City)) session.Dirty = true; // 舊深淵行軍的部隊還給兵營
         if (await _world.EnsureSiteAsync(record, ct)) session.Dirty = true; // 地表主城位置
         if (MarchLogic.Advance(record.City, _clock.NowMs).Count > 0) session.Dirty = true; // 離線期間抵達的行軍
         var added = _online.GetOrAdd(playerId, session);
@@ -165,7 +165,7 @@ public sealed class SessionManager : BackgroundService
                 foreach (var ev in marchEvents)
                     await SafeSend(session, MessageTypes.MarchArrived, new MarchArrivedMessage
                     {
-                        March = ev.MarchId, Hero = ev.Hero, Node = ev.Node, Discovered = ev.Discovered, Disbanded = ev.Disbanded,
+                        March = ev.MarchId, Hero = ev.Hero, Tile = ev.Tile, Disbanded = ev.Disbanded,
                     });
                 await SafeSend(session, MessageTypes.CityState, new CityStateMessage { ServerTimeMs = now, City = JsonSerializer.Deserialize<CityState>(snapshot, _json) });
             }

@@ -241,7 +241,7 @@ public sealed class WebSocketHandler
                 var march = Deserialize<MapMarchRequest>(data);
                 if (march == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "hero, troops and destination required"); break; }
                 await RunCityAction(conn, session, reqId, ErrorCodes.MapRejected, ct, (city, now) =>
-                    Fail(MarchLogic.Start(city, march.Hero, march.Troops, march.Destination, now), MarchResult.Ok));
+                    Fail(MarchLogic.Start(city, march.Hero, march.Troops, march.X, march.Y, now), MarchResult.Ok));
                 break;
 
             case MessageTypes.MapRecall:

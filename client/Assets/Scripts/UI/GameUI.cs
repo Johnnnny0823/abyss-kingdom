@@ -6,6 +6,7 @@ using AbyssKingdom.Client.Net;
 using AbyssKingdom.Client.World;
 using AbyssKingdom.Shared.City;
 using AbyssKingdom.Shared.Heroes;
+using AbyssKingdom.Shared.Map;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 using UnityEngine.UIElements;
@@ -42,16 +43,18 @@ namespace AbyssKingdom.Client.UI
         private BuildingType? _selBuilding;
         private QueueView _buildQueue, _hudTrainQueue, _trainQueue;
 
-        // 彈出面板（主將、遠征、兵營、背包、深淵）
-        private const int PageHeroes = 0, PageExpedition = 1, PageBarracks = 2, PageBag = 3, PageAbyss = 4;
-        private static readonly string[] PageNames = { "主將", "遠征", "兵營", "背包", "深淵" };
+        // 彈出面板（主將、遠征、兵營、背包；出征面板從大地圖的資訊卡打開）
+        private const int PageHeroes = 0, PageExpedition = 1, PageBarracks = 2, PageBag = 3, PageMarch = 4;
+        private const int HudPages = 4;
+        private static readonly string[] PageNames = { "主將", "遠征", "兵營", "背包", "出征" };
         private VisualElement[] _pageRoots;
         private VisualElement _pageOverlay, _pageBody;
         private Label _pageTitle;
         private int _page = -1;
         private HeroPage _heroPage;
         private ExpeditionPage _expPage;
-        private MapPage _mapPage;
+        private MarchPanel _march;
+        private MarchList _marchList;
         private TrainingPanel _training;
         private VisualElement _itemList;
         private string _itemSignature;
@@ -105,12 +108,11 @@ namespace AbyssKingdom.Client.UI
             OverlayBefore = _toasts;
 
             G.Notice += ShowToast;
-            // 測試用：-continent 開大地圖、-heroes／-expedition／-abyss 直接開面板、-building <名稱>／-site <地點> 直接選取
+            // 測試用：-continent 開大地圖、-heroes／-expedition 直接開面板、-building <名稱>／-tile <x> <y> 直接選取
             var args = Environment.GetCommandLineArgs();
             if (Array.IndexOf(args, "-continent") >= 0) _world.SetMode(WorldScene.Mode.Surface);
             if (Array.IndexOf(args, "-heroes") >= 0) OpenPage(PageHeroes);
             if (Array.IndexOf(args, "-expedition") >= 0) OpenPage(PageExpedition);
-            if (Array.IndexOf(args, "-abyss") >= 0) OpenPage(PageAbyss);
             int bi = Array.IndexOf(args, "-building");
             if (bi >= 0 && bi + 1 < args.Length && Enum.TryParse<BuildingType>(args[bi + 1], out var bt)) _selBuilding = bt;
             // 測試用：-movetest <建築> <x> <y> 走一次「移動 → 放下」流程（和滑鼠操作同一段程式）
@@ -124,8 +126,13 @@ namespace AbyssKingdom.Client.UI
                     _world.City.Hover(p, false);
                     _world.City.Click(p);
                 }).StartingIn(5000);
-            int si = Array.IndexOf(args, "-site");
-            if (si >= 0 && si + 1 < args.Length && int.TryParse(args[si + 1], out var site)) _continent.Select(site);
+            int ti = Array.IndexOf(args, "-tile");
+            if (ti >= 0 && ti + 2 < args.Length && int.TryParse(args[ti + 1], out var tx) && int.TryParse(args[ti + 2], out var ty))
+                _root.schedule.Execute(() => { _continent.Select(tx, ty); _continent.FocusTile(tx, ty); }).StartingIn(3000);
+            // 測試用：-marchtest <x> <y> 用自動配兵派第一位空閒主將出征
+            int mti = Array.IndexOf(args, "-marchtest");
+            if (mti >= 0 && mti + 2 < args.Length && int.TryParse(args[mti + 1], out var mx2) && int.TryParse(args[mti + 2], out var my2))
+                _root.schedule.Execute(() => { _march.SetTarget(mx2, my2, "測試"); _march.Refresh(G.Predicted(), G.ServerNowMs); _march.AutoFillAndGo(); }).StartingIn(4000);
             if (Array.IndexOf(args, "-autofight") >= 0) _root.schedule.Execute(() => _expPage.FightNow()).StartingIn(4000);
         }
 
@@ -237,10 +244,14 @@ namespace AbyssKingdom.Client.UI
             _hudTrainQueue = new QueueView(QueueType.Training, OpenSpeedupDialog);
             trainPanel.Add(_hudTrainQueue.Root);
             left.Add(trainPanel);
+            var marchPanel = El("panel", "hud-panel");
+            _marchList = new MarchList();
+            marchPanel.Add(_marchList.Root);
+            left.Add(marchPanel);
             hud.Add(left);
             hud.Add(Pass(El("spacer")));
             var right = Pass(El("hud-right"));
-            for (int i = 0; i < PageNames.Length; i++)
+            for (int i = 0; i < HudPages; i++)
             {
                 int idx = i;
                 right.Add(Btn(PageNames[i], () => OpenPage(idx), "hud-btn"));
@@ -254,6 +265,7 @@ namespace AbyssKingdom.Client.UI
             selHost.Add(_moveHint);
             _surfaceSel = Pass(El());
             _continent = new ContinentPage(_world.Surface);
+            _continent.MarchRequested += (x, y, title) => { _march.SetTarget(x, y, title); OpenPage(PageMarch); };
             _surfaceSel.Add(_continent.Root);
             selHost.Add(_surfaceSel);
             _buildingSel = El("panel", "sel-card");
@@ -282,13 +294,20 @@ namespace AbyssKingdom.Client.UI
             // 彈出面板
             _heroPage = new HeroPage();
             _expPage = new ExpeditionPage();
-            _mapPage = new MapPage();
+            _march = new MarchPanel();
+            _march.Sent += ClosePage;
+            _marchList.Focus += m =>
+            {
+                if (_world.Current != WorldScene.Mode.Surface) ToggleHome();
+                var (fx, fy) = MarchLogic.CurrentTile(m, G.ServerNowMs);
+                _continent.FocusTile(fx, fy);
+            };
             _trainQueue = new QueueView(QueueType.Training, OpenSpeedupDialog);
             _training = new TrainingPanel(_trainQueue);
             var bag = El("panel");
             _itemList = El();
             bag.Add(_itemList);
-            _pageRoots = new[] { _heroPage.Root, _expPage.Root, _training.Root, bag, _mapPage.Root };
+            _pageRoots = new[] { _heroPage.Root, _expPage.Root, _training.Root, bag, _march.Root };
 
             _pageOverlay = El("page-overlay");
             var window = El("page-window");
@@ -331,19 +350,16 @@ namespace AbyssKingdom.Client.UI
 
         private void OpenPage(int page)
         {
-            if (_page == PageAbyss && page != PageAbyss) _mapPage.SetTabActive(false);
             _page = page;
             _pageBody.Clear();
             _pageBody.Add(_pageRoots[page]);
             _pageTitle.text = PageNames[page];
             Show(_pageOverlay, true);
             _world.City.CancelMove();
-            if (page == PageAbyss) _mapPage.SetTabActive(true);
         }
 
         private void ClosePage()
         {
-            if (_page == PageAbyss) _mapPage.SetTabActive(false);
             _page = -1;
             Show(_pageOverlay, false);
         }
@@ -397,18 +413,19 @@ namespace AbyssKingdom.Client.UI
             else
             {
                 Show(_buildingSel, false);
-                _continent.Refresh(city);
+                _continent.Refresh(city, now);
             }
 
             _buildQueue.Refresh(city, now);
             _hudTrainQueue.Refresh(city, now);
+            _marchList.Refresh(city, now);
             switch (_page)
             {
                 case PageHeroes: _heroPage.Refresh(city); break;
                 case PageExpedition: _expPage.Refresh(city); break;
                 case PageBarracks: _training.Refresh(city, now); break;
                 case PageBag: RefreshItems(city); break;
-                case PageAbyss: _mapPage.Refresh(city); break;
+                case PageMarch: _march.Refresh(city, now); break;
             }
             if (_dialog != null) RefreshDialog(city, now);
         }

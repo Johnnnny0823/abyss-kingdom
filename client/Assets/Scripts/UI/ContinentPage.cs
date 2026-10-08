@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using AbyssKingdom.Client.Game;
 using AbyssKingdom.Client.World;
@@ -12,7 +13,7 @@ namespace AbyssKingdom.Client.UI
 {
     /// <summary>
     /// 大地圖畫面的介面部分：定期向伺服器要全服主城，交給 3D 的 SurfaceView 畫；
-    /// 點到地點時在畫面下方顯示資訊卡（Root）。
+    /// 點格子時在畫面下方顯示資訊卡（Root），可以從這裡出征。
     /// </summary>
     public sealed class ContinentPage
     {
@@ -21,24 +22,30 @@ namespace AbyssKingdom.Client.UI
 
         public readonly VisualElement Root;
         private readonly SurfaceView _view;
-        private readonly AbyssMap _map;
         private readonly Label _title, _sub, _desc, _owner;
-        private int _selected = -1;
+        private readonly Button _marchBtn;
+        private (int x, int y)? _selected;
         private bool _centered;
         private float _nextFetch;
         private string _sig;
+        private string _targetName;
+        private (int x, int y) _target;
+
+        /// <summary>按下「出征」：目標格子與名稱。</summary>
+        public event Action<int, int, string> MarchRequested;
 
         public ContinentPage(SurfaceView view)
         {
             _view = view;
-            _map = SurfaceConfig.Map();
-            _view.NodeClicked += id => { _selected = id; _sig = null; };
+            _view.TileClicked += (x, y) => Select(x, y);
 
             Root = El("panel", "sel-card");
             var head = El("row");
             _title = Lbl("", "queue-title", "grow");
             head.Add(_title);
-            head.Add(Btn("✕", () => { _selected = -1; _sig = null; }, "btn-small"));
+            _marchBtn = Btn("出征", () => { if (_selected.HasValue) MarchRequested?.Invoke(_target.x, _target.y, _targetName); }, "btn-primary", "btn-small");
+            head.Add(_marchBtn);
+            head.Add(Btn("✕", () => { _selected = null; _sig = null; }, "btn-small"));
             Root.Add(head);
             _sub = Lbl("", "muted");
             Root.Add(_sub);
@@ -48,55 +55,96 @@ namespace AbyssKingdom.Client.UI
             Root.Add(_desc);
         }
 
-        public void Select(int id)
+        public void Select(int x, int y)
         {
-            _selected = id;
+            _selected = (x, y);
             _sig = null;
         }
+
+        /// <summary>把鏡頭移到某個格子。</summary>
+        public void FocusTile(int x, int y) => WorldScene.Instance.FocusOn(WorldScene.Mode.Surface, SurfaceView.TilePos(x, y));
 
         /// <summary>切到大地圖時把鏡頭移到自己的城。</summary>
         public void CenterOnHome(CityState city)
         {
-            if (city.Surface.Site >= 0)
-                WorldScene.Instance.FocusOn(WorldScene.Mode.Surface, _view.NodePos(city.Surface.Site));
+            if (city.Surface.Placed) WorldScene.Instance.FocusOn(WorldScene.Mode.Surface, SurfaceView.CityPos(city.Surface.X, city.Surface.Y));
         }
 
-        public void Refresh(CityState city)
+        /// <summary>這格上的主城（2×2 佔地）。</summary>
+        private static CityPin PinAt(List<CityPin> pins, int x, int y)
+        {
+            foreach (var p in pins)
+                if (x >= p.X && x < p.X + SurfaceConfig.CityFootprint && y >= p.Y && y < p.Y + SurfaceConfig.CityFootprint) return p;
+            return null;
+        }
+
+        /// <summary>這格附近（1 格內）的資源田、怪物營地或深淵入口。</summary>
+        private static Feature FeatureNear(int x, int y)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    var f = SurfaceLogic.FeatureAt(x + dx, y + dy);
+                    if (f != null) return f;
+                }
+            foreach (var f in SurfaceLogic.Features())
+                if (f.Type == FeatureType.AbyssGate && SurfaceLogic.Dist2(x, y, f.X, f.Y) <= 4) return f;
+            return null;
+        }
+
+        public void Refresh(CityState city, long now)
         {
             if (Time.unscaledTime >= _nextFetch)
             {
                 _nextFetch = Time.unscaledTime + RefreshCitiesSeconds;
                 G.RequestCities();
             }
-            if (!_centered && city.Surface.Site >= 0)
+            if (!_centered && city.Surface.Placed)
             {
                 CenterOnHome(city);
                 _centered = true;
             }
+            _view.SetMarches(city.Surface.Marches, now);
 
             var pins = G.Cities;
-            string sig = pins.Count + ":" + _selected + ":" + city.Surface.Site + ":" + PinsHash(pins);
+            string sig = pins.Count + ":" + _selected + ":" + city.Surface.X + "," + city.Surface.Y + ":" + PinsHash(pins);
             if (sig == _sig) return;
             _sig = sig;
 
-            var byPin = new Dictionary<int, CityPin>();
-            foreach (var p in pins) byPin[p.Site] = p;
-            _view.SetState(byPin, city.Surface.Site, _selected);
+            CityPin pin = _selected.HasValue ? PinAt(pins, _selected.Value.x, _selected.Value.y) : null;
+            Feature feature = _selected.HasValue && pin == null ? FeatureNear(_selected.Value.x, _selected.Value.y) : null;
+            (int x, int y)? mark = pin != null ? (pin.X, pin.Y) : feature != null ? (feature.X, feature.Y) : _selected;
+            _view.SetCities(pins, mark, pin != null);
 
-            Show(Root, _selected >= 0);
-            if (_selected < 0) return;
-            var n = _map.Nodes[_selected];
-            byPin.TryGetValue(n.Id, out var pin);
-            _title.text = pin != null ? $"{pin.Name} 的主城" : DisplayNames.SurfaceNodeName(n);
-            _sub.text = $"{DisplayNames.Zones[SurfaceLogic.Zone(n)]} · 第 {n.Row + 1} 圈 · 地點 #{n.Id}";
+            Show(Root, _selected.HasValue);
+            if (!_selected.HasValue) return;
+            var (sx, sy) = mark.Value;
+            var zone = SurfaceLogic.Zone(sx, sy);
+            bool wall = SurfaceLogic.IsWall(sx, sy);
+            bool pass = SurfaceLogic.NearPass(sx, sy) && zone != SurfaceZone.Pit;
+
+            _title.text = pin != null ? $"{pin.Name} 的主城"
+                : feature != null ? DisplayNames.FeatureName(feature)
+                : wall ? "山脈" : pass ? "關隘" : zone == SurfaceZone.Pit ? "深淵" : zone == SurfaceZone.Edge ? "地圖邊緣" : "空地";
+            _sub.text = $"{DisplayNames.Zones[zone]} · X:{sx} Y:{sy}";
             _owner.text = pin != null ? (pin.Mine ? "這是你的主城" : $"總戰力 {pin.Power:N0}") : "";
-            _desc.text = pin != null ? "行軍、採集、攻打將在接下來的步驟加入。" : DisplayNames.NodeDescriptions[n.Type];
+            _desc.text = pin != null ? (pin.Mine ? "" : "攻打其他領主將在之後的步驟加入。")
+                : feature != null ? DisplayNames.FeatureDescriptions[feature.Type]
+                : wall ? "分區之間的山脈，部隊無法翻越，只能從關隘通過。"
+                : pass ? "山脈中的關隘，是分區之間唯一的通道。聯盟會爭奪這裡。"
+                : zone == SurfaceZone.Pit ? "永暗之喉。每個賽季結束後，下一層的大陸會開放。"
+                : zone == SurfaceZone.Edge ? "大陸的盡頭。" : "什麼都沒有的空地。部隊可以駐紮在這裡。";
+
+            bool mine = pin != null && pin.Mine;
+            _targetName = _title.text;
+            _target = (sx, sy);
+            Show(_marchBtn, !mine && SurfaceLogic.Walkable(sx, sy) && feature?.Type != FeatureType.AbyssGate);
         }
 
         private static int PinsHash(List<CityPin> pins)
         {
             int h = 17;
-            foreach (var p in pins) h = h * 31 + p.Site * 7 + (p.Name?.GetHashCode() ?? 0);
+            foreach (var p in pins) h = h * 31 + p.X * 7 + p.Y * 13 + (p.Name?.GetHashCode() ?? 0) + (p.Mine ? 1 : 0);
             return h;
         }
     }

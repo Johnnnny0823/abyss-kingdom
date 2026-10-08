@@ -146,8 +146,8 @@ namespace AbyssKingdom.Client.Game
 
         public void ClaimExpeditionIdle() => _conn.Send(MessageTypes.ExpeditionClaimIdle);
 
-        public void StartMarch(HeroId hero, Dictionary<TroopType, long> troops, int destination) =>
-            _conn.Send(MessageTypes.MapMarch, new MapMarchRequest { Hero = hero, Troops = troops, Destination = destination });
+        public void StartMarch(HeroId hero, Dictionary<TroopType, long> troops, int x, int y) =>
+            _conn.Send(MessageTypes.MapMarch, new MapMarchRequest { Hero = hero, Troops = troops, X = x, Y = y });
 
         /// <summary>地表所有主城（定期向伺服器要一次）。</summary>
         public List<CityPin> Cities { get; private set; } = new List<CityPin>();
@@ -218,10 +218,9 @@ namespace AbyssKingdom.Client.Game
                     break;
                 case MessageTypes.MarchArrived:
                     var ma = msg.DataAs<MarchArrivedMessage>();
-                    var node = AbyssKingdom.Shared.Map.MapConfig.Layer(1).Nodes[ma.Node];
+                    var (tx, ty) = AbyssKingdom.Shared.Map.SurfaceLogic.FromTile(ma.Tile);
                     Notice?.Invoke(ma.Disbanded ? $"{DisplayNames.Heroes[ma.Hero]} 的部隊已回到兵營"
-                        : ma.Discovered ? $"{DisplayNames.Heroes[ma.Hero]} 抵達並揭開了「{DisplayNames.NodeName(node)}」"
-                        : $"{DisplayNames.Heroes[ma.Hero]} 抵達「{DisplayNames.NodeName(node)}」，駐紮中", false);
+                        : $"{DisplayNames.Heroes[ma.Hero]} 抵達 X:{tx} Y:{ty}，駐紮中", false);
                     break;
                 case MessageTypes.ExpeditionIdleClaimed:
                     var idle = msg.DataAs<ExpeditionRewards>();

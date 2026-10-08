@@ -103,76 +103,26 @@ namespace AbyssKingdom.Client.UI
 
         // ───── 深淵地圖 ─────
 
-        public static readonly Dictionary<NodeType, string> NodeTypes = new Dictionary<NodeType, string>
-        {
-            { NodeType.Gate, "深淵入口" },
-            { NodeType.Cavern, "資源洞室" },
-            { NodeType.MonsterNest, "深淵小怪巢" },
-            { NodeType.Fissure, "地脈裂隙" },
-            { NodeType.ShaftHub, "升降井樞紐" },
-            { NodeType.GuardianLair, "守層者巢穴" },
-            { NodeType.CitySite, "主城用地" },
-            { NodeType.ResourceField, "資源田" },
-            { NodeType.MonsterCamp, "怪物營地" },
-            { NodeType.Pass, "山谷關隘" },
-        };
-
         public static readonly Dictionary<SurfaceZone, string> Zones = new Dictionary<SurfaceZone, string>
         {
             { SurfaceZone.Rim, "崖緣（內環）" },
             { SurfaceZone.Middle, "中環" },
             { SurfaceZone.Outer, "外環（新手區）" },
+            { SurfaceZone.Pit, "深淵" },
+            { SurfaceZone.Edge, "地圖邊緣" },
         };
 
-        /// <summary>地表節點的單字圖示。</summary>
-        public static string SurfaceGlyph(MapNode n)
-        {
-            switch (n.Type)
-            {
-                case NodeType.ResourceField: return ResourceGlyphs[n.Resource] + n.Level;
-                case NodeType.MonsterCamp: return "怪";
-                case NodeType.Pass: return "隘";
-                case NodeType.Gate: return "降";
-                default: return "地";
-            }
-        }
+        public static string FeatureName(Feature f) =>
+            f.Type == FeatureType.ResourceField ? $"{Resources[f.Resource]}田 Lv.{f.Level}"
+            : f.Type == FeatureType.MonsterCamp ? $"怪物營地 Lv.{f.Level}"
+            : "深淵入口";
 
-        public static string SurfaceNodeName(MapNode n) =>
-            n.Type == NodeType.ResourceField ? $"{Resources[n.Resource]}田 Lv.{n.Level}"
-            : n.Type == NodeType.MonsterCamp ? $"怪物營地 Lv.{n.Level}"
-            : n.Type == NodeType.Gate ? "深淵入口"
-            : NodeTypes[n.Type];
-
-        public static readonly Dictionary<NodeType, string> NodeDescriptions = new Dictionary<NodeType, string>
+        public static readonly Dictionary<FeatureType, string> FeatureDescriptions = new Dictionary<FeatureType, string>
         {
-            { NodeType.Gate, "通往深淵下一層大陸的入口，賽季結束後開放。" },
-            { NodeType.Cavern, "岩壁間的洞室，散落著可採集的資源。" },
-            { NodeType.MonsterNest, "深淵小怪盤踞的巢穴。清掉牠們可以取得材料。" },
-            { NodeType.Fissure, "地脈從岩層裂縫湧出。佔領後，同脈的主將會得到加成，並產出稀有資源。" },
-            { NodeType.ShaftHub, "連通上下層的升降井樞紐。控制樞紐，就控制了誰能往下走、往上撤。" },
-            { NodeType.GuardianLair, "守層者「百眼紙傘」的巢穴。這一層最危險的地方。" },
-            { NodeType.CitySite, "空的主城用地。之後可以遷城到這裡。" },
-            { NodeType.ResourceField, "可以派部隊採集的資源田。越靠近深淵，等級越高。" },
-            { NodeType.MonsterCamp, "怪物盤踞的營地，擊敗牠們可以取得材料。" },
-            { NodeType.Pass, "山谷中的關隘，是分區之間唯一的通道。聯盟會爭奪這裡。" },
+            { FeatureType.ResourceField, "可以派部隊採集的資源田。越靠近深淵，等級越高。" },
+            { FeatureType.MonsterCamp, "怪物盤踞的營地，擊敗牠們可以取得材料。" },
+            { FeatureType.AbyssGate, "通往深淵下一層大陸的入口，賽季結束後開放。" },
         };
-
-        /// <summary>節點上的單字圖示；裂隙顯示它的淵脈。</summary>
-        public static string NodeGlyph(NodeType t, Element e)
-        {
-            switch (t)
-            {
-                case NodeType.Gate: return "降";
-                case NodeType.MonsterNest: return "巢";
-                case NodeType.Fissure: return e == Element.None ? "脈" : Elements[e];
-                case NodeType.ShaftHub: return "井";
-                case NodeType.GuardianLair: return "守";
-                default: return "洞";
-            }
-        }
-
-        public static string NodeName(MapNode n) =>
-            n.Type == NodeType.Fissure ? $"地脈裂隙 · {Elements[n.Element]}脈" : NodeTypes[n.Type];
 
         // ───── 淵脈與浮沉（程式內部 = 五行陰陽，2026-10-08 使用者定案改用深淵風格名稱） ─────
         // 根剋層、層剋潮、潮剋燼、燼剋鐘、鐘剋根；根→燼→層→鐘→潮→根 相生。浮 = 陽、沉 = 陰。
@@ -354,14 +304,14 @@ namespace AbyssKingdom.Client.UI
                 case "invalid token": return "登入驗證失敗，請重新登入";
                 case "MaxLevel": return "主將已達等級上限";
                 case "StageLocked": return "要先通關前一關";
-                case "UnknownNode": return "找不到這個節點";
-                case "Unreachable": return "到不了：只能走已探索的廊道，封鎖力場要繞路";
+                case "Unreachable": return "到不了這裡";
+                case "UnknownNode": return "這裡不能去（深淵、山脈或地圖外）";
+                case "NoCity": return "還沒有主城位置";
                 case "HeroBusy": return "這位主將正在行軍";
                 case "NoTroops": return "至少要帶一名士兵";
                 case "NotEnoughTroops": return "兵營的部隊不足";
                 case "ExceedsLeadership": return "超過主將的統率";
                 case "TooManyMarches": return "同時最多 3 支行軍";
-                case "NotStationed": return "行軍抵達後才能召回";
                 case "AlreadyThere": return "已經在這裡了";
                 case "NotReady": return "修練值還沒滿，還不能挑戰印證試煉";
                 case "AlreadyMastered": return "這道印已經刻成";

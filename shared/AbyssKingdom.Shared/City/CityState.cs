@@ -42,8 +42,8 @@ namespace AbyssKingdom.Shared.City
         /// <summary>地表：主城位置。</summary>
         public SurfaceState Surface { get; set; } = new SurfaceState();
 
-        /// <summary>深淵大地圖的探索狀態。</summary>
-        public MapState Map { get; set; } = new MapState();
+        /// <summary>舊存檔的深淵狀態（已停用）；登入時把行軍中的部隊還給兵營後清成 null。</summary>
+        public LegacyMapState Map { get; set; }
 
         /// <summary>遠征進度與掛機收益。</summary>
         public ExpeditionState Expedition { get; set; } = new ExpeditionState();

@@ -66,7 +66,7 @@ namespace AbyssKingdom.Client.World
             _cam.cullingMask = 1 << Layer;
             _cam.depth = 5;
             _cam.nearClipPlane = 0.1f;
-            _cam.farClipPlane = 80f;
+            _cam.farClipPlane = 120f;
 
             var sunGo = new GameObject("Sun") { layer = Layer };
             sunGo.transform.SetParent(transform, false);
@@ -81,7 +81,7 @@ namespace AbyssKingdom.Client.World
             Surface = new SurfaceView(this);
             City = new CityView(this);
             var s = Surface.Bounds;
-            _views[(int)Mode.Surface] = new View { Dist = 8f, MinDist = 2.5f, MaxDist = 20f, HalfW = s.x, HalfH = s.y };
+            _views[(int)Mode.Surface] = new View { Dist = 13f, MinDist = 3f, MaxDist = 30f, HalfW = s.x, HalfH = s.y };
             var c = City.Bounds;
             _views[(int)Mode.City] = new View { Dist = 17f, MinDist = 5f, MaxDist = 24f, HalfW = c.x, HalfH = c.y };
             SetMode(Mode.City);
@@ -248,6 +248,7 @@ namespace AbyssKingdom.Client.World
 
             ApplyCamera();
             if (Current == Mode.City) City.Hover(mouse, overUi);
+            else Surface.Cull(v.Focus, v.Dist);
 
             var rot = _cam.transform.rotation;
             _billboards.RemoveAll(t => t == null);

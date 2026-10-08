@@ -72,9 +72,9 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | → | `domain.useScroll` | `{ hero, item: "DomainScrollPower", count }`（索譜補修練值） |
 | → | `domain.trial` | `{ hero, domain: "Power" }`（修練值滿、且對應星色升滿才能挑戰） |
 | → | `hero.starUp` | `{ hero }`（消耗信物＋響晶升一顆星） |
-| → | `map.march` | `{ hero, troops: { "Rider": 50 }, destination }`（從自己的垂降口出征；只能走已探索廊道，終點可為相鄰未知節點；地圖依種子生成，狀態在 `city.map`） |
-| → | `map.recall` | `{ march }`（召回駐紮中的行軍，回到垂降口後部隊歸營） |
-| → | `world.cities` | —（取得地表所有主城的公開資訊；自己的主城位置在 `city.surface.site`） |
+| → | `map.march` | `{ hero, troops: { "Rider": 50 }, x, y }`（從主城出征到地表格子 (x, y)；直線行進，跨分區時自動繞經關隘；狀態在 `city.surface.marches`） |
+| → | `map.recall` | `{ march }`（召回行軍，路上或駐紮中都可以；回到主城後部隊歸營） |
+| → | `world.cities` | —（取得地表所有主城的公開資訊；自己的主城位置在 `city.surface.x / y`） |
 | → | `ping` | — |
 | ← | `login.ok` | `{ playerId, displayName, serverTimeMs }` |
 | ← | `city.state` | `{ serverTimeMs, city }` |
@@ -83,6 +83,6 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | ← | `expedition.result` | `{ stage, win, reports: [戰報…], rewards }`，之後再送一次 `city.state` |
 | ← | `expedition.idleClaimed` | `{ resources, items }` |
 | ← | `domain.trialResult` | `{ hero, domain, success, report }`，之後再送一次 `city.state` |
-| ← | `map.marchArrived` | `{ march, hero, node, discovered, disbanded }`（伺服器主動推播，reqId = 0） |
-| ← | `world.cities` | `{ cities: [{ site, name, power, mine }] }` |
+| ← | `map.marchArrived` | `{ march, hero, tile, disbanded }`（tile = y × 800 + x；伺服器主動推播，reqId = 0） |
+| ← | `world.cities` | `{ cities: [{ x, y, name, power, mine }] }` |
 | ← | `error` | `{ code, detail }` |

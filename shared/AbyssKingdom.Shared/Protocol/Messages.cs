@@ -149,13 +149,17 @@ namespace AbyssKingdom.Shared.Protocol
     {
         public HeroId Hero { get; set; }
         public Dictionary<TroopType, long> Troops { get; set; }
-        public int Destination { get; set; }
+        /// <summary>目標格子。</summary>
+        public int X { get; set; }
+        public int Y { get; set; }
     }
 
     /// <summary>地表上一座主城（給所有玩家看的公開資訊）。</summary>
     public class CityPin
     {
-        public int Site { get; set; }
+        /// <summary>主城格子座標（佔地左上角，2×2）。</summary>
+        public int X { get; set; }
+        public int Y { get; set; }
         public string Name { get; set; }
         public long Power { get; set; }
         public bool Mine { get; set; }
@@ -171,13 +175,13 @@ namespace AbyssKingdom.Shared.Protocol
         public long March { get; set; }
     }
 
-    /// <summary>伺服器推播：行軍抵達（駐紮、揭開迷霧）或召回後解散。</summary>
+    /// <summary>伺服器推播：行軍抵達（駐紮）或召回後解散。</summary>
     public class MarchArrivedMessage
     {
         public long March { get; set; }
         public HeroId Hero { get; set; }
-        public int Node { get; set; }
-        public bool Discovered { get; set; }
+        /// <summary>抵達的格子（SurfaceLogic.Tile 編碼）。</summary>
+        public int Tile { get; set; }
         public bool Disbanded { get; set; }
     }
 

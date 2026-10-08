@@ -4,71 +4,92 @@ namespace AbyssKingdom.Tests;
 
 public static class SurfaceTests
 {
-    static AbyssMap S => SurfaceConfig.Map();
+    const int C = SurfaceConfig.Center;
 
     [Test]
-    public static void Generation_IsDeterministic()
+    public static void Zones_AreConcentric()
     {
-        var a = SurfaceGenerator.Generate(SurfaceConfig.Seed);
-        var b = SurfaceGenerator.Generate(SurfaceConfig.Seed);
-        Assert.Equal(a.Edges.Count, b.Edges.Count);
-        for (int i = 0; i < a.Edges.Count; i++)
+        Assert.Equal(SurfaceZone.Pit, SurfaceLogic.Zone(C, C), "正中央是深淵");
+        Assert.Equal(SurfaceZone.Rim, SurfaceLogic.Zone(C + 100, C));
+        Assert.Equal(SurfaceZone.Middle, SurfaceLogic.Zone(C, C + 220));
+        Assert.Equal(SurfaceZone.Outer, SurfaceLogic.Zone(C - 330, C));
+        Assert.Equal(SurfaceZone.Edge, SurfaceLogic.Zone(0, 0), "角落是地圖外圍");
+        Assert.True(!SurfaceLogic.Walkable(C, C) && !SurfaceLogic.Walkable(0, 0), "深淵與外圍不能站");
+    }
+
+    [Test]
+    public static void Walls_HaveSixPassesEach()
+    {
+        for (int b = 0; b < 2; b++)
+            for (int i = 0; i < SurfaceConfig.PassesPerBoundary; i++)
+            {
+                var p = SurfaceLogic.Pass(b, i);
+                Assert.True(SurfaceLogic.Walkable(p.x, p.y), $"關隘 {b}-{i} 可以通過");
+            }
+        // 崖緣外圈的關隘在 0/60/120… 度，90 度方向是山脈；中環外圈的關隘在 30/90/150… 度，0 度方向是山脈
+        Assert.True(SurfaceLogic.IsWall(C, C + SurfaceConfig.RimOuter), "崖緣外圈有山脈");
+        Assert.True(SurfaceLogic.IsWall(C + SurfaceConfig.MiddleOuter, C), "中環外圈有山脈");
+    }
+
+    [Test]
+    public static void ISqrt_IsExact()
+    {
+        foreach (var n in new long[] { 0, 1, 2, 3, 4, 15, 16, 17, 99, 100, 640000, 1_279_999, 1_280_000 })
         {
-            Assert.Equal(a.Edges[i].A, b.Edges[i].A, "道路端點");
-            Assert.Equal(a.Edges[i].Length, b.Edges[i].Length, "路程（整數）");
+            long r = SurfaceLogic.ISqrt(n);
+            Assert.True(r * r <= n && (r + 1) * (r + 1) > n, $"isqrt({n}) = {r}");
         }
-        for (int i = 0; i < a.Nodes.Count; i++) Assert.Equal(a.Nodes[i].Type, b.Nodes[i].Type, "節點種類");
     }
 
     [Test]
-    public static void Rings_AndZones()
+    public static void Sites_AreSpacedAndPlentiful()
     {
-        int expected = Enumerable.Range(0, SurfaceConfig.Rings).Sum(SurfaceConfig.NodesInRing);
-        Assert.Equal(expected, S.Nodes.Count, "節點數 = 各圈加總");
-        Assert.Equal(4, S.Gates.Count, "崖緣 4 個垂降口");
-        Assert.True(S.Gates.All(g => SurfaceLogic.Zone(S.Nodes[g]) == SurfaceZone.Rim), "垂降口都在崖緣");
-        int sites = S.Nodes.Count(n => n.Type == NodeType.CitySite);
-        Assert.True(sites >= 120, $"主城用地足夠（{sites}）");
-        Assert.True(S.Nodes.Count(n => n.Type == NodeType.CitySite && SurfaceLogic.Zone(n) == SurfaceZone.Outer) >= 80, "外環有足夠的新手用地");
-        Assert.True(S.Nodes.Where(n => n.Type == NodeType.ResourceField).All(n => n.Level >= 1 && n.Level <= 3), "資源田有等級");
-        Assert.True(S.Nodes.Where(n => n.Type == NodeType.ResourceField && SurfaceLogic.Zone(n) == SurfaceZone.Rim).All(n => n.Level == 3), "崖緣資源田最高級");
-    }
-
-    [Test]
-    public static void ZonesConnectOnlyThroughPasses()
-    {
-        foreach (var e in S.Edges)
+        var sites = SurfaceLogic.Sites();
+        Assert.True(sites.Count >= 3000, $"主城候選位置足夠（{sites.Count}）");
+        Assert.True(sites.Count(s => s.z == SurfaceZone.Outer) >= 1500, "外環有足夠的新手位置");
+        Assert.True(sites.All(s => s.z != SurfaceZone.Pit && s.z != SurfaceZone.Edge), "不在深淵或外圍");
+        // 候選位置之間至少隔 6 格（不會擠在一起）
+        var set = sites.Select(s => (s.x, s.y)).ToList();
+        for (int i = 0; i < 200; i++)
         {
-            var a = S.Nodes[e.A];
-            var b = S.Nodes[e.B];
-            if (SurfaceLogic.Zone(a) == SurfaceLogic.Zone(b)) continue;
-            Assert.True(a.Type == NodeType.Pass && b.Type == NodeType.Pass, $"跨區道路 {a.Id}-{b.Id} 必須兩端都是關隘");
+            var a = set[i * 7 % set.Count];
+            Assert.True(set.All(b => b == a || SurfaceLogic.Dist2(a.x, a.y, b.x, b.y) >= 36), "主城間距");
         }
-        Assert.Equal(SurfaceConfig.PassesPerBoundary * 2 * 2, S.Nodes.Count(n => n.Type == NodeType.Pass), "兩條邊界 × 6 個關隘 × 兩側");
     }
 
     [Test]
-    public static void Surface_IsFullyConnected()
+    public static void Features_HaveLevelsByZone()
     {
-        Assert.Equal(S.Nodes.Count, S.Reachable(0, throughSeals: true).Count);
-        Assert.True(S.Edges.All(e => e.Field == ForceField.None), "地表沒有力場");
-        double avg = S.Nodes.Average(n => n.Edges.Count);
-        Assert.True(avg >= 2.5 && avg <= 4.0, $"開闊路網（平均 {avg:F2} 條路）");
+        var f = SurfaceLogic.Features();
+        Assert.Equal(4, f.Count(x => x.Type == FeatureType.AbyssGate), "4 個深淵入口");
+        Assert.True(f.Where(x => x.Type == FeatureType.AbyssGate).All(x => SurfaceLogic.Zone(x.X, x.Y) == SurfaceZone.Rim), "深淵入口在崖緣");
+        var fields = f.Where(x => x.Type == FeatureType.ResourceField).ToList();
+        Assert.True(fields.Count >= 300, $"資源田數量（{fields.Count}）");
+        Assert.True(f.Count(x => x.Type == FeatureType.MonsterCamp) >= 100, "怪物營地數量");
+        foreach (var x in fields)
+        {
+            var z = SurfaceLogic.Zone(x.X, x.Y);
+            Assert.Equal(z == SurfaceZone.Rim ? 3 : z == SurfaceZone.Middle ? 2 : 1, x.Level, "等級依分區");
+        }
+        Assert.True(f.All(x => SurfaceLogic.Walkable(x.X, x.Y)), "都在能站的格子上");
+        foreach (var s in SurfaceLogic.Sites().Take(500))
+            for (int dy = 0; dy < 2; dy++)
+                for (int dx = 0; dx < 2; dx++)
+                    Assert.True(SurfaceLogic.FeatureAt(s.x + dx, s.y + dy) == null, "不和主城位置重疊");
     }
 
     [Test]
     public static void PickSite_PrefersOuterAndSkipsOccupied()
     {
         var occupied = new HashSet<int>();
-        int first = SurfaceLogic.PickSite(S, occupied, n => 0);
-        Assert.Equal(NodeType.CitySite, S.Nodes[first].Type);
-        Assert.Equal(SurfaceZone.Outer, SurfaceLogic.Zone(S.Nodes[first]), "新手在外環");
-        occupied.Add(first);
-        int second = SurfaceLogic.PickSite(S, occupied, n => 0);
+        var first = SurfaceLogic.PickSite(occupied, n => 0)!.Value;
+        Assert.Equal(SurfaceZone.Outer, SurfaceLogic.Zone(first.x, first.y), "新手在外環");
+        occupied.Add(SurfaceLogic.Tile(first.x, first.y));
+        var second = SurfaceLogic.PickSite(occupied, n => 0)!.Value;
         Assert.True(second != first, "不會分到同一塊地");
 
-        // 外環滿了就往中環
-        foreach (var n in S.Nodes.Where(n => n.Type == NodeType.CitySite && SurfaceLogic.Zone(n) == SurfaceZone.Outer)) occupied.Add(n.Id);
-        Assert.Equal(SurfaceZone.Middle, SurfaceLogic.Zone(S.Nodes[SurfaceLogic.PickSite(S, occupied, n => 0)]));
+        foreach (var s in SurfaceLogic.Sites().Where(s => s.z == SurfaceZone.Outer)) occupied.Add(SurfaceLogic.Tile(s.x, s.y));
+        var third = SurfaceLogic.PickSite(occupied, n => 0)!.Value;
+        Assert.Equal(SurfaceZone.Middle, SurfaceLogic.Zone(third.x, third.y), "外環滿了往中環");
     }
 }
