@@ -79,33 +79,4 @@ public static class MapTests
         foreach (var ei in m.Nodes[veil.A].Edges)
             if (m.Edges[ei].Field != ForceField.Veil) Assert.True(vis.Contains(m.Edges[ei].Other(veil.A)), "無遮蔽的鄰居看得到");
     }
-
-    [Test]
-    public static void Explore_Rules()
-    {
-        var c = CityState.CreateNew(T0);
-        MapLogic.EnsureStarted(c, "explorer");
-        int start = c.Map.Explored[0];
-        var m = L1;
-        int next = m.Edges[m.Nodes[start].Edges[0]].Other(start);
-        long food = c.GetResource(ResourceType.Food);
-
-        Assert.Equal(MapResult.Ok, MapLogic.Explore(c, next));
-        Assert.True(c.Map.Explored.Contains(next), "揭開");
-        Assert.Equal(food - MapConfig.ExploreFoodCost, c.GetResource(ResourceType.Food), "花菌糧");
-        Assert.Equal(MapResult.AlreadyExplored, MapLogic.Explore(c, next));
-        Assert.Equal(MapResult.UnknownNode, MapLogic.Explore(c, 99999));
-        var far = m.Nodes.First(n => n.Row == MapConfig.Rows - 1).Id;
-        Assert.Equal(MapResult.NotAdjacent, MapLogic.Explore(c, far), "不能跳著探索");
-
-        var sealEdge = m.Edges.First(e => e.Field == ForceField.Seal);
-        var s = new CityState { Map = new MapState { Explored = { sealEdge.A } } };
-        s.Resources[ResourceType.Food] = 1000;
-        bool otherPath = m.Nodes[sealEdge.B].Edges.Any(ei => m.Edges[ei].Other(sealEdge.B) == sealEdge.A && m.Edges[ei].Field != ForceField.Seal);
-        if (!otherPath) Assert.Equal(MapResult.Sealed, MapLogic.Explore(s, sealEdge.B), "封鎖力場擋住");
-
-        c.Resources[ResourceType.Food] = 0;
-        int another = m.Nodes[next].Edges.Select(ei => m.Edges[ei]).Where(e => e.Field != ForceField.Seal).Select(e => e.Other(next)).First(n => !c.Map.Explored.Contains(n));
-        Assert.Equal(MapResult.NotEnoughResources, MapLogic.Explore(c, another));
-    }
 }

@@ -91,9 +91,6 @@ namespace AbyssKingdom.Shared.Map
         public const int SpacingY = 90;
         public const int Margin = 60;
 
-        /// <summary>斥候探路的花費（第 2 步改成行軍後移除）。</summary>
-        public const long ExploreFoodCost = 50;
-
         /// <summary>每層的種子。之後改成每個伺服器／賽季不同。</summary>
         public static ulong LayerSeed(int layer) => 0xA6155_0000UL + (ulong)layer;
 
@@ -276,16 +273,11 @@ namespace AbyssKingdom.Shared.Map
         public int Layer { get; set; } = 1;
         /// <summary>已探索的節點。</summary>
         public List<int> Explored { get; set; } = new List<int>();
-    }
-
-    public enum MapResult
-    {
-        Ok = 0,
-        UnknownNode = 1,
-        AlreadyExplored = 2,
-        NotAdjacent = 3,
-        Sealed = 4,
-        NotEnoughResources = 5,
+        /// <summary>自己的垂降口（行軍出發與召回的地方）；-1 = 尚未進入深淵。</summary>
+        public int HomeGate { get; set; } = -1;
+        /// <summary>進行中與駐紮中的行軍。</summary>
+        public List<March> Marches { get; set; } = new List<March>();
+        public long NextMarchId { get; set; }
     }
 
     public static class MapLogic
@@ -293,9 +285,16 @@ namespace AbyssKingdom.Shared.Map
         /// <summary>第一次進入深淵時，依玩家 ID 分配一個垂降口（分散玩家，避免全擠在同一處）。</summary>
         public static bool EnsureStarted(CityState city, string playerId)
         {
-            if (city.Map.Explored.Count > 0) return false;
-            var map = MapConfig.Layer(city.Map.Layer);
-            city.Map.Explored.Add(map.Gates[(int)(StableHash(playerId) % (uint)map.Gates.Count)]);
+            var state = city.Map;
+            if (state.HomeGate >= 0) return false;
+            if (state.Explored.Count > 0)
+            {
+                state.HomeGate = state.Explored[0]; // 舊存檔：第一個探索的節點就是垂降口
+                return true;
+            }
+            var map = MapConfig.Layer(state.Layer);
+            state.HomeGate = map.Gates[(int)(StableHash(playerId) % (uint)map.Gates.Count)];
+            state.Explored.Add(state.HomeGate);
             return true;
         }
 
@@ -310,29 +309,6 @@ namespace AbyssKingdom.Shared.Map
                     if (e.Field != ForceField.Veil) vis.Add(e.Other(n));
                 }
             return vis;
-        }
-
-        /// <summary>斥候探路：從已探索節點沿廊道揭開相鄰節點（可穿過遮蔽力場，不能穿過封鎖力場）。</summary>
-        public static MapResult Explore(CityState city, int node)
-        {
-            var map = MapConfig.Layer(city.Map.Layer);
-            if (node < 0 || node >= map.Nodes.Count) return MapResult.UnknownNode;
-            if (city.Map.Explored.Contains(node)) return MapResult.AlreadyExplored;
-
-            bool adjacent = false, sealedOnly = false;
-            foreach (var ei in map.Nodes[node].Edges)
-            {
-                var e = map.Edges[ei];
-                if (!city.Map.Explored.Contains(e.Other(node))) continue;
-                if (e.Field == ForceField.Seal) { sealedOnly = true; continue; }
-                adjacent = true;
-            }
-            if (!adjacent) return sealedOnly ? MapResult.Sealed : MapResult.NotAdjacent;
-            if (city.GetResource(ResourceType.Food) < MapConfig.ExploreFoodCost) return MapResult.NotEnoughResources;
-
-            city.Resources[ResourceType.Food] = city.GetResource(ResourceType.Food) - MapConfig.ExploreFoodCost;
-            city.Map.Explored.Add(node);
-            return MapResult.Ok;
         }
 
         /// <summary>穩定的字串雜湊（FNV-1a）；string.GetHashCode 每次執行不同，不能用。</summary>

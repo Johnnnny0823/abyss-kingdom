@@ -338,6 +338,44 @@ public static class ServerIntegrationTests
     }
 
     [Test]
+    public static async Task March_ArrivesAndPushes_ThenRecallReturnsTroops()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        await using var client = new TestClient();
+        await client.ConnectAsync(server.WsUri);
+        await client.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:delver" });
+        var city = City(await client.ExpectAsync(MessageTypes.CityState));
+        int home = city.Map.HomeGate;
+        Assert.True(home >= 0, "登入時分配垂降口");
+
+        // 測試用：直接在伺服器端給部隊
+        await server.Sessions.ModifyCityAsync("dev-delver", c => c.Troops[TroopType.Rider] = 100, CancellationToken.None);
+        await client.ExpectAsync(MessageTypes.CityState);
+
+        var map = AbyssKingdom.Shared.Map.MapConfig.Layer(1);
+        int dest = map.Nodes[home].Edges.Select(ei => map.Edges[ei]).First(e => e.Field != AbyssKingdom.Shared.Map.ForceField.Seal).Other(home);
+        await client.SendAsync(MessageTypes.MapMarch, new MapMarchRequest { Hero = HeroId.Karst, Troops = new() { [TroopType.Rider] = 60 }, Destination = dest });
+        var started = City(await client.ExpectAsync(MessageTypes.CityState));
+        Assert.Equal(40L, started.GetTroops(TroopType.Rider), "部隊出征");
+        var march = started.Map.Marches[0];
+
+        server.Clock.Advance(march.ArriveAt - T0 + 1);
+        await server.Sessions.TickAsync(CancellationToken.None);
+        var arrived = await client.ExpectAsync(MessageTypes.MarchArrived);
+        Assert.Equal(dest, arrived.GetProperty("data").GetProperty("node").GetInt32());
+        Assert.True(City(await client.ExpectAsync(MessageTypes.CityState)).Map.Explored.Contains(dest), "抵達揭開迷霧");
+
+        await client.SendAsync(MessageTypes.MapRecall, new MapRecallRequest { March = march.Id });
+        var recalled = City(await client.ExpectAsync(MessageTypes.CityState));
+        server.Clock.Advance(recalled.Map.Marches[0].ArriveAt - (T0 + march.ArriveAt - T0 + 1) + 1);
+        await server.Sessions.TickAsync(CancellationToken.None);
+        var back = await client.ExpectAsync(MessageTypes.MarchArrived);
+        Assert.True(back.GetProperty("data").GetProperty("disbanded").GetBoolean(), "召回解散");
+        Assert.Equal(100L, City(await client.ExpectAsync(MessageTypes.CityState)).GetTroops(TroopType.Rider), "部隊歸營");
+    }
+
+    [Test]
     public static async Task SecondLogin_KicksFirstConnection()
     {
         await using var server = new TestServer();

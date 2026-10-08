@@ -27,7 +27,8 @@ namespace AbyssKingdom.Shared.Protocol
         public const string DomainUseScroll = "domain.useScroll";
         public const string DomainTrial = "domain.trial";
         public const string HeroStarUp = "hero.starUp";
-        public const string MapExplore = "map.explore";
+        public const string MapMarch = "map.march";
+        public const string MapRecall = "map.recall";
         public const string Ping = "ping";
 
         // 伺服器 → 客戶端
@@ -38,6 +39,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string ExpeditionResultMessage = "expedition.result";
         public const string ExpeditionIdleClaimed = "expedition.idleClaimed";
         public const string DomainTrialResultMessage = "domain.trialResult";
+        public const string MarchArrived = "map.marchArrived";
         public const string Error = "error";
         public const string Pong = "pong";
     }
@@ -131,10 +133,27 @@ namespace AbyssKingdom.Shared.Protocol
         public long Count { get; set; } = 1;
     }
 
-    /// <summary>斥候探路：揭開與已探索節點相鄰的節點。</summary>
-    public class MapExploreRequest
+    /// <summary>出征：主將帶兵營部隊，從自己的垂降口前往 Destination。</summary>
+    public class MapMarchRequest
     {
+        public HeroId Hero { get; set; }
+        public Dictionary<TroopType, long> Troops { get; set; }
+        public int Destination { get; set; }
+    }
+
+    public class MapRecallRequest
+    {
+        public long March { get; set; }
+    }
+
+    /// <summary>伺服器推播：行軍抵達（駐紮、揭開迷霧）或召回後解散。</summary>
+    public class MarchArrivedMessage
+    {
+        public long March { get; set; }
+        public HeroId Hero { get; set; }
         public int Node { get; set; }
+        public bool Discovered { get; set; }
+        public bool Disbanded { get; set; }
     }
 
     public class HeroStarUpRequest

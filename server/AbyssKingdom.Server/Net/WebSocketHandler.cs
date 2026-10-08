@@ -224,11 +224,18 @@ public sealed class WebSocketHandler
                     Fail(DomainLogic.UseScroll(city, scroll.Hero, scroll.Item, scroll.Count), DomainResult.Ok));
                 break;
 
-            case MessageTypes.MapExplore:
-                var explore = Deserialize<MapExploreRequest>(data);
-                if (explore == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "node required"); break; }
+            case MessageTypes.MapMarch:
+                var march = Deserialize<MapMarchRequest>(data);
+                if (march == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "hero, troops and destination required"); break; }
                 await RunCityAction(conn, session, reqId, ErrorCodes.MapRejected, ct, (city, now) =>
-                    Fail(MapLogic.Explore(city, explore.Node), MapResult.Ok));
+                    Fail(MarchLogic.Start(city, march.Hero, march.Troops, march.Destination, now), MarchResult.Ok));
+                break;
+
+            case MessageTypes.MapRecall:
+                var recall = Deserialize<MapRecallRequest>(data);
+                if (recall == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "march required"); break; }
+                await RunCityAction(conn, session, reqId, ErrorCodes.MapRejected, ct, (city, now) =>
+                    Fail(MarchLogic.Recall(city, recall.March, now), MarchResult.Ok));
                 break;
 
             case MessageTypes.HeroStarUp:

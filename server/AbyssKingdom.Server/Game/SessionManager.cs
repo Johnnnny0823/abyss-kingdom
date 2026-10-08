@@ -98,6 +98,7 @@ public sealed class SessionManager : BackgroundService
         if (HeroLogic.EnsureStarterHeroes(record.City)) session.Dirty = true;
         if (GearLogic.EnsureStarterGear(record.City)) session.Dirty = true;
         if (MapLogic.EnsureStarted(record.City, playerId)) session.Dirty = true;
+        if (MarchLogic.Advance(record.City, _clock.NowMs).Count > 0) session.Dirty = true; // 離線期間抵達的行軍
         var added = _online.GetOrAdd(playerId, session);
         if (!ReferenceEquals(added, session))
         {
@@ -125,12 +126,14 @@ public sealed class SessionManager : BackgroundService
         {
             UpgradeJob? completed;
             TrainingJob? trained;
+            List<MarchEvent> marchEvents;
             byte[]? snapshot = null;
             await session.Gate.WaitAsync(ct);
             try
             {
                 completed = CityLogic.Advance(session.Record.City, now, out trained);
-                if (completed != null || trained != null)
+                marchEvents = MarchLogic.Advance(session.Record.City, now);
+                if (completed != null || trained != null || marchEvents.Count > 0)
                 {
                     session.Dirty = true;
                     snapshot = JsonSerializer.SerializeToUtf8Bytes(session.Record.City, _json);
@@ -154,6 +157,11 @@ public sealed class SessionManager : BackgroundService
                     {
                         Troop = trained.Troop,
                         Count = trained.Count,
+                    });
+                foreach (var ev in marchEvents)
+                    await SafeSend(session, MessageTypes.MarchArrived, new MarchArrivedMessage
+                    {
+                        March = ev.MarchId, Hero = ev.Hero, Node = ev.Node, Discovered = ev.Discovered, Disbanded = ev.Disbanded,
                     });
                 await SafeSend(session, MessageTypes.CityState, new CityStateMessage { ServerTimeMs = now, City = JsonSerializer.Deserialize<CityState>(snapshot, _json) });
             }
