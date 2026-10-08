@@ -71,3 +71,5 @@
 - 載入：`client/Assets/Scripts/World/ModelLibrary.cs`，從 `Resources/Models/<路徑>` 讀檔，找不到就回傳 null，由呼叫端改用灰盒。
 - 大地圖：`SurfaceView.cs` 用 `ModelLibrary.Spawn("World/…", 父物件, 位置, S)`，其中 `S = 0.2` 是 1 格的世界單位。
 - 2026-10-08 已用一個暫時的測試模型（`Tree.obj`）驗證過整個流程，驗證後已刪除。
+- **目前的模型（第一版）由程式產生**：`tools/blender/generate_world.py`（Codex 撰寫，用法見 `tools/blender/README.md`）。在 Blender 背景模式執行，匯出 13 個 FBX（11 種，樹、山各 2 個變體）。風格是灰藍遺跡、青綠契印、暖金點綴。改尺寸或配色就改腳本裡的 `SPECS`／`PALETTE`，重跑即可；想手工精修某個模型，直接用同檔名覆蓋。
+- 遊戲內檢查：打包後用 `-devlogin -server ws://127.0.0.1:5090/ws -artcapture <資料夾>` 啟動（只在本機 Dev 伺服器有效）。它會檢查每個模型的尺寸、貼地、面數、材質，並截圖到該資料夾；結果寫在 log 裡，搜尋 `ART_CHECK`。程式在 `client/Assets/Scripts/World/WorldModelCapture.cs`。
