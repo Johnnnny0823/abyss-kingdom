@@ -23,6 +23,7 @@ public static class BuildScript
     private static void Build(BuildTarget target, string output)
     {
         EnsureScene();
+        AbyssMaterials.Generate();
 
         PlayerSettings.companyName = "AbyssKingdom";
         PlayerSettings.productName = "深淵王國";

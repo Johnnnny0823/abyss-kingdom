@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AbyssKingdom.Client.Game;
+using AbyssKingdom.Client.World;
 using AbyssKingdom.Shared.Battle;
 using AbyssKingdom.Shared.City;
 using AbyssKingdom.Shared.Map;
@@ -25,6 +26,13 @@ namespace AbyssKingdom.Client.UI
         private int _selected = -1;
         private string _signature;
         private bool _centered;
+        private readonly VisualElement _view3d;
+        private readonly Button _modeBtn;
+        private readonly AbyssWorld _world;
+        private bool _tabActive;
+
+        /// <summary>目前是 3D 剖面（預設）還是 2D 平面地圖。</summary>
+        public bool Is3D { get; private set; } = true;
 
         public MapPage()
         {
@@ -38,8 +46,25 @@ namespace AbyssKingdom.Client.UI
             _scroll.Add(_canvas);
             Root.Add(_scroll);
 
+            // 3D 剖面：透明的視窗區，3D 場景從底下透出來
+            _view3d = El("map-view3d");
+            Root.Add(_view3d);
+            _world = AbyssWorld.Instance ?? AbyssWorld.Create();
+            _world.NodeClicked += id => { _selected = id; _signature = null; };
+            _world.IsPointerOverViewport = screen =>
+            {
+                if (_view3d.panel == null || !Is3D) return false;
+                var p = RuntimePanelUtils.ScreenToPanel(_view3d.panel, new Vector2(screen.x, Screen.height - screen.y));
+                return _view3d.panel.Pick(p) == _view3d;
+            };
+
             var side = El("map-side");
             side.Add(Lbl("第一層 · 餘燼緣野", "panel-title"));
+            _modeBtn = Btn("", () => { Is3D = !Is3D; SetTabActive(_tabActive); }, "btn-small");
+            _modeBtn.style.marginLeft = 0;
+            _modeBtn.style.marginBottom = 6;
+            _modeBtn.style.alignSelf = Align.FlexStart;
+            side.Add(_modeBtn);
             _progress = Lbl("", "muted");
             side.Add(_progress);
             var info = El("panel", "map-info");
@@ -63,6 +88,7 @@ namespace AbyssKingdom.Client.UI
                 legend.Add(Lbl($"{DisplayNames.NodeGlyph(t, Element.None)}　{DisplayNames.NodeTypes[t]}", "muted"));
             legend.Add(Lbl("紫色廊道：遮蔽力場（看不到另一頭）", "muted"));
             legend.Add(Lbl("紅色廊道：封鎖力場（無法通過）", "muted"));
+            legend.Add(Lbl("3D：拖曳平移、滾輪上下、Ctrl＋滾輪縮放", "muted"));
             side.Add(legend);
             Root.Add(side);
         }
@@ -75,7 +101,9 @@ namespace AbyssKingdom.Client.UI
             _signature = sig;
 
             var visible = MapLogic.Visible(_map, city.Map);
-            _canvas.SetState(new HashSet<int>(explored), visible, _selected);
+            var exploredSet = new HashSet<int>(explored);
+            _canvas.SetState(exploredSet, visible, _selected);
+            _world.SetState(exploredSet, visible, _selected, n => DisplayNames.NodeGlyph(n.Type, n.Element));
             _progress.text = $"已探索 {explored.Count} / {_map.Nodes.Count} 個節點";
 
             if (!_centered && explored.Count > 0)
@@ -101,6 +129,16 @@ namespace AbyssKingdom.Client.UI
             _sub.text = $"深度 第 {n.Row} 段　· 節點 #{n.Id}";
             _desc.text = known ? DisplayNames.NodeDescriptions[n.Type] : "迷霧籠罩。派斥候探路才知道裡面有什麼。";
             UpdateButton(city);
+        }
+
+        /// <summary>切換頁籤或 2D／3D 時呼叫：決定 3D 場景要不要顯示。</summary>
+        public void SetTabActive(bool active)
+        {
+            _tabActive = active;
+            Show(_scroll, !Is3D);
+            Show(_view3d, Is3D);
+            _modeBtn.text = Is3D ? "切換成 2D 平面地圖" : "切換成 3D 剖面";
+            _world.SetActive(active && Is3D);
         }
 
         private void UpdateButton(CityState city)

@@ -448,3 +448,5 @@
 .map-info { margin-top: 8px; }
 .map-node-label { position: absolute; width: 30px; height: 30px; -unity-text-align: middle-center; font-size: 14px; -unity-font-style: bold; color: rgb(250, 250, 255); }
 .map-node-label.unknown { color: rgb(130, 140, 180); }
+
+.map-view3d { flex-grow: 1; margin-right: 12px; border-radius: 10px; border-width: 1px; border-color: rgba(120, 140, 200, 0.25); background-color: rgba(0, 0, 0, 0); }

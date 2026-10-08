@@ -34,6 +34,8 @@ namespace AbyssKingdom.Client.UI
         private ExpeditionPage _expPage;
         private MapPage _mapPage;
         private VisualElement _right;
+        private Texture2D _gradient;
+        private bool _worldMode;
         private readonly List<Label> _tabs = new List<Label>();
         private int _tab; // 0 城鎮建築、1 主將、2 遠征、3 深淵
         private QueueView _buildQueue, _trainQueue;
@@ -70,7 +72,8 @@ namespace AbyssKingdom.Client.UI
             _root.Clear();
             _root.styleSheets.Add(Resources.Load<StyleSheet>("UI/Game"));
             _root.AddToClassList("root");
-            _root.style.backgroundImage = new StyleBackground(MakeGradient());
+            _gradient = MakeGradient();
+            _root.style.backgroundImage = new StyleBackground(_gradient);
             var font = LoadCjkFont();
             if (font != null) _root.style.unityFontDefinition = new StyleFontDefinition(FontDefinition.FromSDFFont(font));
 
@@ -274,6 +277,8 @@ namespace AbyssKingdom.Client.UI
             Show(_expPage.Root, _tab == 2);
             Show(_mapPage.Root, _tab == 3);
             Show(_right, _tab != 3); // 深淵頁讓地圖用滿寬度
+            _mapPage.SetTabActive(_tab == 3);
+            SetWorldMode(_tab == 3 && _mapPage.Is3D);
             if (_tab == 0) foreach (var card in _cards) card.Refresh(city);
             else if (_tab == 1) _heroPage.Refresh(city);
             else if (_tab == 2) _expPage.Refresh(city);
@@ -635,6 +640,15 @@ namespace AbyssKingdom.Client.UI
                     : check == TrainResult.NotEnoughResources ? "資源不足" : "無法訓練";
                 _queue.Refresh(city, now);
             }
+        }
+
+        /// <summary>3D 深淵顯示時，介面底色改成透明，讓 3D 場景透出來。</summary>
+        private void SetWorldMode(bool on)
+        {
+            if (on == _worldMode) return;
+            _worldMode = on;
+            _root.style.backgroundImage = on ? new StyleBackground(StyleKeyword.None) : new StyleBackground(_gradient);
+            _root.style.backgroundColor = on ? new StyleColor(Color.clear) : new StyleColor(StyleKeyword.Null);
         }
 
         /// <summary>背景：上方微亮（地表）往下沉入深淵的漸層。</summary>

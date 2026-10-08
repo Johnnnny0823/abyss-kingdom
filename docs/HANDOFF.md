@@ -42,6 +42,8 @@ tests/AbyssKingdom.Tests/   規則單元測試、難度曲線測試、真實 Web
 client/
   Assets/Scripts/Net/     GameConnection（WebSocket）、FirebaseGuestAuth（REST 訪客登入）
   Assets/Scripts/Game/    GameClient（狀態與玩家意圖）
+  Assets/Scripts/World/   AbyssWorld（深淵 3D 剖面灰盒，deferred 算繪、圖層 31）
+  Assets/Resources/Abyss/ 3D 材質（打包時由 Editor/AbyssMaterials.cs 產生）
   Assets/Scripts/UI/      GameUI、HeroPage、ExpeditionPage、MapPage（深淵地圖）、UiKit、Icons（向量圖示）、DisplayNames（所有顯示文字）
   Assets/Resources/UI/    Game.uss（樣式）、AbyssTheme.tss
   Assets/Editor/BuildScript.cs   一鍵打包（選單 Abyss Kingdom → Build Windows）
