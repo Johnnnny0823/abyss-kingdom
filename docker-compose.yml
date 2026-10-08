@@ -14,6 +14,7 @@ services:
       Storage__Mode: ${Storage__Mode:-Supabase}
       Supabase__Url: ${Supabase__Url:?請先設定 Supabase__Url 環境變數}
       Supabase__ServiceKey: ${Supabase__ServiceKey:?請先設定 Supabase__ServiceKey 環境變數}
+      Admin__Token: ${Admin__Token:-}   # GM 工具密碼；沒設就關閉（見 docs/DEPLOY.md）
     ports:
       - "127.0.0.1:5080:5080"   # 只給本機測試用；外部玩家一律走 tunnel
 

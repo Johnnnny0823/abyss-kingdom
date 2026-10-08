@@ -49,3 +49,18 @@ wss://xxxx-xxxx-xxxx.trycloudflare.com/ws
 - **compose 預設 `Auth__Mode=Firebase`**：玩家用客戶端的「訪客登入」（Firebase 匿名帳號）。開發模式 `dev:名字` 會被拒絕；要在本機用 Unity 測 dev 登入，請另外 `dotnet run --project server/AbyssKingdom.Server`（預設 Dev 模式，但 5080 埠會跟 Docker 衝突，先停 Docker 的 server 或改 `Urls`）。
 - Quick Tunnel 是 Cloudflare 的免費試用服務，沒有可用性保證。要固定網址需要 Cloudflare 帳號 + 自己的網域（Named Tunnel），之後再升級。
 - 本機 `127.0.0.1:5080` 仍可直接連（`ws://127.0.0.1:5080/ws`），方便自己用 Unity 測。
+
+## GM 工具（開發者補資源／道具／部隊）
+
+只有設定了環境變數 `Admin__Token`（至少 24 字元，本機開發機已設在 Windows 使用者環境變數）時才會開啟。只從本機呼叫：
+
+```powershell
+$t = [Environment]::GetEnvironmentVariable('Admin__Token','User')
+$body = '{"resources":{"Wood":20000},"items":{"SpeedupGeneral30m":5},"troops":{"Shield":100}}'
+Invoke-RestMethod "http://127.0.0.1:5080/admin/grant/<玩家ID>" -Method Post -Body $body -ContentType 'application/json' -Headers @{ 'X-Admin-Token' = $t }
+```
+
+- 數值是「增加量」，可為負數扣除（不會低於 0）。資源可以超過倉庫上限。
+- 玩家在線上會立即推播最新狀態；離線則直接改存檔。
+- 玩家 ID：`docker compose logs server | Select-String "logged in"`，或 Supabase `players` 表的 `id`。
+- token 絕不可寫進程式碼或貼到聊天；外洩就換一組新的並重建 server 容器。

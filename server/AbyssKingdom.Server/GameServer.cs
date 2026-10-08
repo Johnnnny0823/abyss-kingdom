@@ -1,3 +1,4 @@
+using AbyssKingdom.Server.Admin;
 using AbyssKingdom.Server.Auth;
 using AbyssKingdom.Server.Game;
 using AbyssKingdom.Server.Infrastructure;
@@ -64,6 +65,8 @@ public static class GameServer
             using var socket = await ctx.WebSockets.AcceptWebSocketAsync();
             await handler.RunAsync(socket, ctx.RequestAborted);
         });
+
+        AdminEndpoints.Map(app);
 
         return app;
     }

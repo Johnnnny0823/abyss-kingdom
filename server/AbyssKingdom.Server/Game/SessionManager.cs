@@ -181,6 +181,40 @@ public sealed class SessionManager : BackgroundService
         }
     }
 
+    /// <summary>
+    /// GM 工具：修改某位玩家的城市。在線上就在鎖內改並推播最新狀態；離線就讀檔、修改、存檔。
+    /// （離線修改與該玩家同時登入有極小的競態，GM 工具可接受。）回傳 false 表示找不到玩家。
+    /// </summary>
+    public async Task<bool> ModifyCityAsync(string playerId, Action<CityState> apply, CancellationToken ct)
+    {
+        var now = _clock.NowMs;
+        if (_online.TryGetValue(playerId, out var session))
+        {
+            byte[] snapshot;
+            await session.Gate.WaitAsync(ct);
+            try
+            {
+                CityLogic.Advance(session.Record.City, now);
+                apply(session.Record.City);
+                session.Dirty = true;
+                snapshot = JsonSerializer.SerializeToUtf8Bytes(session.Record.City, _json);
+            }
+            finally
+            {
+                session.Gate.Release();
+            }
+            await SafeSend(session, MessageTypes.CityState, new CityStateMessage { ServerTimeMs = now, City = JsonSerializer.Deserialize<CityState>(snapshot, _json) });
+            return true;
+        }
+
+        var record = await _store.LoadAsync(playerId, ct);
+        if (record == null) return false;
+        CityLogic.Advance(record.City, now);
+        apply(record.City);
+        await _store.SaveAsync(record, ct);
+        return true;
+    }
+
     private async Task SafeSend(PlayerSession session, string type, object data)
     {
         try { await session.Connection.SendAsync(type, 0, data); }

@@ -24,15 +24,17 @@ public static class ServerIntegrationTests
         public WebApplication App { get; }
         public ManualClock Clock { get; } = new(T0);
         public Uri WsUri { get; }
+        public Uri HttpUri { get; }
 
-        public TestServer()
+        public TestServer(params string[] extraArgs)
         {
             int port = FreePort();
             App = GameServer.Build(
-                new[] { "--Logging:LogLevel:Default=Warning" },
+                new[] { "--Logging:LogLevel:Default=Warning" }.Concat(extraArgs).ToArray(),
                 services => services.Replace(ServiceDescriptor.Singleton<IClock>(Clock)),
                 $"http://127.0.0.1:{port}");
             WsUri = new Uri($"ws://127.0.0.1:{port}/ws");
+            HttpUri = new Uri($"http://127.0.0.1:{port}");
         }
 
         public Task StartAsync() => App.StartAsync();
@@ -265,6 +267,45 @@ public static class ServerIntegrationTests
         await client.SendAsync(MessageTypes.CityCancel, new CancelRequest { Queue = QueueType.Training });
         var err = await client.ExpectAsync(MessageTypes.Error);
         Assert.Equal("NothingToCancel", err.GetProperty("data").GetProperty("detail").GetString());
+    }
+
+    [Test]
+    public static async Task AdminGrant_RequiresToken_AndPushesToOnlinePlayer()
+    {
+        const string token = "test-admin-token-0123456789abcdef";
+        await using var server = new TestServer($"--Admin:Token={token}");
+        await server.StartAsync();
+        await using var client = new TestClient();
+        await client.ConnectAsync(server.WsUri);
+        await client.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:gm" });
+        await client.ExpectAsync(MessageTypes.CityState);
+
+        using var http = new HttpClient(new HttpClientHandler { UseProxy = false }) { BaseAddress = server.HttpUri };
+        var body = new StringContent("""{"resources":{"Wood":5000},"items":{"SpeedupGeneral60m":3},"troops":{"Rider":100}}""", Encoding.UTF8, "application/json");
+
+        var noToken = await http.PostAsync("/admin/grant/dev-gm", body);
+        Assert.Equal(HttpStatusCode.Unauthorized, noToken.StatusCode, "沒帶 token 要被拒");
+
+        http.DefaultRequestHeaders.Add("X-Admin-Token", token);
+        var ok = await http.PostAsync("/admin/grant/dev-gm", body);
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+        var city = City(await client.ExpectAsync(MessageTypes.CityState));
+        Assert.Equal(CityConfig.StartingResource + 5000, city.GetResource(ResourceType.Wood));
+        Assert.Equal(4L, city.GetItemCount(ItemType.SpeedupGeneral60m), "新手 1 + 3");
+        Assert.Equal(100L, city.GetTroops(TroopType.Rider));
+
+        var missing = await http.PostAsync("/admin/grant/nobody", body);
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+    }
+
+    [Test]
+    public static async Task AdminEndpoint_DisabledWithoutToken()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        using var http = new HttpClient(new HttpClientHandler { UseProxy = false }) { BaseAddress = server.HttpUri };
+        var res = await http.PostAsync("/admin/grant/x", new StringContent("{}", Encoding.UTF8, "application/json"));
+        Assert.Equal(HttpStatusCode.NotFound, res.StatusCode, "未設定 token 時端點不存在");
     }
 
     [Test]
