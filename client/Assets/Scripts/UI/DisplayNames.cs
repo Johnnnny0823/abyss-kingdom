@@ -99,6 +99,40 @@ namespace AbyssKingdom.Client.UI
             { RopeGrade.Mythic, "黑繩 · 神秘" },
         };
 
+        // ───── 四境 ─────
+
+        public static readonly Dictionary<Domain, string> Domains = new Dictionary<Domain, string>
+        {
+            { Domain.Power, "震境 · 力" },
+            { Domain.Technique, "巧境 · 技" },
+            { Domain.Speed, "迅境 · 速" },
+            { Domain.Durability, "磐境 · 韌" },
+        };
+
+        public static readonly Dictionary<Domain, string> DomainGlyphs = new Dictionary<Domain, string>
+        {
+            { Domain.Power, "震" },
+            { Domain.Technique, "巧" },
+            { Domain.Speed, "迅" },
+            { Domain.Durability, "磐" },
+        };
+
+        public static readonly Dictionary<Domain, string> DomainBonus = new Dictionary<Domain, string>
+        {
+            { Domain.Power, "通達：攻擊 +15%。修練：打出傷害。試煉：20 回合內擊倒不還手的重甲。" },
+            { Domain.Technique, "通達：克制倍率 +15%，被克制時懲罰減少。修練：打出克制。試煉：對抗剋制你的敵人。" },
+            { Domain.Speed, "通達：出手速度 +2。修練：搶先出手。試煉：和更快的同兵種敵人比誰先倒下。" },
+            { Domain.Durability, "通達：承受傷害 -15%。修練：扛住傷害並活下來。試煉：撐過 20 回合不倒。" },
+        };
+
+        public static readonly Dictionary<DomainTier, string> Tiers = new Dictionary<DomainTier, string>
+        {
+            { DomainTier.Mortal, "凡身" },
+            { DomainTier.Dual, "雙極" },
+            { DomainTier.Triple, "三極" },
+            { DomainTier.Perfect, "圓極" },
+        };
+
         public static readonly Dictionary<EquipSlot, string> Slots = new Dictionary<EquipSlot, string>
         {
             { EquipSlot.Weapon, "武器" },
@@ -163,6 +197,10 @@ namespace AbyssKingdom.Client.UI
                 case ItemType.HeroExpSmall: return "主將經驗書（小）";
                 case ItemType.HeroExpMedium: return "主將經驗書（中）";
                 case ItemType.HeroExpLarge: return "主將經驗書（大）";
+                case ItemType.DomainScrollPower: return "境書 · 震";
+                case ItemType.DomainScrollTechnique: return "境書 · 巧";
+                case ItemType.DomainScrollSpeed: return "境書 · 迅";
+                case ItemType.DomainScrollDurability: return "境書 · 磐";
             }
             ItemConfig.TryGetSpeedup(item, out var category, out var ms);
             long minutes = ms / ItemConfig.MsPerMinute;
@@ -190,6 +228,8 @@ namespace AbyssKingdom.Client.UI
                 case "invalid token": return "登入驗證失敗，請重新登入";
                 case "MaxLevel": return "主將已達等級上限";
                 case "StageLocked": return "要先通關前一關";
+                case "NotReady": return "修練值還沒滿，還不能挑戰試煉";
+                case "AlreadyMastered": return "這一境已經通達";
                 case "WrongTeamCount": return "岔路關卡需要兩支隊伍";
                 case "EmptyTeam": return "每條路都需要至少一位主將";
                 case "DuplicateHero": return "同一位主將不能同時走兩條路";

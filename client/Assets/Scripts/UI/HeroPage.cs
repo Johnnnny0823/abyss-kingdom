@@ -25,6 +25,8 @@ namespace AbyssKingdom.Client.UI
         private readonly Label[] _stats = new Label[4];
         private readonly VisualElement _portrait, _expFill;
         private readonly Label _glyph, _troop, _name, _grade, _title, _bio, _level, _power, _powerDelta, _expText;
+        private readonly Dictionary<Domain, DomainRow> _domains = new Dictionary<Domain, DomainRow>();
+        private readonly Label _tier, _order;
         private HeroId? _powerHero;
         private long _lastPower;
         private CityState _city;
@@ -133,6 +135,24 @@ namespace AbyssKingdom.Client.UI
             }
             info.Add(books);
             info.Add(Lbl("點左右的裝備格可以更換裝備；升級和換裝都會即時反映在戰力上。", "muted", "hint"));
+
+            // 四境
+            var domainHead = El("row");
+            domainHead.style.marginTop = 16;
+            domainHead.Add(Lbl("四境", "panel-title"));
+            _tier = Lbl("", "tier-badge");
+            domainHead.Add(_tier);
+            domainHead.Add(El("spacer"));
+            _order = Lbl("", "muted");
+            domainHead.Add(_order);
+            info.Add(domainHead);
+            foreach (var d in DomainConfig.All)
+            {
+                var row = new DomainRow(d, () => _selected);
+                _domains[d] = row;
+                info.Add(row.Root);
+            }
+            info.Add(Lbl("戰鬥中的表現會累積修練值（表現為主）；境書可以補（材料為輔）。修練值滿了就能挑戰試煉，失敗不會扣修練值。", "muted", "hint"));
             detail.Add(info);
         }
 
@@ -201,6 +221,12 @@ namespace AbyssKingdom.Client.UI
                 pair.Value.SetEnabled(have > 0 && !maxed);
             }
 
+            int mastered = hero.Mastered.Count;
+            _tier.text = DisplayNames.Tiers[DomainConfig.Tier(mastered)];
+            _tier.EnableInClassList("lit", mastered >= 2);
+            _order.text = mastered == 0 ? "尚未通達任何一境" : "通達順序：" + string.Join(" → ", hero.Mastered.Select(d => DisplayNames.DomainGlyphs[d]));
+            foreach (var row in _domains.Values) row.Refresh(city, hero);
+
             foreach (var pair in _slots)
             {
                 var g = GearLogic.Equipped(city, _selected, pair.Key);
@@ -217,6 +243,63 @@ namespace AbyssKingdom.Client.UI
                     name.style.color = (Color)new Color32(110, 118, 150, 255);
                     box.EnableInClassList("filled", false);
                 }
+            }
+        }
+
+        /// <summary>四境中的一列：境名、修練進度、狀態（修練中／挑戰試煉／已通達）、境書。</summary>
+        private sealed class DomainRow
+        {
+            public readonly VisualElement Root = El("domain-row");
+            private readonly Domain _domain;
+            private readonly System.Func<HeroId> _hero;
+            private readonly VisualElement _fill;
+            private readonly Label _xp, _done;
+            private readonly Button _trial, _scroll;
+            private readonly ItemType _scrollItem;
+
+            public DomainRow(Domain domain, System.Func<HeroId> hero)
+            {
+                _domain = domain;
+                _hero = hero;
+                _scrollItem = ItemType.DomainScrollPower + (int)domain;
+                Root.tooltip = DisplayNames.DomainBonus[domain];
+                Root.Add(Lbl(DisplayNames.DomainGlyphs[domain], "domain-glyph", "domain-" + domain));
+                var col = El("grow");
+                var top = El("row");
+                top.Add(Lbl(DisplayNames.Domains[domain], "domain-name"));
+                top.Add(El("spacer"));
+                _xp = Lbl("", "muted");
+                top.Add(_xp);
+                col.Add(top);
+                var bar = El("progress");
+                bar.style.marginTop = 4;
+                bar.style.marginBottom = 0;
+                _fill = El("progress-fill", "domain-fill-" + domain);
+                bar.Add(_fill);
+                col.Add(bar);
+                Root.Add(col);
+                _done = Lbl("已通達", "domain-done");
+                Root.Add(_done);
+                _trial = Btn("挑戰試煉", () => GameClient.Instance.DomainTrial(_hero(), _domain), "btn-primary", "btn-small");
+                Root.Add(_trial);
+                _scroll = Btn("", () => GameClient.Instance.UseDomainScroll(_hero(), _scrollItem), "btn-small");
+                Root.Add(_scroll);
+            }
+
+            public void Refresh(CityState city, HeroState hero)
+            {
+                bool mastered = DomainLogic.IsMastered(hero, _domain);
+                bool ready = DomainLogic.ReadyForTrial(hero, _domain);
+                long need = DomainConfig.XpToMaster(hero.Mastered.Count);
+                long xp = DomainLogic.Xp(hero, _domain);
+                _fill.style.width = Length.Percent(mastered ? 100f : Mathf.Clamp01((float)xp / need) * 100f);
+                _xp.text = mastered ? "" : $"{xp:N0} / {need:N0}";
+                Root.EnableInClassList("mastered", mastered);
+                Show(_done, mastered);
+                Show(_trial, ready);
+                long scrolls = city.GetItemCount(_scrollItem);
+                Show(_scroll, !mastered && !ready && scrolls > 0);
+                _scroll.text = $"境書 +100 ×{scrolls}";
             }
         }
 

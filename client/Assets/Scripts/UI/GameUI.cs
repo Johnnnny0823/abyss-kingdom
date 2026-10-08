@@ -229,7 +229,7 @@ namespace AbyssKingdom.Client.UI
             right.Add(_training.Root);
 
             var items = El("panel");
-            items.Add(Lbl("加速道具", "panel-title"));
+            items.Add(Lbl("背包", "panel-title"));
             _itemList = El();
             items.Add(_itemList);
             right.Add(items);
@@ -282,7 +282,7 @@ namespace AbyssKingdom.Client.UI
             if (sig == _itemSignature) return;
             _itemSignature = sig;
             _itemList.Clear();
-            if (owned.Count == 0) _itemList.Add(Lbl("背包裡沒有加速道具", "muted"));
+            if (owned.Count == 0) _itemList.Add(Lbl("背包是空的", "muted"));
             foreach (var item in owned)
             {
                 var row = El("item-row");

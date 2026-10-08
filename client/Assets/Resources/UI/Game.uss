@@ -402,3 +402,20 @@
 .battle-log { padding: 8px 10px; margin: 4px 0 10px 0; background-color: rgb(10, 14, 28); border-radius: 6px; }
 .log-line { font-size: 12px; color: rgb(190, 200, 228); }
 .log-line.enemy { color: rgb(230, 160, 160); }
+
+/* ───── 四境 ───── */
+.tier-badge { font-size: 12px; -unity-font-style: bold; color: rgb(170, 178, 204); border-width: 1px; border-color: rgb(70, 86, 140); border-radius: 9px; padding: 1px 10px; margin-left: 10px; margin-bottom: 8px; }
+.tier-badge.lit { color: rgb(250, 214, 140); border-color: rgb(214, 170, 88); background-color: rgb(52, 44, 26); }
+.domain-row { flex-direction: row; align-items: center; padding: 6px 8px; margin-bottom: 6px; border-radius: 8px; background-color: rgb(16, 22, 42); border-width: 1px; border-color: rgb(34, 44, 78); }
+.domain-row.mastered { border-color: rgb(150, 118, 60); background-color: rgb(32, 30, 30); }
+.domain-glyph { width: 30px; height: 30px; border-radius: 15px; -unity-text-align: middle-center; font-size: 15px; -unity-font-style: bold; color: rgb(255, 255, 255); margin-right: 10px; }
+.domain-Power { background-color: rgb(196, 84, 60); }
+.domain-Technique { background-color: rgb(130, 90, 200); }
+.domain-Speed { background-color: rgb(40, 150, 140); }
+.domain-Durability { background-color: rgb(90, 110, 150); }
+.domain-name { font-size: 14px; -unity-font-style: bold; }
+.domain-fill-Power { background-color: rgb(226, 110, 80); }
+.domain-fill-Technique { background-color: rgb(160, 120, 230); }
+.domain-fill-Speed { background-color: rgb(70, 190, 170); }
+.domain-fill-Durability { background-color: rgb(120, 145, 190); }
+.domain-done { font-size: 13px; -unity-font-style: bold; color: rgb(236, 200, 124); margin-left: 10px; }

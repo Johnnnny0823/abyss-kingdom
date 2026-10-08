@@ -143,6 +143,12 @@ namespace AbyssKingdom.Client.Game
 
         public void ClaimExpeditionIdle() => _conn.Send(MessageTypes.ExpeditionClaimIdle);
 
+        public void UseDomainScroll(HeroId hero, ItemType item, long count = 1) =>
+            _conn.Send(MessageTypes.DomainUseScroll, new DomainScrollRequest { Hero = hero, Item = item, Count = count });
+
+        public void DomainTrial(HeroId hero, Domain domain) =>
+            _conn.Send(MessageTypes.DomainTrial, new DomainTrialRequest { Hero = hero, Domain = domain });
+
         /// <summary>item 為 null = 免費加速。</summary>
         public void Speedup(QueueType queue, ItemType? item, long count = 1) =>
             _conn.Send(MessageTypes.CitySpeedup, new SpeedupRequest { Queue = queue, Item = item, Count = count });
@@ -186,6 +192,11 @@ namespace AbyssKingdom.Client.Game
                     LastExpedition = msg.DataAs<ExpeditionResult>();
                     LastExpeditionTeams = _pendingTeams;
                     Notice?.Invoke(LastExpedition.Win ? $"遠征第 {LastExpedition.Stage} 關勝利！" : $"遠征第 {LastExpedition.Stage} 關失敗", !LastExpedition.Win);
+                    break;
+                case MessageTypes.DomainTrialResultMessage:
+                    var trial = msg.DataAs<DomainTrialResult>();
+                    string who = DisplayNames.Heroes[trial.Hero], dom = DisplayNames.Domains[trial.Domain];
+                    Notice?.Invoke(trial.Success ? $"{who} 通過試煉，{dom} 通達！" : $"{who} 的 {dom} 試煉失敗，修練值保留，變強後再來", !trial.Success);
                     break;
                 case MessageTypes.ExpeditionIdleClaimed:
                     var idle = msg.DataAs<ExpeditionRewards>();
