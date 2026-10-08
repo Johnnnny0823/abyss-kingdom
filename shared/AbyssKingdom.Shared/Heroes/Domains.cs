@@ -5,7 +5,7 @@ using AbyssKingdom.Shared.City;
 
 namespace AbyssKingdom.Shared.Heroes
 {
-    /// <summary>四境（設計見 docs/design/SYSTEMS.md 第 2 節）。顯示名稱在客戶端。</summary>
+    /// <summary>四境（設計見 docs/design/SYSTEMS.md 第 2 節）。玩家看到的是「四股索」：崩索／結索／墜索／錨索（客戶端 DisplayNames）。</summary>
     public enum Domain
     {
         Power = 0,       // 震境：力
@@ -14,13 +14,14 @@ namespace AbyssKingdom.Shared.Heroes
         Durability = 3,  // 磐境：韌
     }
 
-    /// <summary>通達幾境決定層級。</summary>
+    /// <summary>通達幾境決定稱號（2026-10-08 使用者定案：每多一境一個稱號）。</summary>
     public enum DomainTier
     {
-        Mortal = 0,   // 凡身（0–1 境）
-        Dual = 1,     // 雙極
-        Triple = 2,   // 三極
-        Perfect = 3,  // 圓極
+        Unbound = 0,       // 尚未繫索
+        Roped = 1,         // 繫索者
+        Delver = 2,        // 下探者
+        Deepwalker = 3,    // 深行者
+        AbyssReacher = 4,  // 抵淵者（四境皆通，頂點）
     }
 
     public enum DomainResult
@@ -60,8 +61,7 @@ namespace AbyssKingdom.Shared.Heroes
         public const int SpeedBonus = 2;
         public const int TechniqueCounterBonus = 15;
 
-        public static DomainTier Tier(int masteredCount) =>
-            masteredCount >= 4 ? DomainTier.Perfect : masteredCount == 3 ? DomainTier.Triple : masteredCount == 2 ? DomainTier.Dual : DomainTier.Mortal;
+        public static DomainTier Tier(int masteredCount) => (DomainTier)Math.Max(0, Math.Min(4, masteredCount));
     }
 
     public static class DomainLogic

@@ -196,7 +196,7 @@ namespace AbyssKingdom.Client.Game
                 case MessageTypes.DomainTrialResultMessage:
                     var trial = msg.DataAs<DomainTrialResult>();
                     string who = DisplayNames.Heroes[trial.Hero], dom = DisplayNames.Domains[trial.Domain];
-                    Notice?.Invoke(trial.Success ? $"{who} 通過試煉，{dom} 通達！" : $"{who} 的 {dom} 試煉失敗，修練值保留，變強後再來", !trial.Success);
+                    Notice?.Invoke(trial.Success ? $"{who} 通過斷索試煉，{dom}編成！" : $"{who} 的 {dom} 斷索試煉失敗，修練值保留，變強後再來", !trial.Success);
                     break;
                 case MessageTypes.ExpeditionIdleClaimed:
                     var idle = msg.DataAs<ExpeditionRewards>();

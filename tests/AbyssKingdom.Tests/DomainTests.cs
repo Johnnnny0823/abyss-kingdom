@@ -58,10 +58,11 @@ public static class DomainTests
     [Test]
     public static void Tier_ByMasteredCount()
     {
-        Assert.Equal(DomainTier.Mortal, DomainConfig.Tier(1));
-        Assert.Equal(DomainTier.Dual, DomainConfig.Tier(2));
-        Assert.Equal(DomainTier.Triple, DomainConfig.Tier(3));
-        Assert.Equal(DomainTier.Perfect, DomainConfig.Tier(4));
+        Assert.Equal(DomainTier.Unbound, DomainConfig.Tier(0));
+        Assert.Equal(DomainTier.Roped, DomainConfig.Tier(1));
+        Assert.Equal(DomainTier.Delver, DomainConfig.Tier(2));
+        Assert.Equal(DomainTier.Deepwalker, DomainConfig.Tier(3));
+        Assert.Equal(DomainTier.AbyssReacher, DomainConfig.Tier(4));
     }
 
     [Test]

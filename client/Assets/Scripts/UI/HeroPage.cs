@@ -146,7 +146,7 @@ namespace AbyssKingdom.Client.UI
             // 四境
             var domainHead = El("row");
             domainHead.style.marginTop = 16;
-            domainHead.Add(Lbl("四境", "panel-title"));
+            domainHead.Add(Lbl("四股索", "panel-title"));
             _tier = Lbl("", "tier-badge");
             domainHead.Add(_tier);
             domainHead.Add(El("spacer"));
@@ -159,7 +159,7 @@ namespace AbyssKingdom.Client.UI
                 _domains[d] = row;
                 info.Add(row.Root);
             }
-            info.Add(Lbl("戰鬥中的表現會累積修練值（表現為主）；境書可以補（材料為輔）。修練值滿了就能挑戰試煉，失敗不會扣修練值。", "muted", "hint"));
+            info.Add(Lbl("戰鬥中的表現會累積修練值（表現為主）；索譜可以補（材料為輔）。修練值滿了就能挑戰斷索試煉，失敗不會扣修練值。編成越多股，稱號越高。", "muted", "hint"));
             detail.Add(info);
         }
 
@@ -184,7 +184,7 @@ namespace AbyssKingdom.Client.UI
                 Show(chip, owned);
                 if (!owned) continue;
                 chip.EnableInClassList("selected", def.Id == _selected);
-                lv.text = $"Lv.{h.Level} · {DisplayNames.Grades[def.Grade]}";
+                lv.text = $"Lv.{h.Level} · {DisplayNames.Grades[def.Grade]}" + (h.Mastered.Count > 0 ? $" · {DisplayNames.Tiers[DomainConfig.Tier(h.Mastered.Count)]}" : "");
                 pw.text = $"戰力 {PowerLogic.HeroPower(city, def.Id):N0}";
             }
 
@@ -236,8 +236,8 @@ namespace AbyssKingdom.Client.UI
 
             int mastered = hero.Mastered.Count;
             _tier.text = DisplayNames.Tiers[DomainConfig.Tier(mastered)];
-            _tier.EnableInClassList("lit", mastered >= 2);
-            _order.text = mastered == 0 ? "尚未通達任何一境" : "通達順序：" + string.Join(" → ", hero.Mastered.Select(d => DisplayNames.DomainGlyphs[d]));
+            _tier.EnableInClassList("lit", mastered >= 1);
+            _order.text = mastered == 0 ? "還沒有編成任何一股索" : "編索順序：" + string.Join(" → ", hero.Mastered.Select(d => DisplayNames.DomainGlyphs[d]));
             foreach (var row in _domains.Values) row.Refresh(city, hero);
 
             foreach (var pair in _slots)
@@ -291,9 +291,9 @@ namespace AbyssKingdom.Client.UI
                 bar.Add(_fill);
                 col.Add(bar);
                 Root.Add(col);
-                _done = Lbl("已通達", "domain-done");
+                _done = Lbl("已編成", "domain-done");
                 Root.Add(_done);
-                _trial = Btn("挑戰試煉", () => GameClient.Instance.DomainTrial(_hero(), _domain), "btn-primary", "btn-small");
+                _trial = Btn("斷索試煉", () => GameClient.Instance.DomainTrial(_hero(), _domain), "btn-primary", "btn-small");
                 Root.Add(_trial);
                 _scroll = Btn("", () => GameClient.Instance.UseDomainScroll(_hero(), _scrollItem), "btn-small");
                 Root.Add(_scroll);
@@ -312,7 +312,7 @@ namespace AbyssKingdom.Client.UI
                 Show(_trial, ready);
                 long scrolls = city.GetItemCount(_scrollItem);
                 Show(_scroll, !mastered && !ready && scrolls > 0);
-                _scroll.text = $"境書 +100 ×{scrolls}";
+                _scroll.text = $"索譜 +100 ×{scrolls}";
             }
         }
 
