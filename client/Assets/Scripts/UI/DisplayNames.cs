@@ -169,6 +169,8 @@ namespace AbyssKingdom.Client.UI
             { Domain.Durability, "錨索——釘死在崖壁不鬆動。編成：承受傷害 -15%。修練：扛住傷害並活下來。斷索試煉：撐過 20 回合不倒。" },
         };
 
+        public static readonly string[] StarTiers = { "金星", "藍星", "紅星", "銀彩星" };
+
         /// <summary>編成幾股索的稱號。</summary>
         public static readonly Dictionary<DomainTier, string> Tiers = new Dictionary<DomainTier, string>
         {
@@ -243,6 +245,10 @@ namespace AbyssKingdom.Client.UI
                 case ItemType.HeroExpSmall: return "主將經驗書（小）";
                 case ItemType.HeroExpMedium: return "主將經驗書（中）";
                 case ItemType.HeroExpLarge: return "主將經驗書（大）";
+                case ItemType.HeroShardAny: return "信物 · 通用";
+                case ItemType.HeroShardHold: return "信物 · 霍德";
+                case ItemType.HeroShardVesper: return "信物 · 薇絲珀";
+                case ItemType.HeroShardKarst: return "信物 · 卡斯特";
                 case ItemType.DomainScrollPower: return "索譜 · 崩";
                 case ItemType.DomainScrollTechnique: return "索譜 · 結";
                 case ItemType.DomainScrollSpeed: return "索譜 · 墜";
@@ -276,6 +282,9 @@ namespace AbyssKingdom.Client.UI
                 case "StageLocked": return "要先通關前一關";
                 case "NotReady": return "修練值還沒滿，還不能挑戰斷索試煉";
                 case "AlreadyMastered": return "這股索已經編成";
+                case "StarsRequired": return "要先把對應的星色升滿，才能挑戰下一股索";
+                case "NotEnoughShards": return "信物不足";
+                case "MaxStars": return "已經升到最高星";
                 case "WrongTeamCount": return "岔路關卡需要兩支隊伍";
                 case "EmptyTeam": return "每條路都需要至少一位主將";
                 case "DuplicateHero": return "同一位主將不能同時走兩條路";

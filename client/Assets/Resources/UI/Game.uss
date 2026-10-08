@@ -435,3 +435,7 @@
 .el-badge.yin.el-Water { color: rgb(130, 180, 250); }
 .syn-line { font-size: 12px; color: rgb(150, 220, 200); white-space: normal; margin-top: 4px; }
 .syn-line.enemy { color: rgb(230, 170, 160); }
+
+/* ───── 升星 ───── */
+.star { font-size: 22px; margin-right: 2px; -unity-font-style: bold; }
+.star-tier { font-size: 13px; color: rgb(200, 206, 226); margin-left: 8px; }

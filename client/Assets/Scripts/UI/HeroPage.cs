@@ -26,7 +26,9 @@ namespace AbyssKingdom.Client.UI
         private readonly VisualElement _portrait, _expFill;
         private readonly Label _glyph, _troop, _name, _grade, _title, _bio, _level, _power, _powerDelta, _expText;
         private readonly Dictionary<Domain, DomainRow> _domains = new Dictionary<Domain, DomainRow>();
-        private readonly Label _tier, _order;
+        private readonly Label _tier, _order, _starTier;
+        private readonly Label[] _stars = new Label[StarConfig.StarsPerTier];
+        private readonly Button _starBtn;
         private readonly VisualElement _elementSlot;
         private HeroId? _elementFor;
         private HeroId? _powerHero;
@@ -96,6 +98,21 @@ namespace AbyssKingdom.Client.UI
             _level = Lbl("", "level-badge");
             head.Add(_level);
             info.Add(head);
+            var starRow = El("row");
+            starRow.style.marginTop = 4;
+            for (int i = 0; i < _stars.Length; i++)
+            {
+                _stars[i] = Lbl("★", "star");
+                starRow.Add(_stars[i]);
+            }
+            _starTier = Lbl("", "star-tier");
+            starRow.Add(_starTier);
+            info.Add(starRow);
+            _starBtn = Btn("", () => G.StarUp(_selected), "btn-small", "btn-primary");
+            _starBtn.style.marginLeft = 0;
+            _starBtn.style.marginTop = 6;
+            _starBtn.style.alignSelf = Align.FlexStart;
+            info.Add(_starBtn);
             _title = Lbl("", "hero-title");
             info.Add(_title);
             _bio = Lbl("", "hero-bio");
@@ -184,7 +201,7 @@ namespace AbyssKingdom.Client.UI
                 Show(chip, owned);
                 if (!owned) continue;
                 chip.EnableInClassList("selected", def.Id == _selected);
-                lv.text = $"Lv.{h.Level} · {DisplayNames.Grades[def.Grade]}" + (h.Mastered.Count > 0 ? $" · {DisplayNames.Tiers[DomainConfig.Tier(h.Mastered.Count)]}" : "");
+                lv.text = $"Lv.{h.Level} · ★{h.Stars} · {DisplayNames.Grades[def.Grade]}" + (h.Mastered.Count > 0 ? $" · {DisplayNames.Tiers[DomainConfig.Tier(h.Mastered.Count)]}" : "");
                 pw.text = $"戰力 {PowerLogic.HeroPower(city, def.Id):N0}";
             }
 
@@ -234,6 +251,7 @@ namespace AbyssKingdom.Client.UI
                 pair.Value.SetEnabled(have > 0 && !maxed);
             }
 
+            RefreshStars(city, hero);
             int mastered = hero.Mastered.Count;
             _tier.text = DisplayNames.Tiers[DomainConfig.Tier(mastered)];
             _tier.EnableInClassList("lit", mastered >= 1);
@@ -310,10 +328,55 @@ namespace AbyssKingdom.Client.UI
                 Root.EnableInClassList("mastered", mastered);
                 Show(_done, mastered);
                 Show(_trial, ready);
+                bool starsOk = DomainLogic.StarsReady(hero);
+                _trial.SetEnabled(starsOk);
+                _trial.text = starsOk ? "斷索試煉" : $"需{DisplayNames.StarTiers[System.Math.Min(3, hero.Mastered.Count)]}滿";
                 long scrolls = city.GetItemCount(_scrollItem);
                 Show(_scroll, !mastered && !ready && scrolls > 0);
                 _scroll.text = $"索譜 +100 ×{scrolls}";
             }
+        }
+
+        private static readonly Color[] TierColors =
+        {
+            new Color32(244, 200, 80, 255),   // 金星
+            new Color32(90, 160, 250, 255),   // 藍星
+            new Color32(236, 84, 84, 255),    // 紅星
+            new Color32(220, 222, 236, 255),  // 銀彩星（每顆另有彩色，見 PrismColors）
+        };
+
+        private static readonly Color[] PrismColors =
+        {
+            new Color32(226, 228, 240, 255), new Color32(244, 176, 222, 255), new Color32(150, 230, 240, 255),
+            new Color32(196, 176, 252, 255), new Color32(170, 240, 192, 255),
+        };
+
+        /// <summary>星星列：顯示目前星色的 5 顆（滿的亮、空的暗），右側是升星按鈕與費用。</summary>
+        private void RefreshStars(CityState city, HeroState hero)
+        {
+            int stars = hero.Stars;
+            bool maxed = stars >= StarConfig.MaxStars;
+            int tier = maxed ? StarConfig.TierCount - 1 : StarConfig.TierOf(stars);
+            int filled = maxed ? StarConfig.StarsPerTier : stars - tier * StarConfig.StarsPerTier;
+            for (int i = 0; i < _stars.Length; i++)
+            {
+                bool on = i < filled;
+                var c = tier == 3 ? PrismColors[i] : TierColors[tier];
+                _stars[i].style.color = on ? c : (Color)new Color32(52, 58, 88, 255);
+            }
+            _starTier.text = $"{DisplayNames.StarTiers[tier]} {filled}/{StarConfig.StarsPerTier}";
+
+            if (maxed)
+            {
+                _starBtn.text = "已滿星";
+                _starBtn.SetEnabled(false);
+                return;
+            }
+            long need = StarConfig.ShardCost(stars), crystal = StarConfig.CrystalCost(stars);
+            long own = city.GetItemCount(ItemConfig.ShardFor(_selected)), any = city.GetItemCount(ItemType.HeroShardAny);
+            _starBtn.text = $"升星 · 信物 {need} · 響晶 {crystal:N0}";
+            _starBtn.tooltip = $"持有：{DisplayNames.Heroes[_selected]}信物 {own}、通用信物 {any}（先用專屬，不足再用通用）";
+            _starBtn.SetEnabled(own + any >= need && city.GetResource(ResourceType.Crystal) >= crystal);
         }
 
         /// <summary>戰力變化的浮動數字：綠色上升、紅色下降，1.5 秒淡出。</summary>
