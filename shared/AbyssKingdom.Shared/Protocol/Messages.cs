@@ -18,6 +18,8 @@ namespace AbyssKingdom.Shared.Protocol
         public const string CityCancel = "city.cancel";
         public const string CitySpeedup = "city.speedup";
         public const string HeroLevelUp = "hero.levelUp";
+        public const string GearEquip = "gear.equip";
+        public const string GearUnequip = "gear.unequip";
         public const string Ping = "ping";
 
         // 伺服器 → 客戶端
@@ -40,6 +42,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string CancelRejected = "cancel_rejected";
         public const string SpeedupRejected = "speedup_rejected";
         public const string HeroRejected = "hero_rejected";
+        public const string GearRejected = "gear_rejected";
     }
 
     public class LoginRequest
@@ -86,6 +89,18 @@ namespace AbyssKingdom.Shared.Protocol
         public HeroId Hero { get; set; }
         public ItemType Item { get; set; }
         public long Count { get; set; } = 1;
+    }
+
+    /// <summary>把背包中的某件裝備（Uid）穿到主將身上。</summary>
+    public class GearEquipRequest
+    {
+        public long Gear { get; set; }
+        public HeroId Hero { get; set; }
+    }
+
+    public class GearUnequipRequest
+    {
+        public long Gear { get; set; }
     }
 
     public class TrainingCompletedMessage

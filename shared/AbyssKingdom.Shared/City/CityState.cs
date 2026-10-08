@@ -31,6 +31,14 @@ namespace AbyssKingdom.Shared.City
         /// <summary>擁有的主將（MVP 先跟城市存在一起）。</summary>
         public Dictionary<HeroId, HeroState> Heroes { get; set; } = new Dictionary<HeroId, HeroState>();
 
+        /// <summary>背包中的裝備（含穿在主將身上的）。</summary>
+        public List<GearItem> Gear { get; set; } = new List<GearItem>();
+
+        /// <summary>下一件裝備的流水號。</summary>
+        public long NextGearUid { get; set; }
+
+        public bool StarterGearGranted { get; set; }
+
         /// <summary>是否已發過新手道具（避免舊存檔重複補發）。</summary>
         public bool StarterItemsGranted { get; set; }
 
@@ -71,6 +79,7 @@ namespace AbyssKingdom.Shared.City
                 s.Troops[t] = 0;
             CityLogic.GrantStarterItemsOnce(s);
             HeroLogic.EnsureStarterHeroes(s);
+            GearLogic.EnsureStarterGear(s);
             return s;
         }
     }

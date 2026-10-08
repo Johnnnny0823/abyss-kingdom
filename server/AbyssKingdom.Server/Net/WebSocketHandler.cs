@@ -191,6 +191,20 @@ public sealed class WebSocketHandler
                     Fail(HeroLogic.UseExpItem(city, lv.Hero, lv.Item, lv.Count), HeroResult.Ok));
                 break;
 
+            case MessageTypes.GearEquip:
+                var eq = Deserialize<GearEquipRequest>(data);
+                if (eq == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "gear and hero required"); break; }
+                await RunCityAction(conn, session, reqId, ErrorCodes.GearRejected, ct, (city, now) =>
+                    Fail(GearLogic.Equip(city, eq.Gear, eq.Hero), GearResult.Ok));
+                break;
+
+            case MessageTypes.GearUnequip:
+                var uneq = Deserialize<GearUnequipRequest>(data);
+                if (uneq == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "gear required"); break; }
+                await RunCityAction(conn, session, reqId, ErrorCodes.GearRejected, ct, (city, now) =>
+                    Fail(GearLogic.Unequip(city, uneq.Gear), GearResult.Ok));
+                break;
+
             case MessageTypes.CitySpeedup:
                 var speed = Deserialize<SpeedupRequest>(data);
                 if (speed == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "queue required"); break; }

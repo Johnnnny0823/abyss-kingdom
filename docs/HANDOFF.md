@@ -109,7 +109,7 @@ docs/                  SETUP.md（環境安裝）、ACCOUNTS.md（帳號註冊�
 
 **GM 工具**：`POST /admin/grant/{playerId}`（需 `Admin__Token`），用法見 docs/DEPLOY.md。使用者測試時資源不夠就用它補。
 
-MVP 刻意不做：抽卡、陣營羈絆、多層深淵與回響、升降井、集結、偵察、內購（保留設計）。
+MVP 刻意不做：抽卡、陣營羈絆、多層深淵與回響、升降井、偵察、內購（保留設計）。集結已改列入路線（見 docs/design/SYSTEMS.md 3.5 節）。
 
 ## 8. 已定案的遊戲設計細節（實作時遵守）
 
