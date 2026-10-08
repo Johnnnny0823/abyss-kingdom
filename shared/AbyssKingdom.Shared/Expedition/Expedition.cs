@@ -129,7 +129,7 @@ namespace AbyssKingdom.Shared.Expedition
             return stages;
         }
 
-        static List<EnemySquad> Lineup(int stage, int squads, int offset, long scalePercent)
+        public static List<EnemySquad> Lineup(int stage, int squads, int offset, long scalePercent)
         {
             var list = new List<EnemySquad>();
             for (int i = 0; i < squads; i++) list.Add(Squad(Rotation[(i + offset) % Rotation.Length], stage, scalePercent));

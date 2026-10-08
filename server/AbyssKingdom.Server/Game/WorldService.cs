@@ -23,6 +23,7 @@ public sealed class WorldService : IFieldRegistry
     }
 
     private readonly Dictionary<int, Field> _fields = new();
+    private readonly Dictionary<int, long> _campBack = new();
 
     private sealed class Owner
     {
@@ -166,11 +167,27 @@ public sealed class WorldService : IFieldRegistry
         }
     }
 
+    // ───── 怪物營地與戰鬥種子 ─────
+
+    public bool CampAvailable(int tile, long nowMs)
+    {
+        lock (_campBack) return !_campBack.TryGetValue(tile, out var back) || nowMs >= back;
+    }
+
+    public void CampDefeated(int tile, long nowMs)
+    {
+        lock (_campBack) _campBack[tile] = nowMs + CampConfig.RespawnMs;
+    }
+
+    public ulong NextSeed() => BitConverter.ToUInt64(System.Security.Cryptography.RandomNumberGenerator.GetBytes(8));
+
     /// <summary>某一格的即時狀態（給資訊卡看）。</summary>
     public TileInfoMessage TileInfo(int x, int y, string viewerId, long nowMs)
     {
         var info = new TileInfoMessage { X = x, Y = y };
         int tile = SurfaceLogic.Tile(x, y);
+        lock (_campBack)
+            if (_campBack.TryGetValue(tile, out var back) && back > nowMs) info.CampBackAt = back;
         info.Max = MaxStock(tile);
         if (info.Max <= 0) return info;
         string? owner;

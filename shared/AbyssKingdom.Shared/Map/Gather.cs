@@ -28,10 +28,20 @@ namespace AbyssKingdom.Shared.Map
     }
 
     /// <summary>
-    /// 全服的資源田狀態（誰在採、剩多少）。伺服器的 WorldService 實作；測試可以用簡單的假實作。
+    /// 全服的世界狀態：資源田（誰在採、剩多少）、怪物營地（是否被打掉）、戰鬥種子。
+    /// 伺服器的 WorldService 實作；測試可以用 SimpleFieldRegistry。
     /// </summary>
     public interface IFieldRegistry
     {
+        /// <summary>怪物營地此刻是否存在（被打掉後要等重生）。</summary>
+        bool CampAvailable(int tile, long nowMs);
+
+        /// <summary>營地被擊敗：開始重生倒數。</summary>
+        void CampDefeated(int tile, long nowMs);
+
+        /// <summary>戰鬥用的亂數種子（由伺服器決定，客戶端無法預知）。</summary>
+        ulong NextSeed();
+
         /// <summary>嘗試佔用資源田。成功回傳目前存量（&gt; 0）；已被別人佔用回傳 -1；採空了回傳 0。</summary>
         long Occupy(int tile, string owner, long marchId, long nowMs);
 
@@ -39,11 +49,19 @@ namespace AbyssKingdom.Shared.Map
         void Release(int tile, string owner, long marchId, long gathered, long nowMs);
     }
 
-    /// <summary>單機用的資源田登記（測試與預測用）：存量全滿、不會被別人佔用。</summary>
+    /// <summary>單機用的世界狀態（測試用）：存量一開始全滿、沒有其他玩家。</summary>
     public sealed class SimpleFieldRegistry : IFieldRegistry
     {
         private readonly Dictionary<int, long> _stock = new Dictionary<int, long>();
         private readonly Dictionary<int, (string owner, long march)> _taken = new Dictionary<int, (string, long)>();
+        private readonly Dictionary<int, long> _campBack = new Dictionary<int, long>();
+        private ulong _seed;
+
+        public SimpleFieldRegistry(ulong seed = 1) { _seed = seed; }
+
+        public bool CampAvailable(int tile, long nowMs) => !_campBack.TryGetValue(tile, out var back) || nowMs >= back;
+        public void CampDefeated(int tile, long nowMs) => _campBack[tile] = nowMs + CampConfig.RespawnMs;
+        public ulong NextSeed() => _seed++;
 
         public long Stock(int tile)
         {

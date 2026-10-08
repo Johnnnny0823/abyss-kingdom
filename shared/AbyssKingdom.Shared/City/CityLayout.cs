@@ -41,6 +41,7 @@ namespace AbyssKingdom.Shared.City
             { BuildingType.CrystalMine, new Cell(17, 17) },
             { BuildingType.Warehouse, new Cell(10, 4) },
             { BuildingType.Barracks, new Cell(10, 17) },
+            { BuildingType.Hospital, new Cell(17, 10) },
         };
 
         public static Cell DefaultCell(BuildingType type) =>

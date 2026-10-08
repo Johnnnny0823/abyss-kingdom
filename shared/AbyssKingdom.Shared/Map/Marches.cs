@@ -32,6 +32,8 @@ namespace AbyssKingdom.Shared.Map
         public ResourceType GatherResource { get; set; }
         /// <summary>帶在身上的資源，回到主城時入庫。</summary>
         public Dictionary<ResourceType, long> Carry { get; set; } = new Dictionary<ResourceType, long>();
+        /// <summary>帶在身上的戰利品道具，回到主城時放進背包。</summary>
+        public Dictionary<ItemType, long> LootItems { get; set; } = new Dictionary<ItemType, long>();
 
         public bool Gathering => GatherStartMs > 0;
         public long GatherEndMs => GatherStartMs + (GatherCap * 60_000 + GatherRatePerMin - 1) / System.Math.Max(1, GatherRatePerMin);
@@ -73,7 +75,13 @@ namespace AbyssKingdom.Shared.Map
         public bool Gathering;   // 抵達資源田、開始採集
         public bool Occupied;    // 抵達資源田，但已經有人在採（或採空了），只能駐紮
         public bool GatherDone;  // 採滿，自動回城
+        public bool BattleWon;   // 打贏怪物營地（帶著戰利品回城）
+        public bool BattleLost;  // 打輸（倖存部隊回城）
+        public bool CampGone;    // 營地已經被打掉、還沒重生，只能駐紮
         public Dictionary<ResourceType, long> Carry;
+        public Dictionary<ItemType, long> LootItems;
+        public Dictionary<TroopType, long> Wounded;
+        public Dictionary<TroopType, long> Dead;
     }
 
     public static class MarchConfig
@@ -86,7 +94,7 @@ namespace AbyssKingdom.Shared.Map
         public static long SpeedPercent(TroopType t) => t == TroopType.Rider ? 150 : 100;
     }
 
-    public static class MarchLogic
+    public static partial class MarchLogic
     {
         // ───── 尋路：直線，跨分區時繞經關隘；同分區內若直線會切過內側山脈或深淵，就沿環上的轉折點繞過去 ─────
 
@@ -399,8 +407,17 @@ namespace AbyssKingdom.Shared.Map
                 {
                     foreach (var kv in m.Troops) city.Troops[kv.Key] = city.GetTroops(kv.Key) + kv.Value;
                     foreach (var kv in m.Carry) city.Resources[kv.Key] = city.GetResource(kv.Key) + kv.Value;
+                    foreach (var kv in m.LootItems) city.Items[kv.Key] = city.GetItemCount(kv.Key) + kv.Value;
                     state.Marches.RemoveAt(i);
-                    events.Add(new MarchEvent { MarchId = m.Id, Hero = m.Hero, Tile = m.Destination, Disbanded = true, Carry = m.Carry });
+                    events.Add(new MarchEvent { MarchId = m.Id, Hero = m.Hero, Tile = m.Destination, Disbanded = true, Carry = m.Carry, LootItems = m.LootItems });
+                    continue;
+                }
+                var (fx, fy) = SurfaceLogic.FromTile(m.Destination);
+                var feature = SurfaceLogic.FeatureAt(fx, fy);
+                if (fields != null && feature != null && feature.Type == FeatureType.MonsterCamp)
+                {
+                    events.Add(FightCamp(city, m, feature, fields, owner));
+                    if (m.Returning) i++; // 打完立刻回城：同一次推進裡可能已經到家
                     continue;
                 }
                 m.Stationed = true;

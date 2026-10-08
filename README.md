@@ -64,6 +64,7 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | → | `city.train` | `{ troop: "Shield", count: 50 }`（需兵營；單批上限 = 兵營等級 × 50） |
 | → | `city.cancel` | `{ queue: "Building" \| "Training" }`（退 50%；訓練已完成的士兵照算） |
 | → | `city.speedup` | `{ queue, item?, count? }`（不帶 item = 剩餘 5 分鐘內免費完成；帶 item = 使用加速道具） |
+| → | `city.heal` | `{ troops: { "Shield": 30 } }` 治療醫館裡的傷兵（花訓練成本的一半與一半時間；同時一批）；取消／加速用 `city.cancel`／`city.speedup`，queue = `Healing` |
 | → | `city.move` | `{ building, x, y }` 把建築移到城內格子（佔地左上角；不可重疊、不可超出 24×24） |
 | → | `hero.levelUp` | `{ hero: "Hold", item: "HeroExpSmall", count: 1 }` |
 | → | `gear.equip` / `gear.unequip` | `{ gear: <uid>, hero }` / `{ gear: <uid> }` |
@@ -84,7 +85,8 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | ← | `expedition.result` | `{ stage, win, reports: [戰報…], rewards }`，之後再送一次 `city.state` |
 | ← | `expedition.idleClaimed` | `{ resources, items }` |
 | ← | `domain.trialResult` | `{ hero, domain, success, report }`，之後再送一次 `city.state` |
-| ← | `map.marchArrived` | `{ march, hero, tile, disbanded, gathering, occupied, gatherDone, carry }`（tile = y × 800 + x；抵達、開始採集、資源田被佔用、採滿回城、回城解散都用這個；伺服器主動推播，reqId = 0） |
-| ← | `world.tile` | `{ x, y, stock, max, occupant, mine }` |
+| ← | `map.marchArrived` | `{ march, hero, tile, disbanded, gathering, occupied, gatherDone, carry, lootItems, battleWon, battleLost, campGone, wounded, dead }`（tile = y × 800 + x；抵達、開始採集、資源田被佔用、採滿回城、打怪結果、回城解散都用這個；伺服器主動推播，reqId = 0） |
+| ← | `world.tile` | `{ x, y, stock, max, occupant, mine, campBackAt }` |
+| ← | `city.healingCompleted` | `{ troops }`（治療完成，伺服器主動推播） |
 | ← | `world.cities` | `{ cities: [{ x, y, name, power, mine }] }` |
 | ← | `error` | `{ code, detail }` |

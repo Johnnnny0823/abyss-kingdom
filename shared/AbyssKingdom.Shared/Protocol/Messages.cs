@@ -20,6 +20,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string CityCancel = "city.cancel";
         public const string CitySpeedup = "city.speedup";
         public const string CityMove = "city.move";
+        public const string CityHeal = "city.heal";
         public const string HeroLevelUp = "hero.levelUp";
         public const string GearEquip = "gear.equip";
         public const string GearUnequip = "gear.unequip";
@@ -32,6 +33,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string MapRecall = "map.recall";
         public const string WorldCities = "world.cities";
         public const string WorldTile = "world.tile";
+        public const string HealingCompleted = "city.healingCompleted";
         public const string Ping = "ping";
 
         // 伺服器 → 客戶端
@@ -63,6 +65,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string DomainRejected = "domain_rejected";
         public const string MapRejected = "map_rejected";
         public const string MoveRejected = "move_rejected";
+        public const string HealRejected = "heal_rejected";
     }
 
     public class LoginRequest
@@ -82,6 +85,18 @@ namespace AbyssKingdom.Shared.Protocol
     public class UpgradeRequest
     {
         public BuildingType Building { get; set; }
+    }
+
+    /// <summary>治療醫館裡的傷兵（各兵種數量）。</summary>
+    public class HealRequest
+    {
+        public Dictionary<TroopType, long> Troops { get; set; }
+    }
+
+    /// <summary>伺服器推播：治療完成，傷兵回到兵營。</summary>
+    public class HealingCompletedMessage
+    {
+        public Dictionary<TroopType, long> Troops { get; set; }
     }
 
     /// <summary>把建築移到城內格子 (X, Y)（佔地左上角）。</summary>
@@ -183,6 +198,8 @@ namespace AbyssKingdom.Shared.Protocol
         /// <summary>正在採集的領主名稱；沒人在採時為 null。</summary>
         public string Occupant { get; set; }
         public bool Mine { get; set; }
+        /// <summary>怪物營地被擊敗後重生的時間（Unix 毫秒）；0 = 營地在。</summary>
+        public long CampBackAt { get; set; }
     }
 
     public class WorldCitiesMessage
@@ -211,6 +228,15 @@ namespace AbyssKingdom.Shared.Protocol
         public bool GatherDone { get; set; }
         /// <summary>帶著（或帶回）的資源。</summary>
         public Dictionary<ResourceType, long> Carry { get; set; }
+        /// <summary>帶著（或帶回）的戰利品道具。</summary>
+        public Dictionary<ItemType, long> LootItems { get; set; }
+        /// <summary>打贏／打輸怪物營地；營地已被打掉（還沒重生）。</summary>
+        public bool BattleWon { get; set; }
+        public bool BattleLost { get; set; }
+        public bool CampGone { get; set; }
+        /// <summary>這場戰鬥的傷兵（送進醫館）與陣亡。</summary>
+        public Dictionary<TroopType, long> Wounded { get; set; }
+        public Dictionary<TroopType, long> Dead { get; set; }
     }
 
     public class HeroStarUpRequest

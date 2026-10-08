@@ -95,6 +95,20 @@ namespace AbyssKingdom.Shared.City
         /// <summary>剩餘時間在這之內可免費立即完成（5 分鐘）。</summary>
         public const long FreeSpeedupMs = 5 * 60_000;
 
+        // ───── 傷兵與醫館（數值為測試用） ─────
+
+        /// <summary>戰鬥倒下的士兵中，送進醫館的比例（%）；其餘陣亡。</summary>
+        public const long WoundedPercent = 70;
+
+        /// <summary>醫館容量：0 級也有 100（新手保護），每級 +200。</summary>
+        public static long HospitalCapacity(int level) => 100 + 200L * Math.Max(0, level);
+
+        /// <summary>治療每名傷兵的成本：訓練成本的一半。</summary>
+        public static long HealCost(TroopType troop, ResourceType resource) => TroopCost(troop, resource) / 2;
+
+        /// <summary>治療每名傷兵的時間：訓練時間的一半。</summary>
+        public static long HealMsPerUnit(TroopType troop) => TroopTrainMsPerUnit(troop) / 2;
+
         // ───── 部隊（數值為測試用，之後統一調平衡） ─────
 
         public static readonly TroopType[] AllTroops = (TroopType[])Enum.GetValues(typeof(TroopType));
@@ -153,6 +167,8 @@ namespace AbyssKingdom.Shared.City
                 case BuildingType.Farm:
                     return resource == ResourceType.Wood || resource == ResourceType.Stone ? 150 : 0;
                 case BuildingType.CrystalMine:
+                    return resource == ResourceType.Crystal ? 0 : 200;
+                case BuildingType.Hospital:
                     return resource == ResourceType.Crystal ? 0 : 200;
                 default:
                     return 0;

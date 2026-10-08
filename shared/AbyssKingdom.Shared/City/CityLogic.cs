@@ -20,6 +20,13 @@ namespace AbyssKingdom.Shared.City
         /// <summary>同上，另外回傳這次完成的訓練（沒有則為 null）。訓練不影響產量，完成時直接入營。</summary>
         public static UpgradeJob Advance(CityState state, long nowMs, out TrainingJob completedTraining)
         {
+            return Advance(state, nowMs, out completedTraining, out _);
+        }
+
+        /// <summary>同上，另外回傳這次完成的治療（沒有則為 null）。</summary>
+        public static UpgradeJob Advance(CityState state, long nowMs, out TrainingJob completedTraining, out HealingJob completedHealing)
+        {
+            completedHealing = CompleteHealing(state, nowMs);
             completedTraining = null;
             if (state.Training != null && state.Training.FinishAtMs <= nowMs)
             {

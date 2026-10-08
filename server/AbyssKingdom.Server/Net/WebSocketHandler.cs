@@ -181,6 +181,13 @@ public sealed class WebSocketHandler
                     Fail(CityLayout.Move(city, move.Building, move.X, move.Y), MoveResult.Ok));
                 break;
 
+            case MessageTypes.CityHeal:
+                var heal = Deserialize<HealRequest>(data);
+                if (heal?.Troops == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "troops required"); break; }
+                await RunCityAction(conn, session, reqId, ErrorCodes.HealRejected, ct, (city, now) =>
+                    Fail(CityLogic.StartHealing(city, heal.Troops, now), HealResult.Ok));
+                break;
+
             case MessageTypes.CityTrain:
                 var train = Deserialize<TrainRequest>(data);
                 if (train == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "troop and count required"); break; }

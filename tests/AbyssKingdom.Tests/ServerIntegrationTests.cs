@@ -512,6 +512,47 @@ public static class ServerIntegrationTests
     }
 
     [Test]
+    public static async Task Camp_LostFight_WoundedThenHealed()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        var camp = SurfaceLogic.Features().First(f => f.Type == FeatureType.MonsterCamp && f.Level == 1
+            && SurfaceLogic.Sites().Any(s => s.z == SurfaceZone.Outer && SurfaceLogic.Dist2(s.x, s.y, f.X, f.Y) < 400));
+        var site = SurfaceLogic.Sites().First(s => s.z == SurfaceZone.Outer && SurfaceLogic.Dist2(s.x, s.y, camp.X, camp.Y) < 400);
+
+        await using var c = new TestClient();
+        await c.ConnectAsync(server.WsUri);
+        await c.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:hunter" });
+        await c.ExpectAsync(MessageTypes.CityState);
+        await server.Sessions.ModifyCityAsync("dev-hunter", city =>
+        {
+            city.Surface.X = site.x;
+            city.Surface.Y = site.y;
+            city.Troops[TroopType.Shield] = 100;
+        }, CancellationToken.None);
+        await c.ExpectAsync(MessageTypes.CityState);
+
+        // 只帶 30 兵去打：一定打輸，有傷兵
+        await c.SendAsync(MessageTypes.MapMarch, new MapMarchRequest { Hero = HeroId.Hold, Troops = new() { [TroopType.Shield] = 30 }, X = camp.X, Y = camp.Y });
+        var m = City(await c.ExpectAsync(MessageTypes.CityState)).Surface.Marches[0];
+        server.Clock.Advance(m.ArriveAt - server.Clock.NowMs);
+        await server.Sessions.TickAsync(CancellationToken.None);
+        var fight = (await c.ExpectAsync(MessageTypes.MarchArrived)).GetProperty("data");
+        Assert.True(fight.GetProperty("battleLost").GetBoolean(), "打輸");
+        var after = City(await c.ExpectAsync(MessageTypes.CityState));
+        long wounded = after.Wounded.GetValueOrDefault(TroopType.Shield);
+        Assert.True(wounded > 0, "有傷兵進醫館");
+
+        await c.SendAsync(MessageTypes.CityHeal, new HealRequest { Troops = new() { [TroopType.Shield] = wounded } });
+        var healing = City(await c.ExpectAsync(MessageTypes.CityState));
+        Assert.True(healing.Healing != null, "開始治療");
+        server.Clock.Advance(healing.Healing!.FinishAtMs - server.Clock.NowMs);
+        await server.Sessions.TickAsync(CancellationToken.None);
+        var healed = (await c.ExpectAsync(MessageTypes.HealingCompleted)).GetProperty("data");
+        Assert.Equal(wounded, healed.GetProperty("troops").GetProperty("Shield").GetInt64(), "推播治療完成");
+    }
+
+    [Test]
     public static async Task SecondLogin_KicksFirstConnection()
     {
         await using var server = new TestServer();

@@ -30,6 +30,12 @@ namespace AbyssKingdom.Shared.City
         /// <summary>兵營訓練隊列（一條，與建築隊列分開）；null 代表空閒。</summary>
         public TrainingJob Training { get; set; }
 
+        /// <summary>醫館裡等待治療的傷兵。</summary>
+        public Dictionary<TroopType, long> Wounded { get; set; } = new Dictionary<TroopType, long>();
+
+        /// <summary>醫館治療隊列；null 代表空閒。</summary>
+        public HealingJob Healing { get; set; }
+
         /// <summary>背包道具數量（加速道具等）。</summary>
         public Dictionary<ItemType, long> Items { get; set; } = new Dictionary<ItemType, long>();
 

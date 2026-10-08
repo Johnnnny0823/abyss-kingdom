@@ -8,6 +8,7 @@ namespace AbyssKingdom.Shared.City
     {
         Building = 0,
         Training = 1,
+        Healing = 2,
     }
 
     public enum CancelResult

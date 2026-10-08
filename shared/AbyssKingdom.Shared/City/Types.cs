@@ -9,7 +9,7 @@ namespace AbyssKingdom.Shared.City
         Crystal = 3,  // 響晶
     }
 
-    /// <summary>MVP 的 7 種建築：主堡 + 6 種。</summary>
+    /// <summary>建築：主堡 + 7 種。</summary>
     public enum BuildingType
     {
         Keep = 0,         // 主堡：其他建築等級不可超過主堡
@@ -19,6 +19,7 @@ namespace AbyssKingdom.Shared.City
         CrystalMine = 4,  // 響響晶脈：產響晶
         Warehouse = 5,    // 倉庫：提高資源上限
         Barracks = 6,     // 兵營：之後訓練部隊用
+        Hospital = 7,     // 醫館：收容並治療傷兵
     }
 
     /// <summary>開始升級的結果碼，客戶端依此顯示錯誤訊息。</summary>

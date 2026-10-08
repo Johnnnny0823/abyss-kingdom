@@ -130,14 +130,15 @@ public sealed class SessionManager : BackgroundService
         {
             UpgradeJob? completed;
             TrainingJob? trained;
+            HealingJob? healed;
             List<MarchEvent> marchEvents;
             byte[]? snapshot = null;
             await session.Gate.WaitAsync(ct);
             try
             {
-                completed = CityLogic.Advance(session.Record.City, now, out trained);
+                completed = CityLogic.Advance(session.Record.City, now, out trained, out healed);
                 marchEvents = MarchLogic.Advance(session.Record.City, now, _world, session.PlayerId);
-                if (completed != null || trained != null || marchEvents.Count > 0)
+                if (completed != null || trained != null || healed != null || marchEvents.Count > 0)
                 {
                     session.Dirty = true;
                     snapshot = JsonSerializer.SerializeToUtf8Bytes(session.Record.City, _json);
@@ -162,11 +163,15 @@ public sealed class SessionManager : BackgroundService
                         Troop = trained.Troop,
                         Count = trained.Count,
                     });
+                if (healed != null)
+                    await SafeSend(session, MessageTypes.HealingCompleted, new HealingCompletedMessage { Troops = healed.Troops });
                 foreach (var ev in marchEvents)
                     await SafeSend(session, MessageTypes.MarchArrived, new MarchArrivedMessage
                     {
                         March = ev.MarchId, Hero = ev.Hero, Tile = ev.Tile, Disbanded = ev.Disbanded,
                         Gathering = ev.Gathering, Occupied = ev.Occupied, GatherDone = ev.GatherDone, Carry = ev.Carry,
+                        LootItems = ev.LootItems, BattleWon = ev.BattleWon, BattleLost = ev.BattleLost, CampGone = ev.CampGone,
+                        Wounded = ev.Wounded, Dead = ev.Dead,
                     });
                 await SafeSend(session, MessageTypes.CityState, new CityStateMessage { ServerTimeMs = now, City = JsonSerializer.Deserialize<CityState>(snapshot, _json) });
             }

@@ -12,6 +12,7 @@ namespace AbyssKingdom.Shared.City
         /// <summary>
         /// 取消隊列。建築：退還該級成本的一定比例。
         /// 訓練：已訓練完的士兵照算入營，尚未訓練的部分退還一定比例資源。
+        /// 治療：傷兵回到醫館，退還一定比例資源。
         /// </summary>
         public static CancelResult Cancel(CityState state, QueueType queue, long nowMs)
         {
@@ -25,6 +26,16 @@ namespace AbyssKingdom.Shared.City
                 foreach (var r in CityConfig.AllResources)
                     Refund(state, r, CityConfig.UpgradeCost(job.Building, job.TargetLevel, r));
                 state.Upgrade = null;
+                return CancelResult.Ok;
+            }
+
+            if (queue == QueueType.Healing)
+            {
+                var heal = state.Healing;
+                if (heal == null) return CancelResult.NothingToCancel;
+                foreach (var kv in heal.Troops) state.Wounded[kv.Key] = (state.Wounded.TryGetValue(kv.Key, out var w) ? w : 0) + kv.Value;
+                foreach (var r in CityConfig.AllResources) Refund(state, r, HealCost(heal.Troops, r));
+                state.Healing = null;
                 return CancelResult.Ok;
             }
 
@@ -97,12 +108,14 @@ namespace AbyssKingdom.Shared.City
         static long? FinishAt(CityState state, QueueType queue)
         {
             if (queue == QueueType.Building) return state.Upgrade?.FinishAtMs;
+            if (queue == QueueType.Healing) return state.Healing?.FinishAtMs;
             return state.Training?.FinishAtMs;
         }
 
         static void SetFinishAt(CityState state, QueueType queue, long finishAtMs)
         {
             if (queue == QueueType.Building) state.Upgrade.FinishAtMs = finishAtMs;
+            else if (queue == QueueType.Healing) state.Healing.FinishAtMs = finishAtMs;
             else state.Training.FinishAtMs = finishAtMs;
         }
     }
