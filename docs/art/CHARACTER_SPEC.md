@@ -76,3 +76,4 @@ motif, slate blue and brass color palette, full body, transparent background, no
 - 主將頁：`HeroPage.cs`。有立繪就當背景顯示（等比例縮放、完整顯示），並隱藏剪影；列表的主將卡片有頭像就加在名字前面。
 - 大地圖行軍：`SurfaceView.ApplyTroopArt`。用人數最多的兵種的圖，高 0.85 世界單位、永遠面向鏡頭；主將頭像掛在上方，高 0.32。有 2D 圖時隱藏 3D 小兵，但保留表示出征（金）或返回（藍）的旗子。
 - 2026-10-09 已用暫時的方塊測試圖驗證過主將頁與地圖兩處，驗證後已刪除。
+- **目前的圖（第一版）**：使用者用 ChatGPT 生成（2026-10-09；Steam 申報 AI 內容時要用到這筆紀錄）。原始檔在 `art/source/`：`characters_sheet_v1.webp` 是九張擠在一張的大圖，`hold_portrait_v1.webp` 是霍德的單張高解析立繪。用 `tools/art/slice_sheet.py` 切成規格檔案：裁切、清掉邊緣半透明雜點、去掉被切進來的隔壁角色、縮放，頭像裁成圓形。之後換新圖時，裁切範圍要重新調。
