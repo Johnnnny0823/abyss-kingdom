@@ -30,6 +30,7 @@ public sealed class WorldService : IFieldRegistry
         public string PlayerId = "";
         public string Name = "";
         public long Power;
+        public long ShieldUntil;
     }
 
     private readonly IPlayerStore _store;
@@ -69,7 +70,7 @@ public sealed class WorldService : IFieldRegistry
     private void Register(int site, PlayerRecord r)
     {
         if (_byPlayer.TryGetValue(r.Id, out var old) && old != site) _sites.Remove(old);
-        _sites[site] = new Owner { PlayerId = r.Id, Name = r.DisplayName, Power = PowerLogic.TotalPower(r.City) };
+        _sites[site] = new Owner { PlayerId = r.Id, Name = r.DisplayName, Power = PowerLogic.TotalPower(r.City), ShieldUntil = r.City.ShieldUntilMs };
         _byPlayer[r.Id] = site;
     }
 
@@ -117,6 +118,7 @@ public sealed class WorldService : IFieldRegistry
             if (!_byPlayer.TryGetValue(record.Id, out var site) || !_sites.TryGetValue(site, out var o)) return;
             o.Name = record.DisplayName;
             o.Power = PowerLogic.TotalPower(record.City);
+            o.ShieldUntil = record.City.ShieldUntilMs;
         }
     }
 
@@ -207,9 +209,31 @@ public sealed class WorldService : IFieldRegistry
     }
 
     /// <summary>地表所有主城（公開資訊；不包含其他玩家的帳號 ID）。</summary>
-    public List<CityPin> Pins(string viewerId)
+    public List<CityPin> Pins(string viewerId, long nowMs)
     {
         lock (_sites)
-            return _sites.Select(p => new CityPin { X = p.Key % SurfaceConfig.Size, Y = p.Key / SurfaceConfig.Size, Name = p.Value.Name, Power = p.Value.Power, Mine = p.Value.PlayerId == viewerId }).ToList();
+            return _sites.Select(p => new CityPin
+            {
+                X = p.Key % SurfaceConfig.Size, Y = p.Key / SurfaceConfig.Size, Name = p.Value.Name, Power = p.Value.Power,
+                Mine = p.Value.PlayerId == viewerId, Shielded = p.Value.ShieldUntil > nowMs,
+            }).ToList();
+    }
+
+    /// <summary>這一格是哪位領主的主城（2×2 佔地內任一格）。</summary>
+    public string? CityOwnerAt(int tile)
+    {
+        var (x, y) = SurfaceLogic.FromTile(tile);
+        lock (_sites)
+            for (int dy = 0; dy < SurfaceConfig.CityFootprint; dy++)
+                for (int dx = 0; dx < SurfaceConfig.CityFootprint; dx++)
+                    if (x - dx >= 0 && y - dy >= 0 && _sites.TryGetValue(SurfaceLogic.Tile(x - dx, y - dy), out var o)) return o.PlayerId;
+        return null;
+    }
+
+    /// <summary>領主名稱（找不到回傳「某位領主」）。</summary>
+    public string NameOf(string playerId)
+    {
+        lock (_sites)
+            return _byPlayer.TryGetValue(playerId, out var site) && _sites.TryGetValue(site, out var o) ? o.Name : "某位領主";
     }
 }

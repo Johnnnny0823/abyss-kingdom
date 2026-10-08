@@ -45,6 +45,12 @@ namespace AbyssKingdom.Shared.City
         /// <summary>背包中的裝備（含穿在主將身上的）。</summary>
         public List<GearItem> Gear { get; set; } = new List<GearItem>();
 
+        /// <summary>護盾到期時間（Unix 毫秒）；在這之前不能被攻打。攻打別人會立刻解除。</summary>
+        public long ShieldUntilMs { get; set; }
+
+        /// <summary>是否已發過新手護盾。</summary>
+        public bool NewbieShieldGranted { get; set; }
+
         /// <summary>地表：主城位置。</summary>
         public SurfaceState Surface { get; set; } = new SurfaceState();
 
@@ -98,6 +104,7 @@ namespace AbyssKingdom.Shared.City
             foreach (var t in CityConfig.AllTroops)
                 s.Troops[t] = 0;
             CityLayout.EnsureLayout(s);
+            PvpLogic.GrantNewbieShieldOnce(s, nowMs);
             CityLogic.GrantStarterItemsOnce(s);
             HeroLogic.EnsureStarterHeroes(s);
             GearLogic.EnsureStarterGear(s);

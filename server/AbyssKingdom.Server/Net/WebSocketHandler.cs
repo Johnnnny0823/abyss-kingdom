@@ -241,7 +241,7 @@ public sealed class WebSocketHandler
                 break;
 
             case MessageTypes.WorldCities:
-                await conn.SendAsync(MessageTypes.WorldCities, reqId, new WorldCitiesMessage { Cities = _world.Pins(session.PlayerId) });
+                await conn.SendAsync(MessageTypes.WorldCities, reqId, new WorldCitiesMessage { Cities = _world.Pins(session.PlayerId, _clock.NowMs) });
                 break;
 
             case MessageTypes.WorldTile:

@@ -36,6 +36,9 @@ namespace AbyssKingdom.Shared.Map
         public Dictionary<ItemType, long> LootItems { get; set; } = new Dictionary<ItemType, long>();
 
         public bool Gathering => GatherStartMs > 0;
+
+        /// <summary>抵達敵方主城、等伺服器結算攻城中。</summary>
+        public bool Sieging { get; set; }
         public long GatherEndMs => GatherStartMs + (GatherCap * 60_000 + GatherRatePerMin - 1) / System.Math.Max(1, GatherRatePerMin);
 
         public int Destination => Path[Path.Count - 1];
@@ -82,6 +85,11 @@ namespace AbyssKingdom.Shared.Map
         public Dictionary<ItemType, long> LootItems;
         public Dictionary<TroopType, long> Wounded;
         public Dictionary<TroopType, long> Dead;
+        public bool Shielded;    // 攻城：對方有護盾，沒有開打
+        /// <summary>攻城：抵達敵方主城（伺服器接著要在守方身上結算）。值是守方的玩家 ID。</summary>
+        public string AttackTarget;
+        /// <summary>攻城：抵達當下的攻方陣容（在攻方的鎖內算好）。</summary>
+        public List<(Battle.SquadInput squad, TroopType troop)> AttackSquads;
     }
 
     public static class MarchConfig
@@ -296,6 +304,10 @@ namespace AbyssKingdom.Shared.Map
             var path = FindPath(home.x, home.y, x, y);
             if (path == null) return MarchResult.Unreachable;
 
+            // 出兵攻打別人的主城：自己的護盾立刻解除
+            var targetOwner = fields?.CityOwnerAt(SurfaceLogic.Tile(x, y));
+            if (targetOwner != null && targetOwner != owner) city.ShieldUntilMs = 0;
+
             var march = new March { Id = ++state.NextMarchId, Hero = hero, Path = Encode(path) };
             foreach (var kv in troops)
             {
@@ -317,11 +329,12 @@ namespace AbyssKingdom.Shared.Map
             if (march == null) return MarchResult.UnknownMarch;
             if (march.Returning) return MarchResult.Ok;
             if (march.Gathering) StopGathering(march, nowMs, fields, owner);
+            march.Sieging = false;
             TurnBack(city, march, nowMs);
             return MarchResult.Ok;
         }
 
-        static void TurnBack(CityState city, March march, long nowMs)
+        internal static void TurnBack(CityState city, March march, long nowMs)
         {
             var here = CurrentTile(march, nowMs);
             var home = SurfaceLogic.CityCenter(city.Surface);
@@ -410,6 +423,15 @@ namespace AbyssKingdom.Shared.Map
                     foreach (var kv in m.LootItems) city.Items[kv.Key] = city.GetItemCount(kv.Key) + kv.Value;
                     state.Marches.RemoveAt(i);
                     events.Add(new MarchEvent { MarchId = m.Id, Hero = m.Hero, Tile = m.Destination, Disbanded = true, Carry = m.Carry, LootItems = m.LootItems });
+                    continue;
+                }
+                var cityOwner = fields?.CityOwnerAt(m.Destination);
+                if (cityOwner != null && cityOwner != owner)
+                {
+                    // 攻城：先駐紮在城下，交給伺服器到守方那邊結算
+                    m.Stationed = true;
+                    m.Sieging = true;
+                    events.Add(new MarchEvent { MarchId = m.Id, Hero = m.Hero, Tile = m.Destination, AttackTarget = cityOwner, AttackSquads = Squads(city, m) });
                     continue;
                 }
                 var (fx, fy) = SurfaceLogic.FromTile(m.Destination);

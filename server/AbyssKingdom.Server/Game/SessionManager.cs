@@ -60,8 +60,30 @@ public sealed class SessionManager : BackgroundService
 
     public int OnlineCount => _online.Count;
 
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, SemaphoreSlim> _loadLocks = new();
+    private SemaphoreSlim LoadLock(string playerId) => _loadLocks.GetOrAdd(playerId, _ => new SemaphoreSlim(1, 1));
+
     public async Task<PlayerSession> LoginAsync(string playerId, string displayName, IClientConnection connection, CancellationToken ct)
     {
+        var loadLock = LoadLock(playerId);
+        await loadLock.WaitAsync(ct);
+        PlayerSession result;
+        List<MarchEvent> loginAttacks;
+        try
+        {
+            (result, loginAttacks) = await LoginLockedAsync(playerId, displayName, connection, ct);
+        }
+        finally
+        {
+            loadLock.Release();
+        }
+        foreach (var ev in loginAttacks) await ResolveAttackAsync(result, ev, ct); // 離線期間抵達敵城的行軍
+        return result;
+    }
+
+    private async Task<(PlayerSession, List<MarchEvent>)> LoginLockedAsync(string playerId, string displayName, IClientConnection connection, CancellationToken ct)
+    {
+        var noAttacks = new List<MarchEvent>();
         // 同一帳號重複登入：沿用記憶體中的狀態，踢掉舊連線
         if (_online.TryGetValue(playerId, out var existing))
         {
@@ -76,7 +98,7 @@ public sealed class SessionManager : BackgroundService
             {
                 existing.Gate.Release();
             }
-            return existing;
+            return (existing, noAttacks);
         }
 
         var record = await _store.LoadAsync(playerId, ct);
@@ -101,17 +123,19 @@ public sealed class SessionManager : BackgroundService
         if (HeroLogic.EnsureStarterHeroes(record.City)) session.Dirty = true;
         if (GearLogic.EnsureStarterGear(record.City)) session.Dirty = true;
         if (LegacyMigration.Run(record.City)) session.Dirty = true; // 舊深淵行軍的部隊還給兵營
+        if (PvpLogic.GrantNewbieShieldOnce(record.City, _clock.NowMs)) session.Dirty = true; // 功能上線前的舊帳號也有一次新手護盾
         if (await _world.EnsureSiteAsync(record, ct)) session.Dirty = true; // 地表主城位置
-        if (MarchLogic.Advance(record.City, _clock.NowMs, _world, playerId).Count > 0) session.Dirty = true; // 離線期間抵達、採集的行軍
+        var loginEvents = MarchLogic.Advance(record.City, _clock.NowMs, _world, playerId);
+        if (loginEvents.Count > 0) session.Dirty = true; // 離線期間抵達、採集的行軍
         var added = _online.GetOrAdd(playerId, session);
         if (!ReferenceEquals(added, session))
         {
             // 極少見：兩個連線同時登入同一帳號，以先到的為準
             added.Connection = connection;
-            return added;
+            return (added, noAttacks);
         }
         _log.LogInformation("Player {Id} logged in (new={New}). Online={Count}", playerId, isNew, _online.Count);
-        return session;
+        return (session, loginEvents.Where(e => e.AttackTarget != null).ToList());
     }
 
     public async Task LogoutAsync(PlayerSession session, IClientConnection connection)
@@ -165,7 +189,7 @@ public sealed class SessionManager : BackgroundService
                     });
                 if (healed != null)
                     await SafeSend(session, MessageTypes.HealingCompleted, new HealingCompletedMessage { Troops = healed.Troops });
-                foreach (var ev in marchEvents)
+                foreach (var ev in marchEvents.Where(e => e.AttackTarget == null))
                     await SafeSend(session, MessageTypes.MarchArrived, new MarchArrivedMessage
                     {
                         March = ev.MarchId, Hero = ev.Hero, Tile = ev.Tile, Disbanded = ev.Disbanded,
@@ -174,8 +198,60 @@ public sealed class SessionManager : BackgroundService
                         Wounded = ev.Wounded, Dead = ev.Dead,
                     });
                 await SafeSend(session, MessageTypes.CityState, new CityStateMessage { ServerTimeMs = now, City = JsonSerializer.Deserialize<CityState>(snapshot, _json) });
+                foreach (var ev in marchEvents.Where(e => e.AttackTarget != null))
+                    await ResolveAttackAsync(session, ev, ct);
             }
         }
+    }
+
+    /// <summary>
+    /// 攻城結算（兩段，不同時持有兩位玩家的鎖）：
+    /// 1. 在守方身上開打、扣兵、掠奪（守方在線就鎖 Gate，離線就讀檔改完存回）；
+    /// 2. 回到攻方的鎖內，套用倖存部隊與掠奪品，行軍回城。
+    /// </summary>
+    private async Task ResolveAttackAsync(PlayerSession attacker, MarchEvent ev, CancellationToken ct)
+    {
+        var now = _clock.NowMs;
+        ulong seed = _world.NextSeed();
+        PvpOutcome? outcome = null;
+        bool found = await ModifyCityAsync(ev.AttackTarget, def => outcome = PvpLogic.ResolveOnDefender(def, ev.AttackSquads, seed, now), ct);
+        if (!found || outcome == null)
+        {
+            outcome = new PvpOutcome { Shielded = true };
+            foreach (var a in ev.AttackSquads) outcome.AttackerSurvivors[a.troop] = a.squad.Count;
+        }
+        string targetName = _world.NameOf(ev.AttackTarget);
+
+        if (!outcome.Shielded && _online.TryGetValue(ev.AttackTarget, out var defender))
+            await SafeSend(defender, MessageTypes.CityAttacked, new CityAttackedMessage
+            {
+                AttackerName = attacker.Record.DisplayName, DefenderWon = !outcome.AttackerWon,
+                Wounded = outcome.DefenderWounded, Dead = outcome.DefenderDead, Plundered = outcome.Plunder,
+            });
+
+        MarchEvent? done;
+        byte[]? snapshot = null;
+        await attacker.Gate.WaitAsync(ct);
+        try
+        {
+            done = PvpLogic.FinishAttack(attacker.Record.City, ev.MarchId, outcome, now);
+            if (done != null)
+            {
+                attacker.Dirty = true;
+                snapshot = JsonSerializer.SerializeToUtf8Bytes(attacker.Record.City, _json);
+            }
+        }
+        finally
+        {
+            attacker.Gate.Release();
+        }
+        if (done == null || snapshot == null) return;
+        await SafeSend(attacker, MessageTypes.MarchArrived, new MarchArrivedMessage
+        {
+            March = done.MarchId, Hero = done.Hero, Tile = done.Tile, BattleWon = done.BattleWon, BattleLost = done.BattleLost,
+            Shielded = done.Shielded, Carry = done.Carry, Wounded = done.Wounded, Dead = done.Dead, TargetName = targetName,
+        });
+        await SafeSend(attacker, MessageTypes.CityState, new CityStateMessage { ServerTimeMs = now, City = JsonSerializer.Deserialize<CityState>(snapshot, _json) });
     }
 
     public async Task SaveAllAsync(bool force, CancellationToken ct)
@@ -231,12 +307,29 @@ public sealed class SessionManager : BackgroundService
             return true;
         }
 
-        var record = await _store.LoadAsync(playerId, ct);
-        if (record == null) return false;
-        CityLogic.Advance(record.City, now);
-        apply(record.City);
-        await _store.SaveAsync(record, ct);
-        return true;
+        var loadLock = LoadLock(playerId);
+        await loadLock.WaitAsync(ct);
+        try
+        {
+            // 拿到鎖之後玩家可能剛好登入了：改走線上的路
+            if (_online.ContainsKey(playerId))
+            {
+                loadLock.Release();
+                loadLock = null;
+                return await ModifyCityAsync(playerId, apply, ct);
+            }
+            var record = await _store.LoadAsync(playerId, ct);
+            if (record == null) return false;
+            CityLogic.Advance(record.City, now);
+            apply(record.City);
+            await _store.SaveAsync(record, ct);
+            _world.Update(record);
+            return true;
+        }
+        finally
+        {
+            loadLock?.Release();
+        }
     }
 
     private async Task SafeSend(PlayerSession session, string type, object data)

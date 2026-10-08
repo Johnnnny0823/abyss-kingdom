@@ -42,6 +42,9 @@ namespace AbyssKingdom.Shared.Map
         /// <summary>戰鬥用的亂數種子（由伺服器決定，客戶端無法預知）。</summary>
         ulong NextSeed();
 
+        /// <summary>這一格是哪位領主的主城（2×2 佔地內任一格都算）；沒有回傳 null。</summary>
+        string CityOwnerAt(int tile);
+
         /// <summary>嘗試佔用資源田。成功回傳目前存量（&gt; 0）；已被別人佔用回傳 -1；採空了回傳 0。</summary>
         long Occupy(int tile, string owner, long marchId, long nowMs);
 
@@ -62,6 +65,18 @@ namespace AbyssKingdom.Shared.Map
         public bool CampAvailable(int tile, long nowMs) => !_campBack.TryGetValue(tile, out var back) || nowMs >= back;
         public void CampDefeated(int tile, long nowMs) => _campBack[tile] = nowMs + CampConfig.RespawnMs;
         public ulong NextSeed() => _seed++;
+
+        private readonly Dictionary<int, string> _cities = new Dictionary<int, string>();
+
+        /// <summary>登記一座主城（佔地左上角）。</summary>
+        public void SetCity(int x, int y, string owner)
+        {
+            for (int dy = 0; dy < SurfaceConfig.CityFootprint; dy++)
+                for (int dx = 0; dx < SurfaceConfig.CityFootprint; dx++)
+                    _cities[SurfaceLogic.Tile(x + dx, y + dy)] = owner;
+        }
+
+        public string CityOwnerAt(int tile) => _cities.TryGetValue(tile, out var o) ? o : null;
 
         public long Stock(int tile)
         {

@@ -33,6 +33,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string MapRecall = "map.recall";
         public const string WorldCities = "world.cities";
         public const string WorldTile = "world.tile";
+        public const string CityAttacked = "city.attacked";
         public const string HealingCompleted = "city.healingCompleted";
         public const string Ping = "ping";
 
@@ -85,6 +86,16 @@ namespace AbyssKingdom.Shared.Protocol
     public class UpgradeRequest
     {
         public BuildingType Building { get; set; }
+    }
+
+    /// <summary>伺服器推播（給守方）：主城被攻打的結果。</summary>
+    public class CityAttackedMessage
+    {
+        public string AttackerName { get; set; }
+        public bool DefenderWon { get; set; }
+        public Dictionary<TroopType, long> Wounded { get; set; }
+        public Dictionary<TroopType, long> Dead { get; set; }
+        public Dictionary<ResourceType, long> Plundered { get; set; }
     }
 
     /// <summary>治療醫館裡的傷兵（各兵種數量）。</summary>
@@ -179,6 +190,8 @@ namespace AbyssKingdom.Shared.Protocol
         public string Name { get; set; }
         public long Power { get; set; }
         public bool Mine { get; set; }
+        /// <summary>護盾中（不能被攻打）。</summary>
+        public bool Shielded { get; set; }
     }
 
     /// <summary>查詢地表某一格的即時狀態（目前只有資源田的存量與誰在採）。</summary>
@@ -237,6 +250,10 @@ namespace AbyssKingdom.Shared.Protocol
         /// <summary>這場戰鬥的傷兵（送進醫館）與陣亡。</summary>
         public Dictionary<TroopType, long> Wounded { get; set; }
         public Dictionary<TroopType, long> Dead { get; set; }
+        /// <summary>攻城：對方有護盾，沒有開打。</summary>
+        public bool Shielded { get; set; }
+        /// <summary>攻城：被攻打的領主名稱（不是攻城時為 null）。</summary>
+        public string TargetName { get; set; }
     }
 
     public class HeroStarUpRequest

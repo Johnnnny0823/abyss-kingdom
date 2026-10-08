@@ -553,6 +553,48 @@ public static class ServerIntegrationTests
     }
 
     [Test]
+    public static async Task Pvp_AttackOnlineDefender_PlundersAndNotifiesBoth()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        await using var atk = new TestClient();
+        await atk.ConnectAsync(server.WsUri);
+        await atk.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:raider", DisplayName = "掠奪者" });
+        var atkCity = City(await atk.ExpectAsync(MessageTypes.CityState));
+        await using var def = new TestClient();
+        await def.ConnectAsync(server.WsUri);
+        await def.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:keeper", DisplayName = "守城者" });
+        var defCity = City(await def.ExpectAsync(MessageTypes.CityState));
+        Assert.True(defCity.ShieldUntilMs > server.Clock.NowMs, "新帳號有新手護盾");
+
+        // 測試用：拿掉守方護盾、給攻方部隊
+        await server.Sessions.ModifyCityAsync("dev-keeper", c => { c.ShieldUntilMs = 0; foreach (var r in CityConfig.AllResources) c.Resources[r] = 5000; }, CancellationToken.None);
+        await def.ExpectAsync(MessageTypes.CityState);
+        await server.Sessions.ModifyCityAsync("dev-raider", c => c.Troops[TroopType.Shield] = 250, CancellationToken.None);
+        await atk.ExpectAsync(MessageTypes.CityState);
+
+        await atk.SendAsync(MessageTypes.MapMarch, new MapMarchRequest { Hero = HeroId.Hold, Troops = new() { [TroopType.Shield] = 250 }, X = defCity.Surface.X, Y = defCity.Surface.Y });
+        var started = City(await atk.ExpectAsync(MessageTypes.CityState));
+        Assert.True(started.ShieldUntilMs == 0, "攻城解除自己的護盾");
+        var m = started.Surface.Marches[0];
+        server.Clock.Advance(m.ArriveAt - server.Clock.NowMs);
+        await server.Sessions.TickAsync(CancellationToken.None);
+
+        var attacked = (await def.ExpectAsync(MessageTypes.CityAttacked)).GetProperty("data");
+        Assert.Equal("掠奪者", attacked.GetProperty("attackerName").GetString(), "守方收到被攻打的通知");
+        Assert.True(!attacked.GetProperty("defenderWon").GetBoolean(), "空城被攻破");
+        var result = (await atk.ExpectAsync(MessageTypes.MarchArrived)).GetProperty("data");
+        Assert.True(result.GetProperty("battleWon").GetBoolean(), "攻方打贏");
+        Assert.Equal("守城者", result.GetProperty("targetName").GetString());
+        var back = City(await atk.ExpectAsync(MessageTypes.CityState)).Surface.Marches[0];
+        Assert.True(back.Returning && back.Carry.Values.Sum() > 0, "帶著掠奪品回城");
+
+        await def.SendAsync(MessageTypes.CityGet, null);
+        var defAfter = City(await def.ExpectAsync(MessageTypes.CityState));
+        Assert.True(defAfter.GetResource(ResourceType.Wood) < 5000, "守方資源被掠奪");
+    }
+
+    [Test]
     public static async Task SecondLogin_KicksFirstConnection()
     {
         await using var server = new TestServer();
