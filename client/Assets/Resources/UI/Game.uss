@@ -1,10 +1,10 @@
-/* 深淵王國：雛型介面樣式（深色深淵 + 金色點綴）。正式美術完成後替換。 */
+/* 深淵王國：介面樣式（2026-10-09 起：灰藍石板＋暖金點綴，搭配地圖的遺跡配色）。 */
 
 .root {
     flex-grow: 1;
     background-color: rgb(8, 11, 22);
     background-size: 100% 100%;
-    color: rgb(226, 230, 242);
+    color: rgb(232, 236, 240);
     font-size: 15px;
 }
 
@@ -12,9 +12,9 @@
 
 .panel {
     flex-shrink: 0;
-    background-color: rgba(22, 29, 54, 0.92);
+    background-color: rgba(24, 33, 44, 0.92);
     border-width: 1px;
-    border-color: rgb(46, 59, 102);
+    border-color: rgb(48, 64, 75);
     border-radius: 10px;
     padding: 14px 16px;
     margin-bottom: 12px;
@@ -34,16 +34,16 @@
     margin: 4px 0 10px 4px;
 }
 
-.muted { color: rgb(138, 147, 176); font-size: 13px; }
+.muted { color: rgb(144, 162, 166); font-size: 13px; }
 .row { flex-direction: row; align-items: center; }
 .grow { flex-grow: 1; }
 .spacer { flex-grow: 1; }
 
 .btn {
-    background-color: rgb(42, 54, 92);
-    color: rgb(226, 230, 242);
+    background-color: rgb(44, 58, 69);
+    color: rgb(232, 236, 240);
     border-width: 1px;
-    border-color: rgb(70, 86, 140);
+    border-color: rgb(76, 113, 117);
     border-radius: 7px;
     padding: 6px 14px;
     margin: 0 0 0 6px;
@@ -51,8 +51,8 @@
     -unity-font-style: bold;
     transition-duration: 0.12s;
 }
-.btn:hover { background-color: rgb(58, 72, 120); border-color: rgb(110, 130, 196); }
-.btn:active { background-color: rgb(34, 44, 76); }
+.btn:hover { background-color: rgb(60, 77, 88); border-color: rgb(116, 163, 167); }
+.btn:active { background-color: rgb(36, 48, 59); }
 .btn:disabled { opacity: 0.45; }
 
 .btn-primary {
@@ -79,9 +79,9 @@
 .progress {
     height: 10px;
     border-radius: 5px;
-    background-color: rgb(14, 19, 38);
+    background-color: rgb(16, 23, 34);
     border-width: 1px;
-    border-color: rgb(40, 52, 90);
+    border-color: rgb(42, 57, 68);
     margin: 8px 0 6px 0;
     overflow: hidden;
 }
@@ -106,7 +106,7 @@
 }
 .res-icon.small { width: 16px; height: 16px; border-radius: 8px; font-size: 9px; margin-right: 3px; }
 .res-Wood { background-color: rgb(150, 104, 58); }
-.res-Stone { background-color: rgb(118, 126, 142); }
+.res-Stone { background-color: rgb(124, 134, 138); }
 .res-Food { background-color: rgb(92, 140, 52); }
 .res-Crystal { background-color: rgb(56, 120, 200); }
 
@@ -121,12 +121,12 @@
     align-items: center;
     height: 64px;
     padding: 0 20px;
-    background-color: rgba(10, 14, 30, 0.95);
+    background-color: rgba(12, 18, 29, 0.95);
     border-bottom-width: 1px;
     border-color: rgb(60, 52, 36);
 }
 .brand { font-size: 24px; -unity-font-style: bold; color: rgb(236, 200, 124); letter-spacing: 3px; }
-.brand-sub { font-size: 12px; color: rgb(138, 147, 176); margin-left: 10px; margin-top: 8px; }
+.brand-sub { font-size: 12px; color: rgb(144, 162, 166); margin-left: 10px; margin-top: 8px; }
 
 .icon { margin-right: 6px; }
 .icon-small { margin-right: 3px; }
@@ -136,15 +136,15 @@
 .res-chip {
     flex-direction: row;
     align-items: center;
-    background-color: rgb(20, 27, 50);
+    background-color: rgb(22, 31, 42);
     border-width: 1px;
-    border-color: rgb(46, 59, 102);
+    border-color: rgb(48, 64, 75);
     border-radius: 16px;
     padding: 4px 12px 4px 5px;
     margin-left: 8px;
 }
 .res-amount { font-size: 15px; -unity-font-style: bold; }
-.res-cap { font-size: 12px; color: rgb(138, 147, 176); margin-left: 3px; }
+.res-cap { font-size: 12px; color: rgb(144, 162, 166); margin-left: 3px; }
 .res-amount.full { color: rgb(240, 150, 110); }
 
 .player-chip { margin-left: 18px; align-items: flex-end; }
@@ -163,13 +163,13 @@
     height: 162px;
     margin: 0 12px 12px 0;
     padding: 12px 14px;
-    background-color: rgba(22, 29, 54, 0.92);
+    background-color: rgba(24, 33, 44, 0.92);
     border-width: 1px;
-    border-color: rgb(46, 59, 102);
+    border-color: rgb(48, 64, 75);
     border-radius: 10px;
     transition-duration: 0.15s;
 }
-.building-card:hover { border-color: rgb(140, 120, 80); background-color: rgba(28, 36, 66, 0.95); }
+.building-card:hover { border-color: rgb(140, 120, 80); background-color: rgba(30, 41, 52, 0.95); }
 .building-card.upgrading { border-color: rgb(214, 170, 88); }
 
 .building-name { font-size: 17px; -unity-font-style: bold; }
@@ -184,13 +184,13 @@
     padding: 1px 8px;
     margin-left: 8px;
 }
-.building-desc { font-size: 12px; color: rgb(138, 147, 176); white-space: normal; margin: 6px 0 4px 0; height: 32px; }
+.building-desc { font-size: 12px; color: rgb(144, 162, 166); white-space: normal; margin: 6px 0 4px 0; height: 32px; }
 .building-footer { flex-direction: row; align-items: center; }
 
 /* 隊列 */
-.queue-idle { color: rgb(138, 147, 176); font-size: 14px; }
+.queue-idle { color: rgb(144, 162, 166); font-size: 14px; }
 .queue-title { font-size: 15px; -unity-font-style: bold; }
-.queue-time { font-size: 13px; color: rgb(190, 198, 222); }
+.queue-time { font-size: 13px; color: rgb(196, 210, 214); }
 
 /* 兵種選擇 */
 .troop-tabs { flex-direction: row; margin-bottom: 10px; }
@@ -201,17 +201,17 @@
     margin-right: 6px;
     border-radius: 8px;
     border-width: 1px;
-    border-color: rgb(46, 59, 102);
-    background-color: rgb(18, 24, 46);
+    border-color: rgb(48, 64, 75);
+    background-color: rgb(20, 28, 39);
     align-items: center;
 }
-.troop-tab:hover { border-color: rgb(110, 130, 196); }
+.troop-tab:hover { border-color: rgb(116, 163, 167); }
 .troop-tab.selected { border-color: rgb(214, 170, 88); background-color: rgb(40, 36, 30); }
 .troop-tab-name { font-size: 15px; -unity-font-style: bold; }
-.troop-tab-count { font-size: 12px; color: rgb(138, 147, 176); }
+.troop-tab-count { font-size: 12px; color: rgb(144, 162, 166); }
 
 .count-slider .unity-base-slider__dragger { background-color: rgb(214, 170, 88); border-color: rgb(250, 220, 150); }
-.count-slider .unity-base-slider__tracker { background-color: rgb(30, 40, 72); border-color: rgb(46, 59, 102); }
+.count-slider .unity-base-slider__tracker { background-color: rgb(32, 45, 56); border-color: rgb(48, 64, 75); }
 
 /* 道具列表 */
 .item-row {
@@ -219,7 +219,7 @@
     align-items: center;
     padding: 5px 0;
     border-bottom-width: 1px;
-    border-color: rgb(34, 44, 78);
+    border-color: rgb(36, 49, 60);
 }
 .item-name { flex-grow: 1; font-size: 14px; }
 .item-count { font-size: 13px; color: rgb(232, 196, 118); width: 50px; -unity-text-align: middle-right; margin-right: 8px; }
@@ -236,21 +236,21 @@
 .login-card {
     width: 460px;
     padding: 34px 38px 28px 38px;
-    background-color: rgba(18, 24, 46, 0.97);
+    background-color: rgba(20, 28, 39, 0.97);
     border-width: 1px;
     border-color: rgb(120, 98, 56);
     border-radius: 14px;
 }
 .login-title { font-size: 40px; -unity-font-style: bold; color: rgb(236, 200, 124); -unity-text-align: middle-center; letter-spacing: 8px; }
-.login-sub { font-size: 14px; color: rgb(138, 147, 176); -unity-text-align: middle-center; margin-bottom: 24px; letter-spacing: 2px; }
-.field-label { font-size: 13px; color: rgb(170, 178, 204); margin: 10px 0 4px 2px; }
+.login-sub { font-size: 14px; color: rgb(144, 162, 166); -unity-text-align: middle-center; margin-bottom: 24px; letter-spacing: 2px; }
+.field-label { font-size: 13px; color: rgb(176, 191, 195); margin: 10px 0 4px 2px; }
 
 .unity-text-field { margin: 0; }
 .unity-text-field > .unity-base-text-field__input {
-    background-color: rgb(10, 14, 30);
-    border-color: rgb(52, 66, 112);
+    background-color: rgb(12, 18, 29);
+    border-color: rgb(54, 71, 82);
     border-radius: 6px;
-    color: rgb(226, 230, 242);
+    color: rgb(232, 236, 240);
     padding: 6px 8px;
     font-size: 14px;
 }
@@ -264,7 +264,7 @@
 .dialog {
     width: 440px;
     padding: 20px 22px;
-    background-color: rgba(18, 24, 46, 0.98);
+    background-color: rgba(20, 28, 39, 0.98);
     border-width: 1px;
     border-color: rgb(120, 98, 56);
     border-radius: 12px;
@@ -280,7 +280,7 @@
     align-items: flex-end;
 }
 .toast {
-    background-color: rgba(26, 40, 70, 0.96);
+    background-color: rgba(28, 44, 55, 0.96);
     border-left-width: 4px;
     border-color: rgb(96, 190, 160);
     border-radius: 6px;
@@ -294,22 +294,22 @@
 /* 捲軸：細、深色，隱藏上下箭頭 */
 .unity-scroller--vertical { width: 8px; border-width: 0; background-color: rgba(0, 0, 0, 0); margin-left: 4px; }
 .unity-scroller__low-button, .unity-scroller__high-button { display: none; }
-.unity-scroller .unity-base-slider__tracker { background-color: rgba(20, 27, 50, 0.6); border-width: 0; border-radius: 4px; }
-.unity-scroller .unity-base-slider__dragger { background-color: rgb(64, 78, 126); border-width: 0; border-radius: 4px; }
-.unity-scroller .unity-base-slider__dragger:hover { background-color: rgb(96, 112, 170); }
+.unity-scroller .unity-base-slider__tracker { background-color: rgba(22, 31, 42, 0.6); border-width: 0; border-radius: 4px; }
+.unity-scroller .unity-base-slider__dragger { background-color: rgb(66, 82, 93); border-width: 0; border-radius: 4px; }
+.unity-scroller .unity-base-slider__dragger:hover { background-color: rgb(102, 141, 145); }
 /* ───── 頁籤 ───── */
 .tabs { flex-direction: row; margin: 0 0 10px 0; }
 .tab {
     font-size: 17px;
     -unity-font-style: bold;
-    color: rgb(138, 147, 176);
+    color: rgb(144, 162, 166);
     padding: 4px 14px 8px 4px;
     margin-right: 14px;
     border-bottom-width: 2px;
     border-color: rgba(0, 0, 0, 0);
     background-color: rgba(0, 0, 0, 0);
 }
-.tab:hover { color: rgb(226, 230, 242); }
+.tab:hover { color: rgb(232, 236, 240); }
 .tab.selected { color: rgb(232, 196, 118); border-color: rgb(214, 170, 88); }
 
 /* ───── 主將 ───── */
@@ -318,107 +318,107 @@
     width: 372px;
     margin: 0 12px 12px 0;
     padding: 14px 16px;
-    background-color: rgba(22, 29, 54, 0.92);
+    background-color: rgba(24, 33, 44, 0.92);
     border-width: 1px;
     border-left-width: 4px;
-    border-color: rgb(46, 59, 102);
+    border-color: rgb(48, 64, 75);
     border-radius: 10px;
 }
 .hero-name { font-size: 22px; -unity-font-style: bold; }
-.hero-title { font-size: 13px; color: rgb(170, 178, 204); margin-top: 2px; }
-.hero-bio { font-size: 12px; color: rgb(138, 147, 176); white-space: normal; margin: 6px 0 8px 0; -unity-font-style: italic; }
+.hero-title { font-size: 13px; color: rgb(176, 191, 195); margin-top: 2px; }
+.hero-bio { font-size: 12px; color: rgb(144, 162, 166); white-space: normal; margin: 6px 0 8px 0; -unity-font-style: italic; }
 .grade-badge { font-size: 12px; -unity-font-style: bold; border-radius: 9px; padding: 1px 8px; margin-left: 10px; border-width: 1px; }
-.stat { flex-grow: 1; flex-basis: 0; align-items: center; padding: 6px 0; margin-right: 6px; background-color: rgb(16, 22, 42); border-radius: 6px; }
+.stat { flex-grow: 1; flex-basis: 0; align-items: center; padding: 6px 0; margin-right: 6px; background-color: rgb(18, 26, 37); border-radius: 6px; }
 .stat-value { font-size: 16px; -unity-font-style: bold; }
-.stat-label { font-size: 11px; color: rgb(138, 147, 176); }
+.stat-label { font-size: 11px; color: rgb(144, 162, 166); }
 .exp-row { flex-direction: row; align-items: center; margin-top: 8px; }
 .book-btn { flex-grow: 1; flex-basis: 0; margin: 8px 6px 0 0; }
 
 .grade-Common { border-color: rgb(150, 150, 160); color: rgb(210, 210, 220); }
 .grade-Uncommon { border-color: rgb(96, 170, 90); color: rgb(150, 220, 140); }
 .grade-Rare { border-color: rgb(70, 130, 220); color: rgb(130, 180, 250); }
-.grade-Epic { border-color: rgb(150, 90, 220); color: rgb(196, 150, 250); }
+.grade-Epic { border-color: rgb(156, 155, 159); color: rgb(202, 200, 204); }
 .grade-Legendary { border-color: rgb(220, 170, 70); color: rgb(250, 210, 120); }
 .grade-Mythic { border-color: rgb(200, 50, 60); color: rgb(250, 120, 130); background-color: rgb(30, 8, 12); }
 
 /* ───── 主將頁：選擇列、角色雛形、裝備格、戰力 ───── */
 .hero-chip {
     width: 200px; padding: 8px 12px; margin-right: 10px;
-    background-color: rgba(22, 29, 54, 0.92);
-    border-width: 1px; border-left-width: 4px; border-color: rgb(46, 59, 102); border-radius: 8px;
+    background-color: rgba(24, 33, 44, 0.92);
+    border-width: 1px; border-left-width: 4px; border-color: rgb(48, 64, 75); border-radius: 8px;
 }
-.hero-chip:hover { background-color: rgba(30, 38, 70, 0.95); }
+.hero-chip:hover { background-color: rgba(32, 43, 54, 0.95); }
 .hero-chip.selected { background-color: rgb(40, 36, 30); border-top-color: rgb(214, 170, 88); border-right-color: rgb(214, 170, 88); border-bottom-color: rgb(214, 170, 88); }
 .hero-chip-name { font-size: 16px; -unity-font-style: bold; }
 .hero-chip-power { font-size: 13px; color: rgb(232, 196, 118); }
 
 .hero-detail { flex-direction: row; align-items: flex-start; }
-.paperdoll { flex-direction: row; align-items: center; padding: 14px; margin-right: 14px; background-color: rgba(16, 21, 40, 0.92); border-radius: 12px; border-width: 1px; border-color: rgb(46, 59, 102); }
+.paperdoll { flex-direction: row; align-items: center; padding: 14px; margin-right: 14px; background-color: rgba(18, 24, 35, 0.92); border-radius: 12px; border-width: 1px; border-color: rgb(48, 64, 75); }
 .slot-col { width: 104px; }
-.gear-slot { height: 74px; margin: 5px 0; padding: 6px 8px; border-radius: 8px; border-width: 1px; border-color: rgb(52, 64, 104); background-color: rgb(12, 16, 32); justify-content: center; }
+.gear-slot { height: 74px; margin: 5px 0; padding: 6px 8px; border-radius: 8px; border-width: 1px; border-color: rgb(54, 67, 78); background-color: rgb(14, 19, 30); justify-content: center; }
 .gear-slot:hover { border-color: rgb(214, 170, 88); }
-.gear-slot.filled { background-color: rgb(24, 30, 54); }
-.slot-label { font-size: 11px; color: rgb(120, 128, 160); }
+.gear-slot.filled { background-color: rgb(26, 34, 45); }
+.slot-label { font-size: 11px; color: rgb(126, 144, 148); }
 .slot-name { font-size: 14px; -unity-font-style: bold; white-space: normal; }
 
-.portrait { width: 170px; height: 252px; margin: 0 12px; border-radius: 12px; border-width: 2px; background-color: rgb(10, 13, 28); align-items: center; overflow: hidden; }
+.portrait { width: 170px; height: 252px; margin: 0 12px; border-radius: 12px; border-width: 2px; background-color: rgb(12, 16, 27); align-items: center; overflow: hidden; }
 .silhouette { position: absolute; top: 30px; align-items: center; opacity: 0.55; }
-.sil-head { width: 64px; height: 64px; border-radius: 32px; background-color: rgb(52, 62, 100); }
-.sil-body { width: 130px; height: 150px; margin-top: 8px; border-top-left-radius: 60px; border-top-right-radius: 60px; background-color: rgb(40, 50, 86); }
+.sil-head { width: 64px; height: 64px; border-radius: 32px; background-color: rgb(54, 65, 76); }
+.sil-body { width: 130px; height: 150px; margin-top: 8px; border-top-left-radius: 60px; border-top-right-radius: 60px; background-color: rgb(42, 54, 65); }
 .portrait-glyph { position: absolute; top: 96px; font-size: 54px; -unity-font-style: bold; color: rgb(236, 200, 124); }
-.portrait-troop { position: absolute; bottom: 10px; font-size: 12px; color: rgb(200, 206, 226); background-color: rgba(0, 0, 0, 0.5); border-radius: 8px; padding: 2px 10px; }
+.portrait-troop { position: absolute; bottom: 10px; font-size: 12px; color: rgb(206, 216, 220); background-color: rgba(0, 0, 0, 0.5); border-radius: 8px; padding: 2px 10px; }
 
-.hero-info { flex-grow: 1; padding: 14px 16px; background-color: rgba(22, 29, 54, 0.92); border-radius: 12px; border-width: 1px; border-color: rgb(46, 59, 102); }
-.power-label { font-size: 13px; color: rgb(138, 147, 176); margin-right: 8px; }
+.hero-info { flex-grow: 1; padding: 14px 16px; background-color: rgba(24, 33, 44, 0.92); border-radius: 12px; border-width: 1px; border-color: rgb(48, 64, 75); }
+.power-label { font-size: 13px; color: rgb(144, 162, 166); margin-right: 8px; }
 .power-big { font-size: 30px; -unity-font-style: bold; color: rgb(236, 200, 124); }
 .power-delta { font-size: 18px; -unity-font-style: bold; color: rgb(120, 220, 150); margin-left: 10px; opacity: 0; }
 .power-delta.down { color: rgb(240, 120, 120); }
 .hint { margin-top: 10px; white-space: normal; }
 
 /* ───── 遠征頁 ───── */
-.idle-box { flex-direction: row; align-items: center; padding: 6px 10px; border-radius: 8px; background-color: rgba(22, 29, 54, 0.92); border-width: 1px; border-color: rgb(46, 59, 102); }
+.idle-box { flex-direction: row; align-items: center; padding: 6px 10px; border-radius: 8px; background-color: rgba(24, 33, 44, 0.92); border-width: 1px; border-color: rgb(48, 64, 75); }
 .stage-path { flex-direction: row; align-items: center; margin: 6px 0 14px 0; }
-.stage-node { width: 40px; height: 40px; border-radius: 20px; -unity-text-align: middle-center; font-size: 15px; -unity-font-style: bold; color: rgb(120, 128, 160); background-color: rgb(16, 21, 40); border-width: 2px; border-color: rgb(46, 59, 102); }
+.stage-node { width: 40px; height: 40px; border-radius: 20px; -unity-text-align: middle-center; font-size: 15px; -unity-font-style: bold; color: rgb(126, 144, 148); background-color: rgb(18, 24, 35); border-width: 2px; border-color: rgb(48, 64, 75); }
 .stage-node.branch { border-color: rgb(96, 168, 230); }
 .stage-node.boss { width: 48px; height: 48px; border-radius: 24px; border-color: rgb(200, 70, 80); }
 .stage-node.cleared { background-color: rgb(120, 92, 40); color: rgb(255, 236, 190); border-color: rgb(214, 170, 88); }
 .stage-node.current { color: rgb(255, 255, 255); border-color: rgb(236, 200, 124); background-color: rgb(52, 44, 26); }
-.stage-link { width: 22px; height: 2px; background-color: rgb(46, 59, 102); }
+.stage-link { width: 22px; height: 2px; background-color: rgb(48, 64, 75); }
 .stage-tag { font-size: 12px; color: rgb(250, 200, 140); background-color: rgb(60, 36, 26); border-radius: 8px; padding: 1px 8px; margin-left: 10px; margin-bottom: 8px; }
 
-.branch-col { flex-grow: 1; flex-basis: 0; margin-right: 10px; padding: 10px; background-color: rgb(14, 19, 38); border-radius: 8px; }
-.enemy-row { flex-direction: row; align-items: center; padding: 4px 0; border-bottom-width: 1px; border-color: rgb(34, 44, 78); }
+.branch-col { flex-grow: 1; flex-basis: 0; margin-right: 10px; padding: 10px; background-color: rgb(16, 23, 34); border-radius: 8px; }
+.enemy-row { flex-direction: row; align-items: center; padding: 4px 0; border-bottom-width: 1px; border-color: rgb(36, 49, 60); }
 .enemy-name { width: 90px; font-size: 14px; -unity-font-style: bold; color: rgb(240, 170, 160); }
 .team-power { margin-top: 8px; font-size: 13px; color: rgb(140, 210, 160); }
 .team-power.weak { color: rgb(240, 140, 120); }
 
-.assign-chip { padding: 6px 12px; margin: 8px 8px 0 0; border-radius: 14px; border-width: 1px; border-color: rgb(52, 64, 104); background-color: rgb(14, 19, 38); color: rgb(138, 147, 176); }
-.assign-chip:hover { border-color: rgb(110, 130, 196); }
+.assign-chip { padding: 6px 12px; margin: 8px 8px 0 0; border-radius: 14px; border-width: 1px; border-color: rgb(54, 67, 78); background-color: rgb(16, 23, 34); color: rgb(144, 162, 166); }
+.assign-chip:hover { border-color: rgb(116, 163, 167); }
 .assign-chip.on { color: rgb(255, 236, 190); border-color: rgb(214, 170, 88); background-color: rgb(52, 44, 26); }
-.assign-chip.team2 { color: rgb(200, 226, 255); border-color: rgb(96, 168, 230); background-color: rgb(24, 40, 66); }
+.assign-chip.team2 { color: rgb(206, 240, 244); border-color: rgb(96, 168, 230); background-color: rgb(26, 42, 53); }
 
 .result-banner { font-size: 22px; -unity-font-style: bold; color: rgb(236, 200, 124); margin-bottom: 6px; }
 .result-banner.lose { color: rgb(240, 130, 130); }
 .reward-line { font-size: 14px; color: rgb(150, 220, 170); white-space: normal; margin-bottom: 8px; }
-.battle-log { padding: 8px 10px; margin: 4px 0 10px 0; background-color: rgb(10, 14, 28); border-radius: 6px; }
-.log-line { font-size: 12px; color: rgb(190, 200, 228); }
+.battle-log { padding: 8px 10px; margin: 4px 0 10px 0; background-color: rgb(12, 17, 28); border-radius: 6px; }
+.log-line { font-size: 12px; color: rgb(196, 214, 218); }
 .log-line.enemy { color: rgb(230, 160, 160); }
 
 /* ───── 四境 ───── */
-.tier-badge { font-size: 12px; -unity-font-style: bold; color: rgb(170, 178, 204); border-width: 1px; border-color: rgb(70, 86, 140); border-radius: 9px; padding: 1px 10px; margin-left: 10px; margin-bottom: 8px; }
+.tier-badge { font-size: 12px; -unity-font-style: bold; color: rgb(176, 191, 195); border-width: 1px; border-color: rgb(76, 113, 117); border-radius: 9px; padding: 1px 10px; margin-left: 10px; margin-bottom: 8px; }
 .tier-badge.lit { color: rgb(250, 214, 140); border-color: rgb(214, 170, 88); background-color: rgb(52, 44, 26); }
-.domain-row { flex-direction: row; align-items: center; padding: 6px 8px; margin-bottom: 6px; border-radius: 8px; background-color: rgb(16, 22, 42); border-width: 1px; border-color: rgb(34, 44, 78); }
+.domain-row { flex-direction: row; align-items: center; padding: 6px 8px; margin-bottom: 6px; border-radius: 8px; background-color: rgb(18, 26, 37); border-width: 1px; border-color: rgb(36, 49, 60); }
 .domain-row.mastered { border-color: rgb(150, 118, 60); background-color: rgb(32, 30, 30); }
 .domain-glyph { width: 30px; height: 30px; border-radius: 15px; -unity-text-align: middle-center; font-size: 15px; -unity-font-style: bold; color: rgb(255, 255, 255); margin-right: 10px; }
 .domain-Power { background-color: rgb(196, 84, 60); }
-.domain-Technique { background-color: rgb(130, 90, 200); }
+.domain-Technique { background-color: rgb(136, 145, 149); }
 .domain-Speed { background-color: rgb(40, 150, 140); }
-.domain-Durability { background-color: rgb(90, 110, 150); }
+.domain-Durability { background-color: rgb(96, 130, 134); }
 .domain-name { font-size: 14px; -unity-font-style: bold; }
 .domain-fill-Power { background-color: rgb(226, 110, 80); }
-.domain-fill-Technique { background-color: rgb(160, 120, 230); }
+.domain-fill-Technique { background-color: rgb(166, 175, 179); }
 .domain-fill-Speed { background-color: rgb(70, 190, 170); }
-.domain-fill-Durability { background-color: rgb(120, 145, 190); }
+.domain-fill-Durability { background-color: rgb(126, 168, 172); }
 .domain-done { font-size: 13px; -unity-font-style: bold; color: rgb(236, 200, 124); margin-left: 10px; }
 
 /* ───── 五行陰陽 ───── */
@@ -439,23 +439,23 @@
 
 /* ───── 升星 ───── */
 .star { font-size: 22px; margin-right: 2px; -unity-font-style: bold; }
-.star-tier { font-size: 13px; color: rgb(200, 206, 226); margin-left: 8px; }
+.star-tier { font-size: 13px; color: rgb(206, 216, 220); margin-left: 8px; }
 
 /* ───── 深淵地圖 ───── */
 .map-page { flex-direction: row; flex-grow: 1; }
-.map-scroll { flex-grow: 1; background-color: rgb(4, 6, 12); border-radius: 10px; border-width: 1px; border-color: rgb(40, 50, 86); margin-right: 12px; }
+.map-scroll { flex-grow: 1; background-color: rgb(4, 6, 12); border-radius: 10px; border-width: 1px; border-color: rgb(42, 54, 65); margin-right: 12px; }
 .map-canvas { background-color: rgb(5, 7, 14); }
 .map-side { width: 250px; flex-shrink: 0; }
 .map-info { margin-top: 8px; }
 .map-node-label { position: absolute; width: 30px; height: 30px; -unity-text-align: middle-center; font-size: 14px; -unity-font-style: bold; color: rgb(250, 250, 255); }
-.map-node-label.unknown { color: rgb(130, 140, 180); }
+.map-node-label.unknown { color: rgb(136, 160, 164); }
 
-.map-view3d { flex-grow: 1; margin-right: 12px; border-radius: 10px; border-width: 1px; border-color: rgba(120, 140, 200, 0.25); background-color: rgba(0, 0, 0, 0); }
+.map-view3d { flex-grow: 1; margin-right: 12px; border-radius: 10px; border-width: 1px; border-color: rgba(126, 170, 174, 0.25); background-color: rgba(0, 0, 0, 0); }
 
 /* ───── 出征 ───── */
-.march-box { margin-top: 10px; padding-top: 8px; border-top-width: 1px; border-color: rgb(46, 59, 102); }
+.march-box { margin-top: 10px; padding-top: 8px; border-top-width: 1px; border-color: rgb(48, 64, 75); }
 .march-troop-name { width: 56px; font-size: 13px; }
-.march-troop-count { width: 74px; font-size: 12px; color: rgb(170, 178, 204); -unity-text-align: middle-right; }
+.march-troop-count { width: 74px; font-size: 12px; color: rgb(176, 191, 195); -unity-text-align: middle-right; }
 
 .march-box > * { flex-shrink: 0; }
 
@@ -473,7 +473,7 @@
 .hud-btn {
     width: 84px; height: 56px; margin: 0 0 10px 0;
     border-radius: 14px; font-size: 16px;
-    background-color: rgba(22, 29, 54, 0.92); border-color: rgb(120, 98, 56);
+    background-color: rgba(24, 33, 44, 0.92); border-color: rgb(120, 98, 56);
 }
 .home-btn {
     position: absolute; right: 22px; bottom: 22px;
@@ -483,18 +483,18 @@
 }
 .home-btn:hover { background-color: rgb(222, 176, 92); }
 .sel-host { position: absolute; left: 0; right: 0; bottom: 18px; align-items: center; }
-.sel-card { width: 520px; margin: 0; padding: 12px 14px; background-color: rgba(14, 19, 38, 0.95); }
+.sel-card { width: 520px; margin: 0; padding: 12px 14px; background-color: rgba(16, 23, 34, 0.95); }
 .sel-card .building-card { width: auto; margin: 0; border-width: 0; background-color: rgba(0, 0, 0, 0); padding: 0 8px 0 0; }
 .sel-actions { width: 92px; align-self: stretch; }
 .sel-actions .btn { margin: 0 0 8px 0; }
 .move-hint {
-    background-color: rgba(14, 19, 38, 0.92); border-radius: 8px; padding: 8px 14px; margin-bottom: 8px;
+    background-color: rgba(16, 23, 34, 0.92); border-radius: 8px; padding: 8px 14px; margin-bottom: 8px;
     color: rgb(240, 220, 160);
 }
 .page-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-color: rgba(4, 6, 14, 0.6); padding: 30px 44px; }
 .page-window {
     flex-grow: 1; padding: 12px 18px 16px 18px;
-    background-color: rgba(10, 14, 28, 0.98); border-width: 1px; border-color: rgb(120, 98, 56); border-radius: 12px;
+    background-color: rgba(12, 17, 28, 0.98); border-width: 1px; border-color: rgb(120, 98, 56); border-radius: 12px;
 }
 .page-head { margin-bottom: 6px; }
 .page-body { flex-grow: 1; }

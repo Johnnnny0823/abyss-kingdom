@@ -955,8 +955,8 @@ namespace AbyssKingdom.Client.UI
         {
             const int h = 256;
             var tex = new Texture2D(1, h, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
-            var deep = new Color32(4, 6, 13, 255);
-            var surface = new Color32(24, 32, 62, 255);
+            var deep = new Color32(6, 9, 12, 255);
+            var surface = new Color32(30, 44, 54, 255);
             for (int y = 0; y < h; y++)
             {
                 float t = Mathf.Pow(y / (float)(h - 1), 1.6f);

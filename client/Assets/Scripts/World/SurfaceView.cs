@@ -67,31 +67,24 @@ namespace AbyssKingdom.Client.World
 
         // ───── 建構 ─────
 
-        private GameObject Disc(float radiusTiles, float top, Color32 c)
-        {
-            float d = radiusTiles * 2 * S;
-            return _w.Prim(PrimitiveType.Cylinder, c, new Vector3(0, top - 0.01f, 0), new Vector3(d, 0.01f, d), Root);
-        }
-
-        /// <summary>貼地面貼圖的圓盤：貼圖大約每 10 個世界單位（50 格）重複一次。</summary>
-        private void GroundDisc(float radiusTiles, float top, GroundTextures.Style style)
-        {
-            var disc = Disc(radiusTiles, top, Color.white);
-            float d = radiusTiles * 2 * S;
-            disc.GetComponent<Renderer>().sharedMaterial = GroundTextures.Material(_w.BaseMaterial, style, d / 10f);
-        }
-
         private void BuildGround()
         {
-            float size = SurfaceConfig.Size * S;
-            var ground = _w.Prim(PrimitiveType.Cube, Color.white, new Vector3(0, -0.03f, 0), new Vector3(size + 40, 0.02f, size + 40), Root);
-            ground.GetComponent<Renderer>().sharedMaterial = GroundTextures.Material(_w.BaseMaterial, GroundTextures.Style.Wasteland, (size + 40) / 10f);
-            GroundDisc(SurfaceConfig.OuterRadius + 6, -0.010f, GroundTextures.Style.Wasteland);   // 地圖邊緣的荒地
-            GroundDisc(SurfaceConfig.OuterRadius, -0.008f, GroundTextures.Style.LushGrass);       // 外環（新手區）：青草
-            GroundDisc(SurfaceConfig.MiddleOuter, -0.006f, GroundTextures.Style.DryGrass);        // 中環：乾草
-            GroundDisc(SurfaceConfig.RimOuter, -0.004f, GroundTextures.Style.RockyDirt);          // 崖緣：碎石泥地
-            for (int i = 0; i < 7; i++)                                                    // 深淵：一圈圈往下變黑
-                Disc(SurfaceConfig.PitRadius + 4 - i * 9, -0.002f + 0.0005f * i, new Color32((byte)(46 - i * 6), (byte)(38 - i * 5), (byte)(48 - i * 6), 255));
+            // 各分區是互不重疊的地面環，中央留出深淵的洞（之前是疊在一起的實心圓盤，深淵只是一片黑）
+            Ring(SurfaceConfig.OuterRadius, 900, GroundTextures.Style.Wasteland);                 // 地圖邊緣的荒地
+            Ring(SurfaceConfig.MiddleOuter, SurfaceConfig.OuterRadius, GroundTextures.Style.LushGrass); // 外環（新手區）：青草
+            Ring(SurfaceConfig.RimOuter, SurfaceConfig.MiddleOuter, GroundTextures.Style.DryGrass);     // 中環：乾草
+            Ring(SurfaceConfig.PitRadius, SurfaceConfig.RimOuter, GroundTextures.Style.RockyDirt);     // 崖緣：碎石泥地
+            AbyssPit.Build(_w, Root, SurfaceConfig.PitRadius * S);                                     // 永暗之喉：往下的深淵
+        }
+
+        /// <summary>貼地面貼圖的圓環（半徑以格為單位）；UV 依世界座標，貼圖每 10 個世界單位重複一次。</summary>
+        private void Ring(float innerTiles, float outerTiles, GroundTextures.Style style)
+        {
+            var go = new GameObject("Ground_" + style) { layer = WorldScene.Layer };
+            go.transform.SetParent(Root, false);
+            go.transform.localPosition = new Vector3(0, -0.002f, 0);
+            go.AddComponent<MeshFilter>().sharedMesh = AbyssPit.Annulus(innerTiles * S, outerTiles * S, 160);
+            go.AddComponent<MeshRenderer>().sharedMaterial = GroundTextures.Material(_w.BaseMaterial, style, 1f);
         }
 
         /// <summary>分區之間的環狀山脈；關隘的位置留空，兩側各一座石塔。</summary>

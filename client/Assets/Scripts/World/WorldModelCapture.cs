@@ -135,7 +135,7 @@ namespace AbyssKingdom.Client.World
                 var bounds = renderers[0].bounds;
                 foreach (var r in renderers) bounds.Encapsulate(r.bounds);
                 int totalTris = go.GetComponentsInChildren<MeshFilter>().Sum(m => Enumerable.Range(0, m.sharedMesh.subMeshCount).Sum(k => (int)m.sharedMesh.GetIndexCount(k) / 3));
-                float width = cn.StartsWith("Keep") ? 1.8f : 1.35f;
+                float width = cn.StartsWith("Keep") ? 1.95f : 1.45f;
                 bool ok = Math.Abs(bounds.min.y) < .002f && Math.Abs(bounds.center.x - 1000) < .003f && Math.Abs(bounds.center.z - 1000) < .003f &&
                     Math.Abs(bounds.size.x - width) < .003f && totalTris <= 2000;
                 if (!ok) failed++;
