@@ -31,3 +31,6 @@ client/Packages/packages-lock.json
 
 .DS_Store
 Thumbs.db
+
+# CodeGraph 本機索引（每台電腦自己建）
+.codegraph/
