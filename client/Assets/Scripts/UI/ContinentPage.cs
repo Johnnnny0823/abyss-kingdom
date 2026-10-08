@@ -153,8 +153,8 @@ namespace AbyssKingdom.Client.UI
                 : feature != null ? DisplayNames.FeatureName(feature)
                 : wall ? "山脈" : pass ? "關隘" : zone == SurfaceZone.Pit ? "深淵" : zone == SurfaceZone.Edge ? "地圖邊緣" : "空地";
             _sub.text = $"{DisplayNames.Zones[zone]} · X:{sx} Y:{sy}";
-            _owner.text = pin != null ? (pin.Mine ? "這是你的主城" : $"總戰力 {pin.Power:N0}") : "";
-            _desc.text = pin != null ? (pin.Mine ? "" : "攻打其他領主將在之後的步驟加入。")
+            _owner.text = pin != null ? (pin.Mine ? "這是你的主城" : $"總戰力 {pin.Power:N0}" + (pin.Shielded ? "　護盾中" : "")) : "";
+            _desc.text = pin != null ? (pin.Mine ? "" : pin.Shielded ? "有護盾的主城不能攻打。" : "可以出兵攻打：打贏能掠奪基礎資源。出兵攻城會解除你自己的護盾。")
                 : feature != null ? DisplayNames.FeatureDescriptions[feature.Type]
                 : wall ? "分區之間的山脈，部隊無法翻越，只能從關隘通過。"
                 : pass ? "山脈中的關隘，是分區之間唯一的通道。聯盟會爭奪這裡。"
@@ -164,7 +164,8 @@ namespace AbyssKingdom.Client.UI
             bool mine = pin != null && pin.Mine;
             _targetName = _title.text;
             _target = (sx, sy);
-            Show(_marchBtn, !mine && SurfaceLogic.Walkable(sx, sy) && feature?.Type != FeatureType.AbyssGate);
+            Show(_marchBtn, !mine && !(pin != null && pin.Shielded) && SurfaceLogic.Walkable(sx, sy) && feature?.Type != FeatureType.AbyssGate);
+            _marchBtn.text = pin != null ? "攻城" : "出征";
         }
 
         private static int PinsHash(List<CityPin> pins)

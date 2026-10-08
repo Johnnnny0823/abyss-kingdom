@@ -27,7 +27,7 @@ namespace AbyssKingdom.Client.UI
 
         private VisualElement _root, _login, _game, _toasts, _dialog;
         private TextField _urlField, _nameField;
-        private Label _loginStatus, _playerName, _troopTotal, _powerDelta;
+        private Label _loginStatus, _playerName, _troopTotal, _powerDelta, _shieldLabel;
         private long _lastTotalPower;
         private readonly Dictionary<ResourceType, (Label amount, Label cap)> _resChips = new Dictionary<ResourceType, (Label, Label)>();
         private Texture2D _gradient;
@@ -255,11 +255,16 @@ namespace AbyssKingdom.Client.UI
             _playerName = Lbl("", "player-name");
             _troopTotal = Lbl("", "total-power");
             _powerDelta = Lbl("", "power-delta", "small");
-            player.Add(_playerName);
+            var nameRow = El("row");
+            _shieldLabel = Lbl("", "shield-label");
+            nameRow.Add(_shieldLabel);
+            nameRow.Add(_playerName);
+            player.Add(nameRow);
             var powerRow = El("row");
             powerRow.Add(_powerDelta);
             powerRow.Add(_troopTotal);
             player.Add(powerRow);
+
             top.Add(player);
             game.Add(top);
 
@@ -421,6 +426,9 @@ namespace AbyssKingdom.Client.UI
                 capLabel.text = "/ " + cap.ToString("N0");
             }
             _playerName.text = G.PlayerName;
+            bool shielded = PvpLogic.IsShielded(city, now);
+            Show(_shieldLabel, shielded);
+            if (shielded) _shieldLabel.text = "護盾 " + DisplayNames.Duration(city.ShieldUntilMs - now);
             long total = PowerLogic.TotalPower(city);
             _troopTotal.text = $"總戰力 {total:N0}";
             _troopTotal.tooltip = $"主將 {PowerLogic.HeroesPower(city):N0}　部隊 {PowerLogic.TroopsPower(city):N0}　建築 {PowerLogic.BuildingsPower(city):N0}";

@@ -25,6 +25,7 @@ namespace AbyssKingdom.Client.World
         private readonly Transform[,] _chunks = new Transform[Chunks, Chunks];
         private readonly Dictionary<int, (GameObject castle, TextMesh name, bool mine)> _castles = new Dictionary<int, (GameObject, TextMesh, bool)>();
         private readonly GameObject _select;
+        private readonly Dictionary<int, GameObject> _shields = new Dictionary<int, GameObject>();
         private readonly List<GameObject> _dots = new List<GameObject>();
         private readonly List<Transform> _troops = new List<Transform>();
         private float _nextCull;
@@ -247,6 +248,20 @@ namespace AbyssKingdom.Client.World
                     _castles[key] = c;
                 }
                 c.name.text = pin.Name;
+
+                // 護盾：主城外一圈發光的圓
+                _shields.TryGetValue(key, out var shield);
+                if (pin.Shielded && shield == null)
+                {
+                    shield = _w.Prim(PrimitiveType.Cylinder, Color.white, CityPos(pin.X, pin.Y) + Vector3.up * 0.003f, new Vector3(0.9f, 0.003f, 0.9f), ChunkOf(pin.X, pin.Y));
+                    shield.GetComponent<Renderer>().sharedMaterial = _w.Mat(new Color32(110, 180, 255, 255));
+                    _shields[key] = shield;
+                }
+                else if (!pin.Shielded && shield != null)
+                {
+                    UnityEngine.Object.Destroy(shield);
+                    _shields.Remove(key);
+                }
             }
             var gone = new List<int>();
             foreach (var key in _castles.Keys) if (!seen.Contains(key)) gone.Add(key);
@@ -254,6 +269,7 @@ namespace AbyssKingdom.Client.World
             {
                 UnityEngine.Object.Destroy(_castles[key].castle);
                 _castles.Remove(key);
+                if (_shields.TryGetValue(key, out var s)) { UnityEngine.Object.Destroy(s); _shields.Remove(key); }
             }
 
             _select.SetActive(selected.HasValue);

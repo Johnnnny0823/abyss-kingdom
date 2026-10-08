@@ -140,7 +140,12 @@ namespace AbyssKingdom.Client.UI
             else _eta.text = "";
 
             var field = SurfaceLogic.FeatureAt(_x, _y);
-            if (reason == null && field != null && field.Type == FeatureType.MonsterCamp)
+            var enemy = G.Cities.FirstOrDefault(p => !p.Mine && _x >= p.X && _x < p.X + SurfaceConfig.CityFootprint && _y >= p.Y && _y < p.Y + SurfaceConfig.CityFootprint);
+            if (reason == null && enemy != null && enemy.Shielded) reason = "對方有護盾，不能攻打";
+            if (reason == null && enemy != null)
+                _status.text = $"攻打 {enemy.Name} 的主城（總戰力 {enemy.Power:N0}）：對方兵營的部隊與城防會迎戰。打贏可掠奪基礎資源（每種超過保護量部分的 20%，受載重限制）。"
+                    + (PvpLogic.IsShielded(city, now) ? "　⚠ 出兵會解除你的新手護盾！" : "");
+            else if (reason == null && field != null && field.Type == FeatureType.MonsterCamp)
             {
                 var lineup = CampConfig.Lineup(field.Level, SurfaceLogic.Tile(field.X, field.Y));
                 _status.text = $"敵方 {lineup.Count} 支小隊、共 {lineup.Sum(e => e.Count):N0} 隻魔物（{string.Join("、", lineup.Select(e => DisplayNames.Troops[e.Troop]))}型）。抵達就開打，打完自動回城；倒下的士兵七成進醫館。";

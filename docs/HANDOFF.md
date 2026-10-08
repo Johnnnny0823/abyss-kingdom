@@ -23,7 +23,7 @@ PC 先行（Steam＋自架下載、手遊之後）的 4X / SLG：玩家在深淵
 | 資料庫 | Supabase（PostgreSQL，伺服器用 service_role 走 REST） | 城市整包 jsonb；客戶端不可直連 |
 | 登入 | Firebase Auth：PC 版走 **REST API** 匿名登入（Unity SDK 桌面版不可上線） | 之後加綁定 Google、Steam 登入；手遊版再用 Firebase SDK、FCM、Crashlytics |
 | 主機 | **本機 Docker＋Cloudflare Quick Tunnel**（`docs/DEPLOY.md`） | Oracle 註冊被拒；找到雲端主機後沿用同一份 compose |
-| 測試 | 自製迷你框架（無 NuGet），`dotnet run --project tests/AbyssKingdom.Tests` | 目前 154 個測試 |
+| 測試 | 自製迷你框架（無 NuGet），`dotnet run --project tests/AbyssKingdom.Tests` | 目前 163 個測試 |
 | CI | GitHub Actions（`.github/workflows/ci.yml`） | |
 
 ## 4. 程式結構（2026-10-08）
@@ -75,7 +75,7 @@ docker-compose.yml   伺服器＋Cloudflare Quick Tunnel
 
 ## 7. 接下來的工作
 
-依 **GDD 第 6 節**的開發路線。**目前專心做地表**（GDD 5a：S1 大陸地圖與主城 ✅ → S2 地表行軍 ✅ → S3 採集 ✅ → S4 怪物營地／傷兵／醫院 ✅ → **S5 PvP 攻城** → S6 聯盟盟旗）；賽季與深淵各層延後（深淵每層都會是和地表一樣的大陸）。
+依 **GDD 第 6 節**的開發路線。**目前專心做地表**（GDD 5a：S1 大陸地圖與主城 ✅ → S2 地表行軍 ✅ → S3 採集 ✅ → S4 怪物營地／傷兵／醫院 ✅ → S5 PvP 攻城 ✅ → **S6 聯盟盟旗**）；賽季與深淵各層延後（深淵每層都會是和地表一樣的大陸）。
 
 ## 8. 開發小抄（給 AI）
 

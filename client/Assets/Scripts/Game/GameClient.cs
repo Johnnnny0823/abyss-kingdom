@@ -223,6 +223,14 @@ namespace AbyssKingdom.Client.Game
                 case MessageTypes.WorldCities:
                     Cities = msg.DataAs<WorldCitiesMessage>().Cities ?? new List<CityPin>();
                     break;
+                case MessageTypes.CityAttacked:
+                    var atk = msg.DataAs<CityAttackedMessage>();
+                    string lost = DisplayNames.CarryText(atk.Plundered);
+                    string hurt = (DisplayNames.TroopsText(atk.Wounded) is var aw && aw != "" ? $"傷兵 {aw}" : "")
+                        + (DisplayNames.TroopsText(atk.Dead) is var ad && ad != "" ? $"　陣亡 {ad}" : "");
+                    Notice?.Invoke(atk.DefenderWon ? $"{atk.AttackerName} 攻打你的主城，被擊退了！{hurt}"
+                        : $"你的主城被 {atk.AttackerName} 攻破，被掠奪 {(lost != "" ? lost : "（沒有損失資源）")}。{hurt}", !atk.DefenderWon);
+                    break;
                 case MessageTypes.HealingCompleted:
                     Notice?.Invoke($"治療完成：{DisplayNames.TroopsText(msg.DataAs<HealingCompletedMessage>().Troops)} 回到兵營", false);
                     break;
@@ -237,6 +245,13 @@ namespace AbyssKingdom.Client.Game
                     string loot = DisplayNames.ItemsText(ma.LootItems);
                     string losses = (DisplayNames.TroopsText(ma.Wounded) is var w && w != "" ? $"傷兵 {w}" : "")
                         + (DisplayNames.TroopsText(ma.Dead) is var d && d != "" ? $"　陣亡 {d}" : "");
+                    if (ma.TargetName != null)
+                    {
+                        Notice?.Invoke(ma.Shielded ? $"{ma.TargetName} 的主城有護盾，{hero} 的部隊撤回"
+                            : ma.BattleWon ? $"{hero} 攻破了 {ma.TargetName} 的主城！掠奪 {(carry != "" ? carry : "（對方沒有可掠奪的資源）")}。{losses}"
+                            : $"{hero} 攻打 {ma.TargetName} 的主城失敗，倖存的部隊撤回。{losses}", ma.BattleLost);
+                        break;
+                    }
                     if (ma.BattleWon || ma.BattleLost || ma.CampGone)
                     {
                         Notice?.Invoke(ma.CampGone ? $"{hero} 抵達時營地已經被清空了，原地駐紮"
