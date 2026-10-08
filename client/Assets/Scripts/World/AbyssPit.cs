@@ -146,6 +146,8 @@ namespace AbyssKingdom.Client.World
                 w.Prim(PrimitiveType.Cylinder, rope, (pos + ropeTop) / 2, new Vector3(.03f, .7f, .03f), root);
             }
 
+            BuildMist(w, root, radius);
+
             // 岩壁上零星發光的契印（越深越少）
             var glowMat = new Material(w.Glow);
             glowMat.color = new Color(.4f, .95f, .85f);
@@ -160,6 +162,107 @@ namespace AbyssKingdom.Client.World
                 g.transform.localRotation = Quaternion.Euler(0, -a * Mathf.Rad2Deg + 90, 45);
             }
         }
+
+        // ───── 霧與光暈 ─────
+
+        /// <summary>
+        /// 坑裡一層層緩慢旋轉的霧（越深越濃、靠岩壁處較濃、中央較淡，仍看得到底下的黑），
+        /// 加上坑口一圈淡淡的青綠光暈。材質 Mist／RimGlow 在打包時由 AbyssMaterials 產生。
+        /// </summary>
+        private static void BuildMist(WorldScene w, Transform root, float radius)
+        {
+            var mistBase = Resources.Load<Material>("Abyss/Mist");
+            var glowBase = Resources.Load<Material>("Abyss/RimGlow");
+            if (mistBase == null || glowBase == null) return;
+
+            var mistTex = MistTexture(256, 5, falloffPower: 1.6f, centerClear: .1f);
+            float[] depth = { .6f, 2.4f, 5f, 9f };
+            float[] alpha = { .16f, .2f, .24f, .28f };
+            for (int i = 0; i < depth.Length; i++)
+            {
+                // 薄薄一層、越深越偏藍紫越暗，不能蓋掉底下的黑
+                var m = new Material(mistBase) { mainTexture = mistTex };
+                var tint = Color.Lerp(new Color(.55f, .6f, .68f), new Color(.22f, .22f, .34f), i / 3f);
+                m.color = new Color(tint.r, tint.g, tint.b, alpha[i]);
+                m.SetColor("_EmissionColor", tint * .06f);
+                var go = MeshObject("Mist" + i, Disc(radius * (1f - depth[i] * .022f), 48), m, root);
+                go.transform.localPosition = new Vector3(0, -depth[i], 0);
+                go.transform.localRotation = Quaternion.Euler(0, i * 47, 0);
+                go.AddComponent<SlowSpin>().DegreesPerSecond = (i % 2 == 0 ? 1 : -1) * (1.5f + i * .6f);
+            }
+
+            // 坑口光暈：一圈往外淡出的發光環，貼在地面上方一點點
+            var glowTex = RingTexture(256);
+            var glow = new Material(glowBase) { mainTexture = glowTex };
+            glow.color = new Color(.4f, .95f, .85f, .3f);
+            glow.SetColor("_EmissionColor", new Color(.08f, .35f, .3f));
+            var ring = MeshObject("RimGlow", Disc(radius * 1.18f, 64), glow, root);
+            ring.transform.localPosition = new Vector3(0, .03f, 0);
+        }
+
+        /// <summary>圓盤（朝上），UV 以圓心為 (0.5, 0.5) 放射狀對應。</summary>
+        private static Mesh Disc(float r, int segments)
+        {
+            var verts = new List<Vector3> { Vector3.zero };
+            var uvs = new List<Vector2> { new Vector2(.5f, .5f) };
+            var tris = new List<int>();
+            for (int i = 0; i <= segments; i++)
+            {
+                float a = i * Mathf.PI * 2 / segments;
+                verts.Add(new Vector3(Mathf.Cos(a) * r, 0, Mathf.Sin(a) * r));
+                uvs.Add(new Vector2(.5f + .5f * Mathf.Cos(a), .5f + .5f * Mathf.Sin(a)));
+                if (i > 0) tris.AddRange(new[] { 0, i + 1, i });
+            }
+            var mesh = new Mesh { name = "Disc" };
+            mesh.SetVertices(verts);
+            mesh.SetUVs(0, uvs);
+            mesh.SetTriangles(tris, 0);
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        /// <summary>霧的貼圖：一縷一縷的雜訊，靠外圈（岩壁）濃、中央淡。</summary>
+        private static Texture2D MistTexture(int size, int seed, float falloffPower, float centerClear)
+        {
+            var px = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float u = x / (float)size - .5f, v = y / (float)size - .5f;
+                    float d = Mathf.Sqrt(u * u + v * v) * 2; // 0 中央 → 1 外緣
+                    float wisps = Noise(x / 24f, y / 24f, seed) * .6f + Noise(x / 9f, y / 9f, seed + 3) * .4f;
+                    float edge = Mathf.Pow(Mathf.Clamp01(d), falloffPower);
+                    float a = Mathf.Clamp01((edge * .8f + centerClear * .4f) * (.45f + wisps * .9f));
+                    if (d > .98f) a *= Mathf.Clamp01((1.02f - d) / .04f); // 最外圈淡出，不要有硬邊
+                    px[y * size + x] = new Color32(255, 255, 255, (byte)(a * 255));
+                }
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, true) { wrapMode = TextureWrapMode.Clamp, name = "AbyssMist" };
+            tex.SetPixels32(px);
+            tex.Apply(true, true);
+            return tex;
+        }
+
+        /// <summary>坑口光暈貼圖：在坑口半徑附近最亮，往內外淡出。</summary>
+        private static Texture2D RingTexture(int size)
+        {
+            var px = new Color32[size * size];
+            float peak = .97f / 1.18f; // 略在坑口內側，不溢到地面上
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float u = x / (float)size - .5f, v = y / (float)size - .5f;
+                    float d = Mathf.Sqrt(u * u + v * v) * 2;
+                    float a = Mathf.Exp(-Mathf.Pow((d - peak) / .035f, 2));
+                    px[y * size + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(a) * 255));
+                }
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, true) { wrapMode = TextureWrapMode.Clamp, name = "AbyssRimGlow" };
+            tex.SetPixels32(px);
+            tex.Apply(true, true);
+            return tex;
+        }
+
+        private static float Noise(float x, float y, int seed) => Mathf.PerlinNoise(x + seed * 17.3f, y + seed * 9.1f);
 
         private static int Hash(int i, int salt)
         {

@@ -20,6 +20,9 @@ public static class AbyssMaterials
         // 主畫面灰盒的基底材質（顏色在執行期換）與選取標記的發光材質
         Make(standard, "Chamber", new Color(0.48f, 0.45f, 0.42f), smooth: 0.2f);
         Make(standard, "Select", new Color(1f, 0.85f, 0.45f), new Color(1.2f, 0.9f, 0.4f));
+        // 深淵的霧（半透明、微微發光）與坑口光暈（青綠）
+        MakeFade(standard, "Mist", new Color(0.72f, 0.78f, 0.84f, 1f), new Color(0.08f, 0.1f, 0.12f));
+        MakeFade(standard, "RimGlow", new Color(0.4f, 0.95f, 0.85f, 1f), new Color(0.2f, 0.9f, 0.75f));
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
