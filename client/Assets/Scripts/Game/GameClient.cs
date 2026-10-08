@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using AbyssKingdom.Client.Net;
 using AbyssKingdom.Client.UI;
 using AbyssKingdom.Shared.City;
+using AbyssKingdom.Shared.Expedition;
 using AbyssKingdom.Shared.Heroes;
 using AbyssKingdom.Shared.Protocol;
 using Newtonsoft.Json;
@@ -33,6 +35,11 @@ namespace AbyssKingdom.Client.Game
 
         /// <summary>伺服器最後送來的權威城市狀態。</summary>
         public CityState City { get; private set; }
+
+        /// <summary>最近一次遠征結果與當時的編隊（介面用來顯示戰報）。</summary>
+        public ExpeditionResult LastExpedition { get; private set; }
+        public List<List<HeroId>> LastExpeditionTeams { get; private set; }
+        private List<List<HeroId>> _pendingTeams;
 
         public long ServerNowMs => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + _serverOffsetMs;
 
@@ -124,6 +131,18 @@ namespace AbyssKingdom.Client.Game
         public void LevelUpHero(HeroId hero, ItemType item, long count = 1) =>
             _conn.Send(MessageTypes.HeroLevelUp, new HeroLevelUpRequest { Hero = hero, Item = item, Count = count });
 
+        public void EquipGear(long uid, HeroId hero) => _conn.Send(MessageTypes.GearEquip, new GearEquipRequest { Gear = uid, Hero = hero });
+
+        public void UnequipGear(long uid) => _conn.Send(MessageTypes.GearUnequip, new GearUnequipRequest { Gear = uid });
+
+        public void ExpeditionBattle(int stage, List<List<HeroId>> teams)
+        {
+            _pendingTeams = teams;
+            _conn.Send(MessageTypes.ExpeditionBattle, new ExpeditionBattleRequest { Stage = stage, Teams = teams });
+        }
+
+        public void ClaimExpeditionIdle() => _conn.Send(MessageTypes.ExpeditionClaimIdle);
+
         /// <summary>item 為 null = 免費加速。</summary>
         public void Speedup(QueueType queue, ItemType? item, long count = 1) =>
             _conn.Send(MessageTypes.CitySpeedup, new SpeedupRequest { Queue = queue, Item = item, Count = count });
@@ -162,6 +181,16 @@ namespace AbyssKingdom.Client.Game
                 case MessageTypes.TrainingCompleted:
                     var tr = msg.DataAs<TrainingCompletedMessage>();
                     Notice?.Invoke($"{tr.Count:N0} 名{DisplayNames.Troops[tr.Troop]}訓練完成", false);
+                    break;
+                case MessageTypes.ExpeditionResultMessage:
+                    LastExpedition = msg.DataAs<ExpeditionResult>();
+                    LastExpeditionTeams = _pendingTeams;
+                    Notice?.Invoke(LastExpedition.Win ? $"遠征第 {LastExpedition.Stage} 關勝利！" : $"遠征第 {LastExpedition.Stage} 關失敗", !LastExpedition.Win);
+                    break;
+                case MessageTypes.ExpeditionIdleClaimed:
+                    var idle = msg.DataAs<ExpeditionRewards>();
+                    idle.Resources.TryGetValue(ResourceType.Wood, out var each);
+                    Notice?.Invoke($"領取掛機收益：各資源 +{each:N0}", false);
                     break;
                 case MessageTypes.Error:
                     var err = msg.DataAs<ErrorMessage>();

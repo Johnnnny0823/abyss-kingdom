@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using AbyssKingdom.Shared.City;
+using AbyssKingdom.Shared.Expedition;
 using AbyssKingdom.Shared.Heroes;
 
 namespace AbyssKingdom.Client.UI
@@ -98,6 +99,48 @@ namespace AbyssKingdom.Client.UI
             { RopeGrade.Mythic, "黑繩 · 神秘" },
         };
 
+        public static readonly Dictionary<EquipSlot, string> Slots = new Dictionary<EquipSlot, string>
+        {
+            { EquipSlot.Weapon, "武器" },
+            { EquipSlot.Head, "頭部" },
+            { EquipSlot.Body, "身軀" },
+            { EquipSlot.Hands, "手部" },
+            { EquipSlot.Accessory, "飾品" },
+            { EquipSlot.Relic, "遺物" },
+        };
+
+        public static readonly Dictionary<GearId, string> Gear = new Dictionary<GearId, string>
+        {
+            { GearId.RustAnchorBlade, "鏽錨刃" },
+            { GearId.RopeHood, "繩編兜帽" },
+            { GearId.StrataPlate, "層岩胸甲" },
+            { GearId.EchoGloves, "鳴指手套" },
+            { GearId.LanternCharm, "燈魅護符" },
+            { GearId.BoneBellRelic, "骨鈴遺物" },
+            { GearId.BoneBellSpear, "骨鈴長矛" },
+            { GearId.HundredEyeRib, "百眼傘骨" },
+        };
+
+        public static string GearStats(GearDef d)
+        {
+            var parts = new List<string>();
+            if (d.Attack > 0) parts.Add($"攻 +{d.Attack}");
+            if (d.Defense > 0) parts.Add($"防 +{d.Defense}");
+            if (d.Hp > 0) parts.Add($"命 +{d.Hp}");
+            if (d.Leadership > 0) parts.Add($"統 +{d.Leadership}");
+            return $"{Grades[d.Grade]} · " + string.Join("  ", parts);
+        }
+
+        // ───── 魔物（第一章：餘燼緣野） ─────
+
+        public static readonly Dictionary<MonsterId, string> Monsters = new Dictionary<MonsterId, string>
+        {
+            { MonsterId.MossChild, "苔面童" },
+            { MonsterId.LanternWisp, "燈魅" },
+            { MonsterId.BellRat, "骨鈴鼠" },
+            { MonsterId.HundredEyeUmbrella, "百眼紙傘" },
+        };
+
         public static readonly Dictionary<ItemCategory, string> ItemCategories = new Dictionary<ItemCategory, string>
         {
             { ItemCategory.General, "通用" },
@@ -146,6 +189,12 @@ namespace AbyssKingdom.Client.UI
                 case "NothingToCancel": return "隊列是空的";
                 case "invalid token": return "登入驗證失敗，請重新登入";
                 case "MaxLevel": return "主將已達等級上限";
+                case "StageLocked": return "要先通關前一關";
+                case "WrongTeamCount": return "岔路關卡需要兩支隊伍";
+                case "EmptyTeam": return "每條路都需要至少一位主將";
+                case "DuplicateHero": return "同一位主將不能同時走兩條路";
+                case "ChapterComplete": return "本章已全部通關";
+                case "NothingToClaim": return "目前沒有可領取的掛機收益";
                 case "HeroNotOwned": return "尚未擁有這位主將";
             }
             return $"{code}：{detail}";

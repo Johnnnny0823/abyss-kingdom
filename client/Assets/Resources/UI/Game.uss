@@ -334,3 +334,66 @@
 .grade-Epic { border-color: rgb(150, 90, 220); color: rgb(196, 150, 250); }
 .grade-Legendary { border-color: rgb(220, 170, 70); color: rgb(250, 210, 120); }
 .grade-Mythic { border-color: rgb(200, 50, 60); color: rgb(250, 120, 130); background-color: rgb(30, 8, 12); }
+
+/* ───── 主將頁：選擇列、角色雛形、裝備格、戰力 ───── */
+.hero-chip {
+    width: 200px; padding: 8px 12px; margin-right: 10px;
+    background-color: rgba(22, 29, 54, 0.92);
+    border-width: 1px; border-left-width: 4px; border-color: rgb(46, 59, 102); border-radius: 8px;
+}
+.hero-chip:hover { background-color: rgba(30, 38, 70, 0.95); }
+.hero-chip.selected { background-color: rgb(40, 36, 30); border-top-color: rgb(214, 170, 88); border-right-color: rgb(214, 170, 88); border-bottom-color: rgb(214, 170, 88); }
+.hero-chip-name { font-size: 16px; -unity-font-style: bold; }
+.hero-chip-power { font-size: 13px; color: rgb(232, 196, 118); }
+
+.hero-detail { flex-direction: row; align-items: flex-start; }
+.paperdoll { flex-direction: row; align-items: center; padding: 14px; margin-right: 14px; background-color: rgba(16, 21, 40, 0.92); border-radius: 12px; border-width: 1px; border-color: rgb(46, 59, 102); }
+.slot-col { width: 104px; }
+.gear-slot { height: 74px; margin: 5px 0; padding: 6px 8px; border-radius: 8px; border-width: 1px; border-color: rgb(52, 64, 104); background-color: rgb(12, 16, 32); justify-content: center; }
+.gear-slot:hover { border-color: rgb(214, 170, 88); }
+.gear-slot.filled { background-color: rgb(24, 30, 54); }
+.slot-label { font-size: 11px; color: rgb(120, 128, 160); }
+.slot-name { font-size: 14px; -unity-font-style: bold; white-space: normal; }
+
+.portrait { width: 170px; height: 252px; margin: 0 12px; border-radius: 12px; border-width: 2px; background-color: rgb(10, 13, 28); align-items: center; overflow: hidden; }
+.silhouette { position: absolute; top: 30px; align-items: center; opacity: 0.55; }
+.sil-head { width: 64px; height: 64px; border-radius: 32px; background-color: rgb(52, 62, 100); }
+.sil-body { width: 130px; height: 150px; margin-top: 8px; border-top-left-radius: 60px; border-top-right-radius: 60px; background-color: rgb(40, 50, 86); }
+.portrait-glyph { position: absolute; top: 96px; font-size: 54px; -unity-font-style: bold; color: rgb(236, 200, 124); }
+.portrait-troop { position: absolute; bottom: 10px; font-size: 12px; color: rgb(200, 206, 226); background-color: rgba(0, 0, 0, 0.5); border-radius: 8px; padding: 2px 10px; }
+
+.hero-info { flex-grow: 1; padding: 14px 16px; background-color: rgba(22, 29, 54, 0.92); border-radius: 12px; border-width: 1px; border-color: rgb(46, 59, 102); }
+.power-label { font-size: 13px; color: rgb(138, 147, 176); margin-right: 8px; }
+.power-big { font-size: 30px; -unity-font-style: bold; color: rgb(236, 200, 124); }
+.power-delta { font-size: 18px; -unity-font-style: bold; color: rgb(120, 220, 150); margin-left: 10px; opacity: 0; }
+.power-delta.down { color: rgb(240, 120, 120); }
+.hint { margin-top: 10px; white-space: normal; }
+
+/* ───── 遠征頁 ───── */
+.idle-box { flex-direction: row; align-items: center; padding: 6px 10px; border-radius: 8px; background-color: rgba(22, 29, 54, 0.92); border-width: 1px; border-color: rgb(46, 59, 102); }
+.stage-path { flex-direction: row; align-items: center; margin: 6px 0 14px 0; }
+.stage-node { width: 40px; height: 40px; border-radius: 20px; -unity-text-align: middle-center; font-size: 15px; -unity-font-style: bold; color: rgb(120, 128, 160); background-color: rgb(16, 21, 40); border-width: 2px; border-color: rgb(46, 59, 102); }
+.stage-node.branch { border-color: rgb(96, 168, 230); }
+.stage-node.boss { width: 48px; height: 48px; border-radius: 24px; border-color: rgb(200, 70, 80); }
+.stage-node.cleared { background-color: rgb(120, 92, 40); color: rgb(255, 236, 190); border-color: rgb(214, 170, 88); }
+.stage-node.current { color: rgb(255, 255, 255); border-color: rgb(236, 200, 124); background-color: rgb(52, 44, 26); }
+.stage-link { width: 22px; height: 2px; background-color: rgb(46, 59, 102); }
+.stage-tag { font-size: 12px; color: rgb(250, 200, 140); background-color: rgb(60, 36, 26); border-radius: 8px; padding: 1px 8px; margin-left: 10px; margin-bottom: 8px; }
+
+.branch-col { flex-grow: 1; flex-basis: 0; margin-right: 10px; padding: 10px; background-color: rgb(14, 19, 38); border-radius: 8px; }
+.enemy-row { flex-direction: row; align-items: center; padding: 4px 0; border-bottom-width: 1px; border-color: rgb(34, 44, 78); }
+.enemy-name { width: 90px; font-size: 14px; -unity-font-style: bold; color: rgb(240, 170, 160); }
+.team-power { margin-top: 8px; font-size: 13px; color: rgb(140, 210, 160); }
+.team-power.weak { color: rgb(240, 140, 120); }
+
+.assign-chip { padding: 6px 12px; margin: 8px 8px 0 0; border-radius: 14px; border-width: 1px; border-color: rgb(52, 64, 104); background-color: rgb(14, 19, 38); color: rgb(138, 147, 176); }
+.assign-chip:hover { border-color: rgb(110, 130, 196); }
+.assign-chip.on { color: rgb(255, 236, 190); border-color: rgb(214, 170, 88); background-color: rgb(52, 44, 26); }
+.assign-chip.team2 { color: rgb(200, 226, 255); border-color: rgb(96, 168, 230); background-color: rgb(24, 40, 66); }
+
+.result-banner { font-size: 22px; -unity-font-style: bold; color: rgb(236, 200, 124); margin-bottom: 6px; }
+.result-banner.lose { color: rgb(240, 130, 130); }
+.reward-line { font-size: 14px; color: rgb(150, 220, 170); white-space: normal; margin-bottom: 8px; }
+.battle-log { padding: 8px 10px; margin: 4px 0 10px 0; background-color: rgb(10, 14, 28); border-radius: 6px; }
+.log-line { font-size: 12px; color: rgb(190, 200, 228); }
+.log-line.enemy { color: rgb(230, 160, 160); }

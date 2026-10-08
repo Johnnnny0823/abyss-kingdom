@@ -8,6 +8,7 @@ using AbyssKingdom.Shared.Heroes;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 using UnityEngine.UIElements;
+using static AbyssKingdom.Client.UI.UiKit;
 
 namespace AbyssKingdom.Client.UI
 {
@@ -27,10 +28,11 @@ namespace AbyssKingdom.Client.UI
         private Label _loginStatus, _playerName, _troopTotal;
         private readonly Dictionary<ResourceType, (Label amount, Label cap)> _resChips = new Dictionary<ResourceType, (Label, Label)>();
         private readonly List<BuildingCard> _cards = new List<BuildingCard>();
-        private readonly List<HeroCard> _heroCards = new List<HeroCard>();
-        private VisualElement _cityPage, _heroPage;
-        private Label _tabCity, _tabHeroes;
-        private bool _showHeroes;
+        private VisualElement _cityPage;
+        private HeroPage _heroPage;
+        private ExpeditionPage _expPage;
+        private readonly List<Label> _tabs = new List<Label>();
+        private int _tab; // 0 城鎮建築、1 主將、2 遠征
         private QueueView _buildQueue, _trainQueue;
         private TrainingPanel _training;
         private VisualElement _itemList;
@@ -76,9 +78,15 @@ namespace AbyssKingdom.Client.UI
             _root.Add(_game);
             _root.Add(_login);
             _root.Add(_toasts);
+            OverlayHost = _root;
+            OverlayBefore = _toasts;
 
             G.Notice += ShowToast;
-            _showHeroes = Array.IndexOf(Environment.GetCommandLineArgs(), "-heroes") >= 0; // 測試用：直接開主將頁
+            // 測試用：-heroes / -expedition 直接開對應頁籤
+            var args = Environment.GetCommandLineArgs();
+            if (Array.IndexOf(args, "-heroes") >= 0) _tab = 1;
+            if (Array.IndexOf(args, "-expedition") >= 0) _tab = 2;
+            if (Array.IndexOf(args, "-autofight") >= 0) _root.schedule.Execute(() => _expPage.FightNow()).StartingIn(4000);
         }
 
         private void OnDisable()
@@ -174,12 +182,15 @@ namespace AbyssKingdom.Client.UI
 
             var left = El("left");
             var tabs = El("tabs");
-            _tabCity = Lbl("城鎮建築", "tab");
-            _tabHeroes = Lbl("主將", "tab");
-            _tabCity.RegisterCallback<ClickEvent>(_ => _showHeroes = false);
-            _tabHeroes.RegisterCallback<ClickEvent>(_ => _showHeroes = true);
-            tabs.Add(_tabCity);
-            tabs.Add(_tabHeroes);
+            string[] tabNames = { "城鎮建築", "主將", "遠征" };
+            for (int i = 0; i < tabNames.Length; i++)
+            {
+                var tab = Lbl(tabNames[i], "tab");
+                int idx = i;
+                tab.RegisterCallback<ClickEvent>(_ => _tab = idx);
+                _tabs.Add(tab);
+                tabs.Add(tab);
+            }
             left.Add(tabs);
 
             _cityPage = new ScrollView(ScrollViewMode.Vertical);
@@ -194,17 +205,10 @@ namespace AbyssKingdom.Client.UI
             _cityPage.Add(grid);
             left.Add(_cityPage);
 
-            _heroPage = new ScrollView(ScrollViewMode.Vertical);
-            _heroPage.AddToClassList("grow");
-            var heroGrid = El("hero-grid");
-            foreach (var def in HeroConfig.All)
-            {
-                var card = new HeroCard(def);
-                _heroCards.Add(card);
-                heroGrid.Add(card.Root);
-            }
-            _heroPage.Add(heroGrid);
-            left.Add(_heroPage);
+            _heroPage = new HeroPage();
+            left.Add(_heroPage.Root);
+            _expPage = new ExpeditionPage();
+            left.Add(_expPage.Root);
             main.Add(left);
 
             var right = new ScrollView(ScrollViewMode.Vertical);
@@ -243,12 +247,13 @@ namespace AbyssKingdom.Client.UI
             _playerName.text = G.PlayerName;
             _troopTotal.text = $"兵力 {CityConfig.AllTroops.Sum(t => city.GetTroops(t)):N0}";
 
-            _tabCity.EnableInClassList("selected", !_showHeroes);
-            _tabHeroes.EnableInClassList("selected", _showHeroes);
-            Show(_cityPage, !_showHeroes);
-            Show(_heroPage, _showHeroes);
-            if (_showHeroes) foreach (var card in _heroCards) card.Refresh(city);
-            else foreach (var card in _cards) card.Refresh(city);
+            for (int i = 0; i < _tabs.Count; i++) _tabs[i].EnableInClassList("selected", i == _tab);
+            Show(_cityPage, _tab == 0);
+            Show(_heroPage.Root, _tab == 1);
+            Show(_expPage.Root, _tab == 2);
+            if (_tab == 0) foreach (var card in _cards) card.Refresh(city);
+            else if (_tab == 1) _heroPage.Refresh(city);
+            else _expPage.Refresh(city);
             _buildQueue.Refresh(city, now);
             _training.Refresh(city, now);
             RefreshItems(city);
@@ -403,108 +408,6 @@ namespace AbyssKingdom.Client.UI
                 var check = CityLogic.CanUpgrade(city, _type);
                 _button.SetEnabled(check == UpgradeResult.Ok);
                 _button.text = check == UpgradeResult.Ok ? (level == 0 ? "建造" : "升級") : DisplayNames.UpgradeBlocker(check);
-            }
-        }
-
-        private sealed class HeroCard
-        {
-            private static readonly ItemType[] Books = { ItemType.HeroExpSmall, ItemType.HeroExpMedium, ItemType.HeroExpLarge };
-
-            public readonly VisualElement Root = El("hero-card");
-            private readonly HeroDef _def;
-            private readonly Label _level, _expText;
-            private readonly VisualElement _expFill;
-            private readonly Label[] _stats = new Label[4];
-            private readonly Dictionary<ItemType, Button> _books = new Dictionary<ItemType, Button>();
-
-            public HeroCard(HeroDef def)
-            {
-                _def = def;
-                Root.style.borderLeftColor = GradeColor(def.Grade);
-                var head = El("row");
-                head.Add(Lbl(DisplayNames.Heroes[def.Id], "hero-name"));
-                head.Add(Lbl(DisplayNames.Grades[def.Grade], "grade-badge", "grade-" + def.Grade));
-                head.Add(El("spacer"));
-                _level = Lbl("", "level-badge");
-                head.Add(_level);
-                Root.Add(head);
-                Root.Add(Lbl(DisplayNames.HeroTitles[def.Id] + " · 專精 " + DisplayNames.Troops[def.Specialty], "hero-title"));
-                Root.Add(Lbl(DisplayNames.HeroBios[def.Id], "hero-bio"));
-
-                var stats = El("row");
-                string[] labels = { "統率", "攻擊", "防禦", "生命" };
-                for (int i = 0; i < 4; i++)
-                {
-                    var box = El("stat");
-                    _stats[i] = Lbl("", "stat-value");
-                    box.Add(_stats[i]);
-                    box.Add(Lbl(labels[i], "stat-label"));
-                    stats.Add(box);
-                }
-                Root.Add(stats);
-
-                var expRow = El("exp-row");
-                var bar = El("progress", "grow");
-                _expFill = El("progress-fill", "training");
-                bar.Add(_expFill);
-                expRow.Add(bar);
-                _expText = Lbl("", "muted");
-                _expText.style.marginLeft = 10;
-                expRow.Add(_expText);
-                Root.Add(expRow);
-
-                var books = El("row");
-                foreach (var item in Books)
-                {
-                    var it = item;
-                    var b = Btn("", () => G.LevelUpHero(_def.Id, it), "btn-small", "book-btn");
-                    b.style.marginLeft = 0;
-                    _books[item] = b;
-                    books.Add(b);
-                }
-                Root.Add(books);
-            }
-
-            public void Refresh(CityState city)
-            {
-                if (!city.Heroes.TryGetValue(_def.Id, out var hero))
-                {
-                    Show(Root, false);
-                    return;
-                }
-                Show(Root, true);
-                bool maxed = hero.Level >= HeroConfig.MaxLevel;
-                _level.text = $"Lv.{hero.Level}" + (maxed ? " MAX" : "");
-                var s = HeroConfig.Stats(_def, hero.Level);
-                _stats[0].text = s.Leadership.ToString("N0");
-                _stats[1].text = s.Attack.ToString("N0");
-                _stats[2].text = s.Defense.ToString("N0");
-                _stats[3].text = s.Hp.ToString("N0");
-
-                long need = HeroConfig.ExpToNext(hero.Level);
-                _expFill.style.width = Length.Percent(maxed ? 100f : Mathf.Clamp01((float)hero.Exp / need) * 100f);
-                _expText.text = maxed ? "已滿級" : $"{hero.Exp:N0} / {need:N0}";
-
-                foreach (var pair in _books)
-                {
-                    long have = city.GetItemCount(pair.Key);
-                    ItemConfig.TryGetHeroExp(pair.Key, out var exp);
-                    pair.Value.text = $"+{exp:N0} ×{have}";
-                    pair.Value.SetEnabled(have > 0 && !maxed);
-                }
-            }
-
-            private static Color GradeColor(RopeGrade g)
-            {
-                switch (g)
-                {
-                    case RopeGrade.Uncommon: return new Color32(96, 170, 90, 255);
-                    case RopeGrade.Rare: return new Color32(70, 130, 220, 255);
-                    case RopeGrade.Epic: return new Color32(150, 90, 220, 255);
-                    case RopeGrade.Legendary: return new Color32(220, 170, 70, 255);
-                    case RopeGrade.Mythic: return new Color32(200, 50, 60, 255);
-                    default: return new Color32(150, 150, 160, 255);
-                }
             }
         }
 
@@ -708,42 +611,6 @@ namespace AbyssKingdom.Client.UI
                     : check == TrainResult.NotEnoughResources ? "資源不足" : "無法訓練";
                 _queue.Refresh(city, now);
             }
-        }
-
-        // ───── 小工具 ─────
-
-        private static VisualElement El(params string[] classes)
-        {
-            var e = new VisualElement();
-            foreach (var c in classes) e.AddToClassList(c);
-            return e;
-        }
-
-        private static Label Lbl(string text, params string[] classes)
-        {
-            var l = new Label(text);
-            foreach (var c in classes) l.AddToClassList(c);
-            return l;
-        }
-
-        private static Button Btn(string text, Action onClick, params string[] classes)
-        {
-            var b = new Button(onClick) { text = text };
-            b.AddToClassList("btn");
-            foreach (var c in classes) b.AddToClassList(c);
-            return b;
-        }
-
-        private static Label ResIcon(ResourceType r, bool small)
-        {
-            var icon = Lbl(DisplayNames.ResourceGlyphs[r], "res-icon", "res-" + r);
-            icon.EnableInClassList("small", small);
-            return icon;
-        }
-
-        private static void Show(VisualElement e, bool visible)
-        {
-            e.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         /// <summary>背景：上方微亮（地表）往下沉入深淵的漸層。</summary>
