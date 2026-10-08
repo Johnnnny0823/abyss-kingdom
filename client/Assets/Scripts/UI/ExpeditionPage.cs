@@ -28,6 +28,7 @@ namespace AbyssKingdom.Client.UI
         private readonly Dictionary<HeroId, int> _assign = new Dictionary<HeroId, int>(); // -1 = 不出戰
         private readonly List<Label> _teamPower = new List<Label>();
         private readonly List<long> _enemyPower = new List<long>();
+        private readonly List<Label> _ourSynergy = new List<Label>();
         private int _builtStage = -1;
         private ExpeditionResult _shownResult;
 
@@ -131,6 +132,7 @@ namespace AbyssKingdom.Client.UI
             _branches.Clear();
             _teamPower.Clear();
             _enemyPower.Clear();
+            _ourSynergy.Clear();
             for (int i = 0; i < def.Branches.Count; i++)
             {
                 var col = El("branch-col");
@@ -142,14 +144,20 @@ namespace AbyssKingdom.Client.UI
                     power += p;
                     var row = El("enemy-row");
                     row.Add(Lbl(DisplayNames.Monsters[e.Monster], "enemy-name"));
+                    row.Add(ElementBadge(e.Element, e.Polarity));
                     row.Add(Lbl($"{DisplayNames.Troops[e.Troop]} ×{e.Count:N0}", "muted", "grow"));
                     row.Add(Lbl($"{p:N0}", "muted"));
                     col.Add(row);
                 }
                 _enemyPower.Add(power);
+                var enemySyn = Elements.Synergies(def.Branches[i].Select(e => (e.Element, e.Polarity)).ToList());
+                col.Add(Lbl("敵方加成：" + DisplayNames.SynergyList(enemySyn), "syn-line", "enemy"));
                 var pl = Lbl("", "team-power");
                 _teamPower.Add(pl);
                 col.Add(pl);
+                var ours = Lbl("", "syn-line");
+                _ourSynergy.Add(ours);
+                col.Add(ours);
                 _branches.Add(col);
             }
 
@@ -180,7 +188,8 @@ namespace AbyssKingdom.Client.UI
             {
                 if (!System.Enum.TryParse<HeroId>(chip.name, out var id) || !_assign.TryGetValue(id, out var team)) continue;
                 string where = team < 0 ? "不出戰" : def.Branches.Count > 1 ? TeamNames[team] : "出戰";
-                chip.text = $"{DisplayNames.Heroes[id]}  {PowerLogic.HeroPower(city, id):N0} · {where}";
+                HeroConfig.TryGet(id, out var hd);
+                chip.text = $"{DisplayNames.Heroes[id]}〔{DisplayNames.Stem(hd.Element, hd.Polarity)}{DisplayNames.Elements[hd.Element]}〕 {PowerLogic.HeroPower(city, id):N0} · {where}";
                 chip.EnableInClassList("on", team >= 0);
                 chip.EnableInClassList("team2", team == 1);
             }
@@ -193,6 +202,8 @@ namespace AbyssKingdom.Client.UI
                 if (members.Count == 0 || members.Count > BattleConfig.MaxSquadsPerSide) ready = false;
                 _teamPower[i].text = $"我方 {ours:N0}  vs  敵方 {_enemyPower[i]:N0}";
                 _teamPower[i].EnableInClassList("weak", ours < _enemyPower[i]);
+                var syn = Elements.Synergies(members.Select(h => { HeroConfig.TryGet(h, out var d); return (d.Element, d.Polarity); }).ToList());
+                _ourSynergy[i].text = "我方加成：" + DisplayNames.SynergyList(syn);
             }
             _fight.SetEnabled(ready);
             _fight.text = ready ? $"出征第 {def.Number} 關" : "每條路都需要至少一位主將";
@@ -240,6 +251,8 @@ namespace AbyssKingdom.Client.UI
                 string outcome = rep.Outcome == BattleOutcome.AttackerWins ? "勝" : rep.Outcome == BattleOutcome.DefenderWins ? "敗" : "平手";
                 string label = r.Reports.Count > 1 ? $"岔路 {(char)('A' + i)}：" : "";
                 _result.Add(Lbl($"{label}{outcome}（{rep.Rounds} 回合）", "queue-title"));
+                if (i < r.OurSynergies.Count)
+                    _result.Add(Lbl($"我方加成：{DisplayNames.SynergyList(r.OurSynergies[i])}　敵方加成：{DisplayNames.SynergyList(r.EnemySynergies[i])}", "syn-line"));
 
                 string Name(BattleSide side, int idx)
                 {
@@ -253,7 +266,8 @@ namespace AbyssKingdom.Client.UI
                 foreach (var a in rep.Actions.Take(14))
                 {
                     var enemySide = a.Side == BattleSide.Attacker ? BattleSide.Defender : BattleSide.Attacker;
-                    string tag = a.CounterPercent > 100 ? "（克制）" : a.CounterPercent < 100 ? "（被克制）" : "";
+                    string tag = (a.CounterPercent > 100 ? "（兵種克制）" : a.CounterPercent < 100 ? "（兵種被克）" : "")
+                        + (a.ElementPercent > 100 ? $"（五行剋 {a.ElementPercent}%）" : a.ElementPercent < 100 ? "（五行被剋）" : "");
                     var line = Lbl($"第{a.Round}回合　{Name(a.Side, a.Actor)} → {Name(enemySide, a.Target)}　{a.Damage:N0} 傷害{tag}", "log-line");
                     line.EnableInClassList("enemy", a.Side == BattleSide.Defender);
                     log.Add(line);

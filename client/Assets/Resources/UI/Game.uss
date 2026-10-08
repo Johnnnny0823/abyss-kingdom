@@ -419,3 +419,19 @@
 .domain-fill-Speed { background-color: rgb(70, 190, 170); }
 .domain-fill-Durability { background-color: rgb(120, 145, 190); }
 .domain-done { font-size: 13px; -unity-font-style: bold; color: rgb(236, 200, 124); margin-left: 10px; }
+
+/* ───── 五行陰陽 ───── */
+.el-badge { font-size: 11px; -unity-font-style: bold; border-radius: 8px; padding: 1px 7px; margin-left: 8px; border-width: 1px; color: rgb(20, 20, 20); }
+.el-badge.yin { background-color: rgba(0, 0, 0, 0); }
+.el-Wood { background-color: rgb(96, 176, 96); border-color: rgb(96, 176, 96); }
+.el-Fire { background-color: rgb(226, 96, 70); border-color: rgb(226, 96, 70); }
+.el-Earth { background-color: rgb(198, 156, 80); border-color: rgb(198, 156, 80); }
+.el-Metal { background-color: rgb(206, 208, 218); border-color: rgb(206, 208, 218); }
+.el-Water { background-color: rgb(80, 146, 226); border-color: rgb(80, 146, 226); }
+.el-badge.yin.el-Wood { color: rgb(130, 210, 130); }
+.el-badge.yin.el-Fire { color: rgb(250, 130, 110); }
+.el-badge.yin.el-Earth { color: rgb(226, 190, 120); }
+.el-badge.yin.el-Metal { color: rgb(220, 222, 232); }
+.el-badge.yin.el-Water { color: rgb(130, 180, 250); }
+.syn-line { font-size: 12px; color: rgb(150, 220, 200); white-space: normal; margin-top: 4px; }
+.syn-line.enemy { color: rgb(230, 170, 160); }

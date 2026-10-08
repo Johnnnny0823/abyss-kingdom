@@ -1,4 +1,5 @@
 using System;
+using AbyssKingdom.Shared.Battle;
 using AbyssKingdom.Shared.City;
 using AbyssKingdom.Shared.Heroes;
 using UnityEngine;
@@ -40,6 +41,14 @@ namespace AbyssKingdom.Client.UI
             var icon = new IconElement(IconElement.For(r), small ? 18 : 28);
             icon.AddToClassList(small ? "icon-small" : "icon");
             return icon;
+        }
+
+        /// <summary>五行陰陽徽章，例如「戊・陽土」。陰屬性用空心樣式。</summary>
+        public static Label ElementBadge(Element e, Polarity p)
+        {
+            var l = Lbl(DisplayNames.ElementLabel(e, p), "el-badge", "el-" + e);
+            l.EnableInClassList("yin", p == Polarity.Yin);
+            return l;
         }
 
         public static void Show(VisualElement e, bool visible)

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using AbyssKingdom.Shared.Battle;
 using AbyssKingdom.Shared.City;
 using AbyssKingdom.Shared.Expedition;
 using AbyssKingdom.Shared.Heroes;
@@ -98,6 +99,49 @@ namespace AbyssKingdom.Client.UI
             { RopeGrade.Legendary, "金繩 · 傳說" },
             { RopeGrade.Mythic, "黑繩 · 神秘" },
         };
+
+        // ───── 五行陰陽（十天干） ─────
+
+        public static readonly Dictionary<Element, string> Elements = new Dictionary<Element, string>
+        {
+            { Element.None, "無" }, { Element.Wood, "木" }, { Element.Fire, "火" },
+            { Element.Earth, "土" }, { Element.Metal, "金" }, { Element.Water, "水" },
+        };
+
+        /// <summary>天干：甲乙木、丙丁火、戊己土、庚辛金、壬癸水（陽在前）。</summary>
+        public static string Stem(Element e, Polarity p)
+        {
+            const string stems = "甲乙丙丁戊己庚辛壬癸";
+            if (e == Element.None) return "";
+            int i = ((int)e - 1) * 2 + (p == Polarity.Yin ? 1 : 0);
+            return stems[i].ToString();
+        }
+
+        /// <summary>例如「戊・陽土」。</summary>
+        public static string ElementLabel(Element e, Polarity p) =>
+            e == Element.None ? "無屬性" : $"{Stem(e, p)}・{(p == Polarity.Yin ? "陰" : "陽")}{Elements[e]}";
+
+        public static readonly Dictionary<Synergy, string> Synergies = new Dictionary<Synergy, string>
+        {
+            { Synergy.Triad, "三合" }, { Synergy.Quintet, "五同" },
+            { Synergy.ThreeTalents, "三才" }, { Synergy.FiveComplete, "五行俱全" },
+            { Synergy.Chain3, "相生三環" }, { Synergy.Chain4, "相生四環" }, { Synergy.Chain5, "相生五環" },
+            { Synergy.Harmony, "陰陽調和" }, { Synergy.PureYang, "純陽" }, { Synergy.PureYin, "純陰" },
+        };
+
+        public static string SynergyList(IEnumerable<Synergy> list)
+        {
+            var parts = new List<string>();
+            foreach (var s in list)
+            {
+                var (atk, red) = AbyssKingdom.Shared.Battle.Elements.Effect(s);
+                var fx = new List<string>();
+                if (atk > 0) fx.Add($"攻+{atk}%");
+                if (red > 0) fx.Add($"受傷-{red}%");
+                parts.Add($"{Synergies[s]}（{string.Join(" ", fx)}）");
+            }
+            return parts.Count == 0 ? "無" : string.Join("、", parts);
+        }
 
         // ───── 四境 ─────
 

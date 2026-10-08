@@ -27,6 +27,8 @@ namespace AbyssKingdom.Client.UI
         private readonly Label _glyph, _troop, _name, _grade, _title, _bio, _level, _power, _powerDelta, _expText;
         private readonly Dictionary<Domain, DomainRow> _domains = new Dictionary<Domain, DomainRow>();
         private readonly Label _tier, _order;
+        private readonly VisualElement _elementSlot;
+        private HeroId? _elementFor;
         private HeroId? _powerHero;
         private long _lastPower;
         private CityState _city;
@@ -43,7 +45,10 @@ namespace AbyssKingdom.Client.UI
             {
                 var chip = El("hero-chip");
                 chip.style.borderLeftColor = GradeColor(def.Grade);
-                chip.Add(Lbl(DisplayNames.Heroes[def.Id], "hero-chip-name"));
+                var nameRow = El("row");
+                nameRow.Add(Lbl(DisplayNames.Heroes[def.Id], "hero-chip-name"));
+                nameRow.Add(ElementBadge(def.Element, def.Polarity));
+                chip.Add(nameRow);
                 var lv = Lbl("", "muted");
                 var pw = Lbl("", "hero-chip-power");
                 chip.Add(lv);
@@ -85,6 +90,8 @@ namespace AbyssKingdom.Client.UI
             head.Add(_name);
             _grade = Lbl("", "grade-badge");
             head.Add(_grade);
+            _elementSlot = El();
+            head.Add(_elementSlot);
             head.Add(El("spacer"));
             _level = Lbl("", "level-badge");
             head.Add(_level);
@@ -192,6 +199,12 @@ namespace AbyssKingdom.Client.UI
             _grade.ClearClassList();
             _grade.AddToClassList("grade-badge");
             _grade.AddToClassList("grade-" + sel.Grade);
+            if (_elementFor != _selected)
+            {
+                _elementSlot.Clear();
+                _elementSlot.Add(ElementBadge(sel.Element, sel.Polarity));
+                _elementFor = _selected;
+            }
             _title.text = DisplayNames.HeroTitles[_selected];
             _bio.text = DisplayNames.HeroBios[_selected];
 
