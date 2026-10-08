@@ -10,7 +10,7 @@
 - [x] 存檔：記憶體（本機開發）／Supabase（正式）
 - [x] 22 個自動測試（規則單元測試 + 真實連線的端到端測試 + Supabase 存取測試）
 - [x] Unity 客戶端：連線元件 + 開發用城建面板（按 Play 自動出現）
-- [ ] 部署到 Oracle Cloud（下一步，帳號開好後進行）
+- [x] 部署：本機 Docker + Cloudflare Quick Tunnel（`wss://`），見 [docs/DEPLOY.md](docs/DEPLOY.md)；之後再搬雲端主機
 - [ ] Unity 端接 Firebase 登入
 
 ## 資料夾結構

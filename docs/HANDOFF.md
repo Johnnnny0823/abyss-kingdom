@@ -36,7 +36,7 @@
 | 主資料庫 | Supabase（託管 PostgreSQL） | 伺服器用 service_role key 走 REST（PostgREST）；客戶端不可直連 |
 | 登入 / 推播 / 當機 | Firebase Auth（匿名 + Google）、FCM、Crashlytics、Remote Config | **不用 Firestore**（按讀寫計費、不適合 SLG） |
 | 快取 | Redis（之後才加，同主機 Docker） | 目前狀態都在伺服器記憶體 |
-| 主機 | Oracle Cloud Always Free（Ampere A1，ARM64） | 註冊卡關中，見第 5 節備案 |
+| 主機 | Oracle Cloud Always Free（Ampere A1，ARM64） | 註冊被拒（防詐騙自動拒絕）；**目前改用本機 Docker + Cloudflare Quick Tunnel**，見 docs/DEPLOY.md |
 | CI | GitHub Actions（`.github/workflows/ci.yml`） | 跑建置與測試 |
 | 測試 | 自製迷你測試框架（無 NuGet） | 雲端開發環境當時無法連 NuGet，故維持零套件 |
 
@@ -73,7 +73,7 @@ docs/                  SETUP.md（環境安裝）、ACCOUNTS.md（帳號註冊�
 | GitHub | repo：`https://github.com/Johnnnny0823/abyss-kingdom`（Private），已設為 git remote；由使用者用 GitHub Desktop 上傳 |
 | Supabase | 專案已建立。Security：Data API 開、Automatically expose new tables 關、automatic RLS 開。`db/001_players.sql` 已執行（2026-10-08）；Project URL = https://bqgpiibomfktlrasuupb.supabase.co。本機開發機已在 Windows 使用者環境變數設好 `Supabase__Url`、`Supabase__ServiceKey` |
 | Firebase | 專案 ID **`abyss-kingdom`**（注意：`project-abyss-kingdom` 是公開顯示名稱，不是 ID）。已啟用匿名與 Google 登入；**匿名帳號自動清理刻意不開**（會刪掉 30 天以上的訪客帳號 → 玩家 UID 改變、進度遺失），待做「訪客綁定 Google」後再評估 |
-| Oracle Cloud | 註冊時出現「禁止／已超過要求數目」被限流。建議等待、無痕視窗、關 VPN 後重試。**備案**：伺服器先跑在本機 + Cloudflare Tunnel 給朋友連；或 Google Cloud e2-micro（僅美國機房） |
+| Oracle Cloud | 2026-10-08 再次嘗試：填完資料後被拒（「系統在建立您的帳戶時發生錯誤…嘗試建立多個帳戶」，防詐騙自動拒絕），客服機器人無法處理。建議隔一兩週、用實體信用卡與一致的英文帳單地址再試。**目前改用本機 Docker + Cloudflare Quick Tunnel**（docs/DEPLOY.md）。 |
 
 秘密（資料庫密碼、service_role key、Firebase 服務帳號）**從未也不應**出現在聊天或程式碼中。
 
@@ -82,13 +82,13 @@ docs/                  SETUP.md（環境安裝）、ACCOUNTS.md（帳號註冊�
 1. ~~Unity 客戶端從未實際編譯過~~ → 2026-10-08 已在 Windows 用 Unity 6000.4.8f1 編譯通過，Play 登入、升級、完成推播皆正常，編輯器內中文顯示正常。**手機上的 IMGUI 中文字型仍未驗證**。
 2. ~~SupabasePlayerStore 只用假 HTTP 測過~~ → 2026-10-08 已對真實 Supabase 驗證：建表、登入寫入、30 秒定時存檔、重啟伺服器後讀回狀態皆正常。
 3. **FirebaseAuthVerifier 未用真實 ID Token 測過**，等 Unity 接上 Firebase SDK 後驗證。
-4. Android 預設禁止明文連線，正式部署要用 **wss://**（TLS），例如 Caddy 反向代理 + 網域，或 Cloudflare Tunnel。
+4. ~~Android 預設禁止明文連線~~ → 已透過 Cloudflare Quick Tunnel 提供 `wss://`，2026-10-08 實測 wss 登入成功。
 
 ## 7. 接下來的工作（依優先順序）
 
 1. ~~**本機跑通**~~（2026-10-08 完成）：`dotnet run --project tests/AbyssKingdom.Tests`（22 passed）→ 啟動伺服器 → Unity 開 `client/` 按 Play 登入升級；修掉 Unity 編譯問題。
 2. ~~**接真實 Supabase**~~（2026-10-08 完成）：執行 SQL、用環境變數設定 URL 與 key，驗證讀寫。
-3. **部署**：Oracle（或備案）上用 Docker 跑伺服器，加 TLS（wss），寫部署文件與 systemd / docker compose。
+3. ~~**部署**~~（2026-10-08 完成，過渡方案）：本機 `docker compose up -d --build` 跑伺服器 + Cloudflare Quick Tunnel，見 docs/DEPLOY.md。缺點：電腦要開著、網址每次重啟會變、仍是 Dev 登入。找到雲端主機後沿用同一份 compose。
 4. **Unity 接 Firebase 登入**：Firebase Unity SDK、匿名登入、之後加「綁定 Google」；伺服器改 `Auth__Mode=Firebase`。
 5. **第 3–4 週**：城建完善（多建築隊列？兵營訓練部隊、資源 UI）。
 6. **第 5–7 週**：第 1 層大地圖（約 200×200 格）、AOI 九宮格視野、行軍（伺服器只存起點/終點/出發時間/速度，客戶端插值）、採集與野怪。

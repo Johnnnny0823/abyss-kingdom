@@ -1,0 +1,26 @@
+# 本機部署：遊戲伺服器 + Cloudflare Quick Tunnel（免帳號、免網域，自動提供 wss://）
+# 用法見 docs/DEPLOY.md。在專案根目錄執行：docker compose up -d --build
+#
+# 秘密不寫在這裡：Supabase__Url / Supabase__ServiceKey 從執行 docker compose 的環境變數讀入
+# （Windows 使用者環境變數，或專案根目錄的 .env，.env 已在 .gitignore）。
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    environment:
+      Auth__Mode: ${Auth__Mode:-Dev}
+      Storage__Mode: ${Storage__Mode:-Supabase}
+      Supabase__Url: ${Supabase__Url:?請先設定 Supabase__Url 環境變數}
+      Supabase__ServiceKey: ${Supabase__ServiceKey:?請先設定 Supabase__ServiceKey 環境變數}
+    ports:
+      - "127.0.0.1:5080:5080"   # 只給本機測試用；外部玩家一律走 tunnel
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    # Quick Tunnel：每次重啟網址都會變，網址印在 log 裡（docker compose logs tunnel）
+    command: tunnel --no-autoupdate --url http://server:5080
+    depends_on:
+      - server
