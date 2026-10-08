@@ -5,13 +5,13 @@ using AbyssKingdom.Shared.City;
 
 namespace AbyssKingdom.Shared.Heroes
 {
-    /// <summary>四境（設計見 docs/design/SYSTEMS.md 第 2 節）。玩家看到的是「四股索」：崩索／結索／墜索／錨索（客戶端 DisplayNames）。</summary>
+    /// <summary>四股索（設計見 docs/design/GDD.md 4.7）。玩家看到的是「四股索」：崩索／結索／墜索／錨索（客戶端 DisplayNames）。</summary>
     public enum Domain
     {
-        Power = 0,       // 震境：力
-        Technique = 1,   // 巧境：技
-        Speed = 2,       // 迅境：速
-        Durability = 3,  // 磐境：韌
+        Power = 0,       // 崩索：力
+        Technique = 1,   // 結索：技
+        Speed = 2,       // 墜索：速
+        Durability = 3,  // 錨索：韌
     }
 
     /// <summary>通達幾境決定稱號（2026-10-08 使用者定案：每多一境一個稱號）。</summary>
@@ -21,7 +21,7 @@ namespace AbyssKingdom.Shared.Heroes
         Roped = 1,         // 繫索者
         Delver = 2,        // 下探者
         Deepwalker = 3,    // 深行者
-        AbyssReacher = 4,  // 抵淵者（四境皆通，頂點）
+        AbyssReacher = 4,  // 抵淵者（四股索皆通，頂點）
     }
 
     public enum DomainResult
@@ -87,7 +87,7 @@ namespace AbyssKingdom.Shared.Heroes
             h.DomainXp[d] = Math.Min(cap, Xp(h, d) + amount);
         }
 
-        /// <summary>把已通達的四境加成套到小隊上。</summary>
+        /// <summary>把已通達的四股索加成套到小隊上。</summary>
         public static void ApplyBonuses(HeroState h, SquadInput s)
         {
             if (IsMastered(h, Domain.Power)) s.AttackPercent = s.AttackPercent * DomainConfig.PowerAttackPercent / 100;
@@ -118,7 +118,7 @@ namespace AbyssKingdom.Shared.Heroes
             }
         }
 
-        /// <summary>使用境書定向補修練值（材料為輔）。</summary>
+        /// <summary>使用索譜定向補修練值（材料為輔）。</summary>
         public static DomainResult UseScroll(CityState city, HeroId id, ItemType item, long count)
         {
             if (!HeroConfig.TryGet(id, out _)) return DomainResult.UnknownHero;
@@ -134,10 +134,10 @@ namespace AbyssKingdom.Shared.Heroes
 
         /// <summary>
         /// 通達試煉（夢魘試煉）：主將單獨帶兵挑戰一場主題戰鬥。難度隨已通達數量提高。
-        ///  震境：打破重甲——敵人不會攻擊但極硬，20 回合內擊倒才算過。
-        ///  巧境：逆境——敵人是剋制你的兵種。
-        ///  迅境：搶先——敵人攻擊很高但脆弱，誰先倒下誰輸。
-        ///  磐境：撐住——敵人打不死，主將撐過 20 回合不倒就算過。
+        ///  崩索：打破重甲——敵人不會攻擊但極硬，20 回合內擊倒才算過。
+        ///  結索：逆境——敵人是剋制你的兵種。
+        ///  墜索：搶先——敵人攻擊很高但脆弱，誰先倒下誰輸。
+        ///  錨索：撐住——敵人打不死，主將撐過 20 回合不倒就算過。
         /// </summary>
         public static DomainResult Trial(CityState city, HeroId id, Domain domain, ulong seed, out DomainTrialResult result)
         {
@@ -160,7 +160,7 @@ namespace AbyssKingdom.Shared.Heroes
             return DomainResult.Ok;
         }
 
-        /// <summary>主將帶「統率」數量的專精兵種，並套上已通達的四境加成（遠征與試煉共用）。</summary>
+        /// <summary>主將帶「統率」數量的專精兵種，並套上已通達的四股索加成（遠征與試煉共用）。</summary>
         public static SquadInput HeroSquad(CityState city, HeroId id)
         {
             HeroConfig.TryGet(id, out var def);

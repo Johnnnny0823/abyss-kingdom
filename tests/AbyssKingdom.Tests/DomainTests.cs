@@ -34,16 +34,16 @@ public static class DomainTests
     {
         foreach (var hero in new[] { HeroId.Hold, HeroId.Vesper })
         {
-            Assert.Equal(0, TrialWins(hero, 1, Domain.Technique, 0), hero + " Lv1 過不了巧境試煉");
-            Assert.Equal(20, TrialWins(hero, 8, Domain.Technique, 0), hero + " Lv8 穩過第一次巧境試煉");
-            Assert.Equal(20, TrialWins(hero, 8, Domain.Speed, 0), hero + " Lv8 穩過第一次迅境試煉");
+            Assert.Equal(0, TrialWins(hero, 1, Domain.Technique, 0), hero + " Lv1 過不了結索試煉");
+            Assert.Equal(20, TrialWins(hero, 8, Domain.Technique, 0), hero + " Lv8 穩過第一次結索試煉");
+            Assert.Equal(20, TrialWins(hero, 8, Domain.Speed, 0), hero + " Lv8 穩過第一次墜索試煉");
         }
     }
 
     [Test]
     public static void Curve_LaterTrialsNeedMoreLevels()
     {
-        Assert.Equal(0, TrialWins(HeroId.Hold, 14, Domain.Speed, 3), "第四境的試煉在 Lv14 過不了");
+        Assert.Equal(0, TrialWins(HeroId.Hold, 14, Domain.Speed, 3), "第四股索的試煉在 Lv14 過不了");
         Assert.Equal(20, TrialWins(HeroId.Hold, 30, Domain.Speed, 3), "滿級可以過");
     }
 
@@ -51,7 +51,7 @@ public static class DomainTests
     public static void Curve_HeroesHaveNaturalStrengths()
     {
         Assert.True(TrialWins(HeroId.Vesper, 3, Domain.Power, 0) > TrialWins(HeroId.Hold, 3, Domain.Power, 0), "射手的崩索（力）比較容易");
-        Assert.True(TrialWins(HeroId.Hold, 5, Domain.Durability, 0) > TrialWins(HeroId.Vesper, 5, Domain.Durability, 0), "盾衛的錨索（韌）比較容易");
+        Assert.True(TrialWins(HeroId.Hold, 5, Domain.Durability, 0) > TrialWins(HeroId.Vesper, 5, Domain.Durability, 0), "霍德（沉錨衛）的錨索（韌）比較容易");
     }
 
     // ───── 規則 ─────
@@ -90,7 +90,7 @@ public static class DomainTests
         Assert.Equal(DomainResult.StarsRequired, DomainLogic.Trial(c, HeroId.Hold, Domain.Durability, 1, out _), "沒有 5 金星不能挑戰");
         h.Stars = 5;
         Assert.Equal(DomainResult.Ok, DomainLogic.Trial(c, HeroId.Hold, Domain.Durability, 1, out var r));
-        Assert.True(r.Success, "Lv20 霍德過磐境試煉");
+        Assert.True(r.Success, "Lv20 霍德過錨索試煉");
         Assert.Equal(Domain.Durability, h.Mastered[0], "記錄通達順序");
         Assert.Equal(DomainResult.AlreadyMastered, DomainLogic.Trial(c, HeroId.Hold, Domain.Durability, 1, out _));
     }
@@ -115,10 +115,10 @@ public static class DomainTests
         var before = DomainLogic.HeroSquad(c, HeroId.Karst);
         h.Mastered.AddRange(DomainConfig.All);
         var after = DomainLogic.HeroSquad(c, HeroId.Karst);
-        Assert.Equal(before.AttackPercent * DomainConfig.PowerAttackPercent / 100, after.AttackPercent, "震境");
-        Assert.Equal(DomainConfig.DurabilityDamageTakenPercent, after.DamageTakenPercent, "磐境");
-        Assert.Equal(DomainConfig.SpeedBonus, after.SpeedBonus, "迅境");
-        Assert.Equal(DomainConfig.TechniqueCounterBonus, after.CounterBonus, "巧境");
+        Assert.Equal(before.AttackPercent * DomainConfig.PowerAttackPercent / 100, after.AttackPercent, "崩索");
+        Assert.Equal(DomainConfig.DurabilityDamageTakenPercent, after.DamageTakenPercent, "錨索");
+        Assert.Equal(DomainConfig.SpeedBonus, after.SpeedBonus, "墜索");
+        Assert.Equal(DomainConfig.TechniqueCounterBonus, after.CounterBonus, "結索");
     }
 
     [Test]
@@ -128,7 +128,7 @@ public static class DomainTests
         ExpeditionLogic.Fight(c, 1, new List<IList<HeroId>> { new[] { HeroId.Hold, HeroId.Vesper, HeroId.Karst } }, 3, T0, out var r);
         Assert.True(r.Win, "第 1 關會贏");
         long totalPower = c.Heroes.Values.Sum(h => DomainLogic.Xp(h, Domain.Power));
-        Assert.True(totalPower > 0, "有人打出傷害 → 震境修練值增加");
+        Assert.True(totalPower > 0, "有人打出傷害 → 崩索修練值增加");
         Assert.True(c.Heroes.Values.All(h => DomainLogic.Xp(h, Domain.Power) <= DomainConfig.MaxXpPerBattle), "單場有上限");
     }
 

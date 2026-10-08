@@ -37,7 +37,7 @@ namespace AbyssKingdom.Shared.Battle
     }
 
     /// <summary>
-    /// 五行陰陽（十天干）：克制規則與隊伍加成。設計見 docs/design/SYSTEMS.md「五行陰陽」。
+    /// 五行陰陽（十天干）：克制規則與隊伍加成。設計見 docs/design/GDD.md 4.8。
     /// 克制：木剋土、土剋水、水剋火、火剋金、金剋木。相生：木生火、火生土、土生金、金生水、水生木。
     /// </summary>
     public static class Elements

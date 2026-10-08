@@ -23,8 +23,8 @@ public static class CityLogicTests
     {
         var c = CityState.CreateNew(T0);
         CityLogic.Advance(c, T0 + Hour);
-        Assert.Equal(CityConfig.StartingResource + 100, c.GetResource(ResourceType.Wood), "木材");
-        Assert.Equal(CityConfig.StartingResource + 100, c.GetResource(ResourceType.Crystal), "晶礦");
+        Assert.Equal(CityConfig.StartingResource + 100, c.GetResource(ResourceType.Wood), "根材");
+        Assert.Equal(CityConfig.StartingResource + 100, c.GetResource(ResourceType.Crystal), "響晶");
     }
 
     [Test]
@@ -33,7 +33,7 @@ public static class CityLogicTests
         // 每秒結算一次、共 3600 次，結果必須等於一次結算一小時（餘數機制）
         var c = CityState.CreateNew(T0);
         for (int i = 1; i <= 3600; i++) CityLogic.Advance(c, T0 + i * 1000L);
-        Assert.Equal(CityConfig.StartingResource + 100, c.GetResource(ResourceType.Food), "糧食");
+        Assert.Equal(CityConfig.StartingResource + 100, c.GetResource(ResourceType.Food), "菌糧");
     }
 
     [Test]
@@ -50,7 +50,7 @@ public static class CityLogicTests
     {
         var c = CityState.CreateNew(T0);
         CityLogic.Advance(c, T0 + 1000 * Hour);
-        Assert.Equal(CityConfig.Capacity(0), c.GetResource(ResourceType.Stone), "石材上限");
+        Assert.Equal(CityConfig.Capacity(0), c.GetResource(ResourceType.Stone), "層岩上限");
     }
 
     [Test]
@@ -59,7 +59,7 @@ public static class CityLogicTests
         Assert.Equal(400L, CityConfig.UpgradeCost(BuildingType.Keep, 1, ResourceType.Wood));
         Assert.Equal(600L, CityConfig.UpgradeCost(BuildingType.Keep, 2, ResourceType.Wood));
         Assert.Equal(900L, CityConfig.UpgradeCost(BuildingType.Keep, 3, ResourceType.Wood));
-        Assert.Equal(0L, CityConfig.UpgradeCost(BuildingType.Sawmill, 2, ResourceType.Wood), "伐木場不需木材");
+        Assert.Equal(0L, CityConfig.UpgradeCost(BuildingType.Sawmill, 2, ResourceType.Wood), "掘根場不需根材");
     }
 
     [Test]
@@ -68,8 +68,8 @@ public static class CityLogicTests
         var c = CityState.CreateNew(T0);
         var r = CityLogic.StartUpgrade(c, BuildingType.Keep, T0);
         Assert.Equal(UpgradeResult.Ok, r);
-        Assert.Equal(CityConfig.StartingResource - 600, c.GetResource(ResourceType.Wood), "木材扣除");
-        Assert.Equal(CityConfig.StartingResource - 150, c.GetResource(ResourceType.Crystal), "晶礦扣除");
+        Assert.Equal(CityConfig.StartingResource - 600, c.GetResource(ResourceType.Wood), "根材扣除");
+        Assert.Equal(CityConfig.StartingResource - 150, c.GetResource(ResourceType.Crystal), "響晶扣除");
         var job = Assert.NotNull(c.Upgrade, "升級工程");
         Assert.Equal(2, job.TargetLevel);
         Assert.Equal(T0 + CityConfig.UpgradeDurationMs(BuildingType.Keep, 2), job.FinishAtMs);

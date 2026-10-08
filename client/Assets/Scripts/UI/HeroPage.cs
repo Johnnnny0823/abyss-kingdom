@@ -160,7 +160,7 @@ namespace AbyssKingdom.Client.UI
             info.Add(books);
             info.Add(Lbl("點左右的裝備格可以更換裝備；升級和換裝都會即時反映在戰力上。", "muted", "hint"));
 
-            // 四境
+            // 四股索
             var domainHead = El("row");
             domainHead.style.marginTop = 16;
             domainHead.Add(Lbl("四股索", "panel-title"));
@@ -277,7 +277,7 @@ namespace AbyssKingdom.Client.UI
             }
         }
 
-        /// <summary>四境中的一列：境名、修練進度、狀態（修練中／挑戰試煉／已通達）、境書。</summary>
+        /// <summary>四股索中的一列：境名、修練進度、狀態（修練中／挑戰試煉／已通達）、索譜。</summary>
         private sealed class DomainRow
         {
             public readonly VisualElement Root = El("domain-row");

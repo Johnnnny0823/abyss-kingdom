@@ -116,18 +116,18 @@ public static class BattleTests
         long baseHit = FirstHit(plain, target);
 
         var strong = Squad(TroopType.Crossbow, 100); strong.AttackPercent = 115;
-        Assert.True(FirstHit(strong, target) > baseHit, "震境：傷害提高");
+        Assert.True(FirstHit(strong, target) > baseHit, "崩索：傷害提高");
 
         var tough = Squad(TroopType.Crossbow, 100); tough.DamageTakenPercent = 85;
-        Assert.True(FirstHit(plain, tough) < baseHit, "磐境：承受傷害降低");
+        Assert.True(FirstHit(plain, tough) < baseHit, "錨索：承受傷害降低");
 
         var skilled = Squad(TroopType.Shield, 100); skilled.CounterBonus = 15;
         var r = BattleEngine.Run(Side(skilled), Side(Squad(TroopType.Rider, 100)), 4);
-        Assert.True(r.Actions.Any(a => a.Side == BattleSide.Attacker && a.CounterPercent == 145), "巧境：克制 130 → 145");
+        Assert.True(r.Actions.Any(a => a.Side == BattleSide.Attacker && a.CounterPercent == 145), "結索：克制 130 → 145");
 
         var fast = Squad(TroopType.Shield, 100); fast.SpeedBonus = 5;
         var r2 = BattleEngine.Run(Side(fast), Side(Squad(TroopType.Rider, 100)), 4);
-        Assert.Equal(BattleSide.Attacker, r2.Actions[0].Side, "迅境：慢兵種也能搶先出手");
+        Assert.Equal(BattleSide.Attacker, r2.Actions[0].Side, "墜索：慢兵種也能搶先出手");
     }
 
     [Test]

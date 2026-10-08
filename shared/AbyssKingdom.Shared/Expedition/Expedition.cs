@@ -96,7 +96,7 @@ namespace AbyssKingdom.Shared.Expedition
                 st.ItemRewards[ItemType.HeroExpMedium] = 1 + s / 2;
                 if (s == 5 || s == 10) st.ItemRewards[ItemType.HeroExpLarge] = 1;
                 if (s == 5) st.ItemRewards[ItemType.SpeedupGeneral30m] = 2;
-                // 境書：依關卡輪替四種
+                // 索譜：依關卡輪替四種
                 st.ItemRewards[ItemType.DomainScrollPower + (s - 1) % 4] = 2;
                 // 信物：每關輪替一位主將的專屬信物＋少量通用；守層者大量通用
                 st.ItemRewards[ItemType.HeroShardHold + (s - 1) % 3] = 6 + s;
@@ -168,7 +168,7 @@ namespace AbyssKingdom.Shared.Expedition
 
     public static class ExpeditionLogic
     {
-        /// <summary>主將帶「統率」數量的專精兵種出征（含四境加成）。遠征不消耗兵營部隊、不會死兵。</summary>
+        /// <summary>主將帶「統率」數量的專精兵種出征（含四股索加成）。遠征不消耗兵營部隊、不會死兵。</summary>
         public static SquadInput HeroSquad(CityState city, HeroId id) => DomainLogic.HeroSquad(city, id);
 
         public static SquadInput EnemySquadInput(EnemySquad e) => new SquadInput
@@ -215,7 +215,7 @@ namespace AbyssKingdom.Shared.Expedition
                 result.EnemySynergies.Add(Elements.ApplyTeamSynergy(theirs));
                 var report = BattleEngine.Run(ours, theirs, seed + (ulong)i);
                 result.Reports.Add(report);
-                DomainLogic.AwardFromBattle(city, teams[i], report); // 輸贏都會累積四境修練
+                DomainLogic.AwardFromBattle(city, teams[i], report); // 輸贏都會累積四股索修練
                 if (report.Outcome != BattleOutcome.AttackerWins) result.Win = false;
             }
 

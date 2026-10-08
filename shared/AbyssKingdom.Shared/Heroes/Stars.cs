@@ -5,7 +5,7 @@ namespace AbyssKingdom.Shared.Heroes
 {
     /// <summary>
     /// 星色（2026-10-08 使用者定案）：金星 → 藍星 → 紅星 → 銀彩星，每色 5 顆。
-    /// 第 k 股索（四境）的斷索試煉，需要先把第 k 種星色升滿。
+    /// 第 k 股索的斷索試煉，需要先把第 k 種星色升滿。
     /// </summary>
     public enum StarTier
     {

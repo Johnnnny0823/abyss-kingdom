@@ -44,22 +44,22 @@ namespace AbyssKingdom.Shared.Battle
         public TroopType Troop { get; set; }
         public long Count { get; set; }
 
-        // ───── 四境加成（預設值 = 無加成） ─────
-        /// <summary>震境：攻擊力百分比（100 = 無加成）。</summary>
+        // ───── 四股索加成（預設值 = 無加成） ─────
+        /// <summary>崩索：攻擊力百分比（100 = 無加成）。</summary>
         public long AttackPercent { get; set; } = 100;
-        /// <summary>磐境：承受傷害百分比（100 = 無加成，85 = 少受 15%）。</summary>
+        /// <summary>錨索：承受傷害百分比（100 = 無加成，85 = 少受 15%）。</summary>
         public long DamageTakenPercent { get; set; } = 100;
-        /// <summary>迅境：出手速度加成。</summary>
+        /// <summary>墜索：出手速度加成。</summary>
         public int SpeedBonus { get; set; }
-        /// <summary>巧境：克制倍率加成；被克制時也減少同樣的懲罰。</summary>
+        /// <summary>結索：克制倍率加成；被克制時也減少同樣的懲罰。</summary>
         public int CounterBonus { get; set; }
 
-        /// <summary>五行與陰陽（十天干），見 Elements.cs。</summary>
+        /// <summary>淵脈與浮沉（內部為五行陰陽），見 Elements.cs。</summary>
         public Element Element { get; set; }
         public Polarity Polarity { get; set; }
     }
 
-    /// <summary>每支小隊的戰後結果。DamageDealt / DamageTaken / FirstStrikes 之後用來發放「四境」修練值。</summary>
+    /// <summary>每支小隊的戰後結果。DamageDealt / DamageTaken / FirstStrikes 之後用來發放「四股索」修練值。</summary>
     public sealed class SquadResult
     {
         public long TroopsStart { get; set; }
@@ -79,7 +79,7 @@ namespace AbyssKingdom.Shared.Battle
         public int Target { get; set; }
         public long Damage { get; set; }
         public long TroopsKilled { get; set; }
-        /// <summary>兵種克制：100 = 無，130 = 克制，80 = 被克制（含巧境加成）。</summary>
+        /// <summary>兵種克制：100 = 無，130 = 克制，80 = 被克制（含結索加成）。</summary>
         public int CounterPercent { get; set; }
         /// <summary>五行克制：100 = 無，125 = 同性相剋，115 = 異性相剋，85 = 被剋。</summary>
         public int ElementPercent { get; set; } = 100;

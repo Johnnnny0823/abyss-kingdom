@@ -68,7 +68,7 @@ namespace AbyssKingdom.Shared.City
 
         /// <summary>
         /// 升到 targetLevel 所需的某種資源。基礎值 × 1.5^(目標等級-1)，以整數計算（×3/2 反覆）。
-        /// 晶礦只有主堡與晶礦場以外的高階建築才需要，MVP 先簡化為主堡需要晶礦。
+        /// 響晶只有主堡與響響晶脈以外的高階建築才需要，MVP 先簡化為主堡需要響晶。
         /// </summary>
         public static long UpgradeCost(BuildingType type, int targetLevel, ResourceType resource)
         {

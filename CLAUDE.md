@@ -12,7 +12,9 @@
 
 ## 開發流程
 
-1. 先看 README 的進度與 docs/ 的規格，一次只做一個小功能。
+1. 先看 `docs/design/GDD.md`（設定集：世界觀、名詞、規則、數值的唯一正式版本），一次只做一個小功能。
+   - 玩家看到的名稱只寫在 `client/Assets/Scripts/UI/DisplayNames.cs`，並與 GDD 第 3 節名詞總表一致；程式內部用中性英文 enum，**不要改 enum 名稱**（會壞存檔）。
+   - 設定或數值有變，同一次改動裡更新 GDD。
 2. 規則改動一定要在 `tests/AbyssKingdom.Tests` 加測試；跑 `dotnet run --project tests/AbyssKingdom.Tests` 全部 PASS 才算完成。
 3. 新增訊息類型：常數加在 `shared/.../Protocol/Messages.cs`，伺服器在 `Net/WebSocketHandler.cs` 分派，README 協定表同步更新。
 4. 測試專案不使用 NuGet（自帶 `[Test]` 迷你框架），請維持這個做法。

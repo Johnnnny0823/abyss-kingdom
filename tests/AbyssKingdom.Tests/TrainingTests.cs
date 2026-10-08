@@ -54,7 +54,7 @@ public static class TrainingTests
         Assert.Equal(CityConfig.StartingResource - 300, c.GetResource(ResourceType.Food), "糧 30×10");
         Assert.Equal(CityConfig.StartingResource - 100, c.GetResource(ResourceType.Stone), "石 10×10");
         Assert.Equal(CityConfig.StartingResource - 50, c.GetResource(ResourceType.Crystal), "晶 5×10");
-        Assert.Equal(CityConfig.StartingResource, c.GetResource(ResourceType.Wood), "獵騎不花木材");
+        Assert.Equal(CityConfig.StartingResource, c.GetResource(ResourceType.Wood), "懸索騎不花根材");
         var job = Assert.NotNull(c.Training, "訓練已排入");
         Assert.Equal(T0 + 30_000, job.FinishAtMs, "3 秒 × 10 名");
     }
@@ -71,7 +71,7 @@ public static class TrainingTests
     public static void Train_NotEnoughResources_ChangesNothing()
     {
         var c = CityWithBarracks(10);
-        c.Resources[ResourceType.Food] = 19; // 盾衛每名要糧 20
+        c.Resources[ResourceType.Food] = 19; // 沉錨衛每名要糧 20
         Assert.Equal(TrainResult.NotEnoughResources, CityLogic.StartTraining(c, TroopType.Shield, 1, T0));
         Assert.Equal(CityConfig.StartingResource, c.GetResource(ResourceType.Wood), "失敗不應扣資源");
         Assert.True(c.Training == null, "失敗不應排入隊列");

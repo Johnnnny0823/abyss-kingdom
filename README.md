@@ -3,15 +3,10 @@
 「深淵探勘 × 4X 策略」SLG（PC 先行，Steam＋自架下載；手遊之後）。一人 + AI（Vibe Coding）開發，零成本起步。
 企劃書與技術架構請看 Claude Docs 上的《深淵王國》SLG 手遊企劃書。
 
-## 目前進度：第 1–2 週里程碑
+## 目前進度
 
-- [x] 共用 C# 規則庫（城建、資源產出、升級計時、連線協定），伺服器與 Unity 共用同一份程式碼
-- [x] ASP.NET Core 遊戲伺服器：WebSocket 連線、開發模式登入、Firebase 登入驗證、玩家上線管理、每秒推進、定時存檔
-- [x] 存檔：記憶體（本機開發）／Supabase（正式）
-- [x] 22 個自動測試（規則單元測試 + 真實連線的端到端測試 + Supabase 存取測試）
-- [x] Unity 客戶端：連線元件 + 開發用城建面板（按 Play 自動出現）
-- [x] 部署：本機 Docker + Cloudflare Quick Tunnel（`wss://`），見 [docs/DEPLOY.md](docs/DEPLOY.md)；之後再搬雲端主機
-- [ ] Unity 端接 Firebase 登入
+城建（訓練、取消、加速、背包）、主將（品質、等級、裝備、戰力、升星、四股索、淵脈）、確定性戰鬥核心、遠征第一章已完成；伺服器部署在本機 Docker＋Cloudflare Tunnel，Windows 版可下載試玩。
+**遊戲設定（世界觀、名詞、數值、路線）以 [docs/design/GDD.md](docs/design/GDD.md) 為準**；接手開發請先讀 [docs/HANDOFF.md](docs/HANDOFF.md)。
 
 ## 資料夾結構
 
@@ -73,7 +68,7 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | → | `gear.equip` / `gear.unequip` | `{ gear: <uid>, hero }` / `{ gear: <uid> }` |
 | → | `expedition.battle` | `{ stage: 1, teams: [["Hold","Vesper"],["Karst"]] }`（每條岔路一隊） |
 | → | `expedition.claimIdle` | —（領掛機收益） |
-| → | `domain.useScroll` | `{ hero, item: "DomainScrollPower", count }`（境書補修練值） |
+| → | `domain.useScroll` | `{ hero, item: "DomainScrollPower", count }`（索譜補修練值） |
 | → | `domain.trial` | `{ hero, domain: "Power" }`（修練值滿、且對應星色升滿才能挑戰） |
 | → | `hero.starUp` | `{ hero }`（消耗信物＋響晶升一顆星） |
 | → | `ping` | — |
