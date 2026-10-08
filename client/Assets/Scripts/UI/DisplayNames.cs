@@ -111,7 +111,37 @@ namespace AbyssKingdom.Client.UI
             { NodeType.Fissure, "地脈裂隙" },
             { NodeType.ShaftHub, "升降井樞紐" },
             { NodeType.GuardianLair, "守層者巢穴" },
+            { NodeType.CitySite, "主城用地" },
+            { NodeType.ResourceField, "資源田" },
+            { NodeType.MonsterCamp, "怪物營地" },
+            { NodeType.Pass, "山谷關隘" },
         };
+
+        public static readonly Dictionary<SurfaceZone, string> Zones = new Dictionary<SurfaceZone, string>
+        {
+            { SurfaceZone.Rim, "崖緣（內環）" },
+            { SurfaceZone.Middle, "中環" },
+            { SurfaceZone.Outer, "外環（新手區）" },
+        };
+
+        /// <summary>地表節點的單字圖示。</summary>
+        public static string SurfaceGlyph(MapNode n)
+        {
+            switch (n.Type)
+            {
+                case NodeType.ResourceField: return ResourceGlyphs[n.Resource] + n.Level;
+                case NodeType.MonsterCamp: return "怪";
+                case NodeType.Pass: return "隘";
+                case NodeType.Gate: return "降";
+                default: return "地";
+            }
+        }
+
+        public static string SurfaceNodeName(MapNode n) =>
+            n.Type == NodeType.ResourceField ? $"{Resources[n.Resource]}田 Lv.{n.Level}"
+            : n.Type == NodeType.MonsterCamp ? $"怪物營地 Lv.{n.Level}"
+            : n.Type == NodeType.Gate ? "垂降口（深淵入口）"
+            : NodeTypes[n.Type];
 
         public static readonly Dictionary<NodeType, string> NodeDescriptions = new Dictionary<NodeType, string>
         {
@@ -121,6 +151,10 @@ namespace AbyssKingdom.Client.UI
             { NodeType.Fissure, "地脈從岩層裂縫湧出。佔領後，同脈的主將會得到加成，並產出稀有資源。" },
             { NodeType.ShaftHub, "連通上下層的升降井樞紐。控制樞紐，就控制了誰能往下走、往上撤。" },
             { NodeType.GuardianLair, "守層者「百眼紙傘」的巢穴。這一層最危險的地方。" },
+            { NodeType.CitySite, "空的主城用地。之後可以遷城到這裡。" },
+            { NodeType.ResourceField, "可以派部隊採集的資源田。越靠近深淵，等級越高。" },
+            { NodeType.MonsterCamp, "怪物盤踞的營地，擊敗牠們可以取得材料。" },
+            { NodeType.Pass, "山谷中的關隘，是分區之間唯一的通道。聯盟會爭奪這裡。" },
         };
 
         /// <summary>節點上的單字圖示；裂隙顯示它的淵脈。</summary>

@@ -23,7 +23,7 @@ PC 先行（Steam＋自架下載、手遊之後）的 4X / SLG：玩家在垂直
 | 資料庫 | Supabase（PostgreSQL，伺服器用 service_role 走 REST） | 城市整包 jsonb；客戶端不可直連 |
 | 登入 | Firebase Auth：PC 版走 **REST API** 匿名登入（Unity SDK 桌面版不可上線） | 之後加綁定 Google、Steam 登入；手遊版再用 Firebase SDK、FCM、Crashlytics |
 | 主機 | **本機 Docker＋Cloudflare Quick Tunnel**（`docs/DEPLOY.md`） | Oracle 註冊被拒；找到雲端主機後沿用同一份 compose |
-| 測試 | 自製迷你框架（無 NuGet），`dotnet run --project tests/AbyssKingdom.Tests` | 目前 127 個測試 |
+| 測試 | 自製迷你框架（無 NuGet），`dotnet run --project tests/AbyssKingdom.Tests` | 目前 133 個測試 |
 | CI | GitHub Actions（`.github/workflows/ci.yml`） | |
 
 ## 4. 程式結構（2026-10-08）
@@ -34,17 +34,17 @@ shared/AbyssKingdom.Shared/
   Heroes/      主將（Heroes）、裝備與戰力（Gear）、四股索與斷索試煉（Domains）、升星（Stars）
   Battle/      確定性戰鬥核心（Battle）、淵脈克制與隊伍加成（Elements）
   Expedition/  遠征第一章、掛機收益
-  Map/         深淵大地圖（種子生成的層網狀節點圖、迷霧、力場）、行軍（Marches）
+  Map/         深淵大地圖（種子生成的層網狀節點圖、迷霧、力場）、行軍（Marches）、地表大陸（Surface）
   Protocol/    訊息類型與資料結構
 server/AbyssKingdom.Server/
-  Auth/ Game/ Net/ Persistence/ Admin/（GM 工具）  GameServer.cs 組裝
+  Auth/ Game/（含 WorldService：地表全服主城索引）/ Net/ Persistence/ Admin/（GM 工具）  GameServer.cs 組裝
 tests/AbyssKingdom.Tests/   規則單元測試、難度曲線測試、真實 WebSocket 端到端、Supabase 假 HTTP
 client/
   Assets/Scripts/Net/     GameConnection（WebSocket）、FirebaseGuestAuth（REST 訪客登入）
   Assets/Scripts/Game/    GameClient（狀態與玩家意圖）
   Assets/Scripts/World/   AbyssWorld（深淵 3D 剖面灰盒，deferred 算繪、圖層 31）
   Assets/Resources/Abyss/ 3D 材質（打包時由 Editor/AbyssMaterials.cs 產生）
-  Assets/Scripts/UI/      GameUI、HeroPage、ExpeditionPage、MapPage（深淵地圖）、UiKit、Icons（向量圖示）、DisplayNames（所有顯示文字）
+  Assets/Scripts/UI/      GameUI、HeroPage、ExpeditionPage、ContinentPage（地表大陸）、MapPage（深淵地圖）、UiKit、Icons（向量圖示）、DisplayNames（所有顯示文字）
   Assets/Resources/UI/    Game.uss（樣式）、AbyssTheme.tss
   Assets/Editor/BuildScript.cs   一鍵打包（選單 Abyss Kingdom → Build Windows）
 db/001_players.sql   docs/（HANDOFF、DEPLOY、SETUP、ACCOUNTS、design/GDD.md）
@@ -75,14 +75,14 @@ docker-compose.yml   伺服器＋Cloudflare Quick Tunnel
 
 ## 7. 接下來的工作
 
-依 **GDD 第 6 節**的開發路線。目前在做**大地圖第 1 層**（拆成 5 步，見 GDD 5.3「實作進度」）：深淵第 1 層的地圖與迷霧、行軍、3D 剖面灰盒已完成。**時間軸已改成：前期（約 42 天）在地表、之後每賽季依時間解鎖一層深淵**（GDD 2.1.2）。下一步依 GDD 第 6 節：**5a 共用節點互動**（採集、打怪、傷兵醫院）→ 5b 地表大陸地圖 → 5c 賽季系統。
+依 **GDD 第 6 節**的開發路線。目前在做**大地圖第 1 層**（拆成 5 步，見 GDD 5.3「實作進度」）：深淵第 1 層的地圖與迷霧、行軍、3D 剖面灰盒已完成。**時間軸已改成：前期（約 42 天）在地表、之後每賽季依時間解鎖一層深淵**（GDD 2.1.2）。**目前專心做地表**（GDD 第 6 節 5a：S1 大陸地圖與主城 ✅ → **S2 地表行軍** → S3 採集 → S4 怪物營地／傷兵／醫院 → S5 PvP 攻城 → S6 聯盟盟旗）；賽季延後。
 
 ## 8. 開發小抄（給 AI）
 
 - 測試：`dotnet run --project tests/AbyssKingdom.Tests`（可加名稱片段當過濾，例如 `-- Probe`）。
 - 編譯客戶端（Unity 必須先關）：`Unity.exe -batchmode -quit -nographics -projectPath client -logFile <log>`；打包加 `-executeMethod BuildScript.BuildWindows`。
 - 更新線上伺服器：先把 Windows 使用者環境變數讀進 `$env:`，再 `docker compose up -d --build server`（tunnel 網址不變）。
-- 打包版測試參數：`-server <url>`、`-autologin`（訪客）、`-devlogin`（開發模式）、`-heroes`／`-expedition`／`-abyss`（直接開頁籤）、`-select <節點>`（深淵頁直接選取節點）、`-autofight`（自動出征）。截圖前在本機 5090 埠開 Dev 伺服器（可設 `Admin__Token` 用 GM 工具準備資料），**不要用使用者的訪客帳號做測試**。
+- 打包版測試參數：`-server <url>`、`-autologin`（訪客）、`-devlogin`（開發模式）、`-heroes`／`-expedition`／`-continent`／`-abyss`（直接開頁籤）、`-select <節點>`（深淵頁直接選取節點）、`-autofight`（自動出征）。截圖前在本機 5090 埠開 Dev 伺服器（可設 `Admin__Token` 用 GM 工具準備資料），**不要用使用者的訪客帳號做測試**。
 - 給朋友的 zip：`client/Builds/AbyssKingdom-Windows.zip`（排除 `*DoNotShip*` 資料夾）。
 
 ## 9. 給 Claude Code 的開場提示（可直接貼上）

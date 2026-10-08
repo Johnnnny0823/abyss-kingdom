@@ -127,6 +127,7 @@ namespace AbyssKingdom.Client.UI
             var legend = El("panel");
             legend.Add(Lbl("圖例", "queue-title"));
             foreach (NodeType t in Enum.GetValues(typeof(NodeType)))
+                if ((int)t <= (int)NodeType.GuardianLair) // 只列深淵的節點種類
                 legend.Add(Lbl($"{DisplayNames.NodeGlyph(t, Element.None)}　{DisplayNames.NodeTypes[t]}", "muted"));
             legend.Add(Lbl("紫色廊道：遮蔽力場（看不到另一頭）", "muted"));
             legend.Add(Lbl("紅色廊道：封鎖力場（無法通過）", "muted"));

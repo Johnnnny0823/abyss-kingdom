@@ -33,11 +33,13 @@ namespace AbyssKingdom.Client.UI
         private HeroPage _heroPage;
         private ExpeditionPage _expPage;
         private MapPage _mapPage;
+        private ContinentPage _continentPage;
+        private const int TabCity = 0, TabHeroes = 1, TabExpedition = 2, TabContinent = 3, TabAbyss = 4;
         private VisualElement _right;
         private Texture2D _gradient;
         private bool _worldMode;
         private readonly List<Label> _tabs = new List<Label>();
-        private int _tab; // 0 城鎮建築、1 主將、2 遠征、3 深淵
+        private int _tab;
         private QueueView _buildQueue, _trainQueue;
         private TrainingPanel _training;
         private VisualElement _itemList;
@@ -90,9 +92,10 @@ namespace AbyssKingdom.Client.UI
             G.Notice += ShowToast;
             // 測試用：-heroes / -expedition 直接開對應頁籤
             var args = Environment.GetCommandLineArgs();
-            if (Array.IndexOf(args, "-heroes") >= 0) _tab = 1;
-            if (Array.IndexOf(args, "-expedition") >= 0) _tab = 2;
-            if (Array.IndexOf(args, "-abyss") >= 0) _tab = 3;
+            if (Array.IndexOf(args, "-heroes") >= 0) _tab = TabHeroes;
+            if (Array.IndexOf(args, "-expedition") >= 0) _tab = TabExpedition;
+            if (Array.IndexOf(args, "-continent") >= 0) _tab = TabContinent;
+            if (Array.IndexOf(args, "-abyss") >= 0) _tab = TabAbyss;
             if (Array.IndexOf(args, "-autofight") >= 0) _root.schedule.Execute(() => _expPage.FightNow()).StartingIn(4000);
         }
 
@@ -193,7 +196,7 @@ namespace AbyssKingdom.Client.UI
 
             var left = El("left");
             var tabs = El("tabs");
-            string[] tabNames = { "城鎮建築", "主將", "遠征", "深淵" };
+            string[] tabNames = { "城鎮建築", "主將", "遠征", "大陸", "深淵" };
             for (int i = 0; i < tabNames.Length; i++)
             {
                 var tab = Lbl(tabNames[i], "tab");
@@ -220,6 +223,8 @@ namespace AbyssKingdom.Client.UI
             left.Add(_heroPage.Root);
             _expPage = new ExpeditionPage();
             left.Add(_expPage.Root);
+            _continentPage = new ContinentPage();
+            left.Add(_continentPage.Root);
             _mapPage = new MapPage();
             left.Add(_mapPage.Root);
             main.Add(left);
@@ -275,13 +280,15 @@ namespace AbyssKingdom.Client.UI
             Show(_cityPage, _tab == 0);
             Show(_heroPage.Root, _tab == 1);
             Show(_expPage.Root, _tab == 2);
-            Show(_mapPage.Root, _tab == 3);
-            Show(_right, _tab != 3); // 深淵頁讓地圖用滿寬度
-            _mapPage.SetTabActive(_tab == 3);
-            SetWorldMode(_tab == 3 && _mapPage.Is3D);
-            if (_tab == 0) foreach (var card in _cards) card.Refresh(city);
-            else if (_tab == 1) _heroPage.Refresh(city);
-            else if (_tab == 2) _expPage.Refresh(city);
+            Show(_continentPage.Root, _tab == TabContinent);
+            Show(_mapPage.Root, _tab == TabAbyss);
+            Show(_right, _tab != TabAbyss && _tab != TabContinent); // 地圖頁用滿寬度
+            _mapPage.SetTabActive(_tab == TabAbyss);
+            SetWorldMode(_tab == TabAbyss && _mapPage.Is3D);
+            if (_tab == TabCity) foreach (var card in _cards) card.Refresh(city);
+            else if (_tab == TabHeroes) _heroPage.Refresh(city);
+            else if (_tab == TabExpedition) _expPage.Refresh(city);
+            else if (_tab == TabContinent) _continentPage.Refresh(city);
             else _mapPage.Refresh(city);
             _buildQueue.Refresh(city, now);
             _training.Refresh(city, now);
