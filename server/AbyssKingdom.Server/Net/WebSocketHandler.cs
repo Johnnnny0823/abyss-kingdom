@@ -5,6 +5,7 @@ using AbyssKingdom.Server.Auth;
 using AbyssKingdom.Server.Game;
 using AbyssKingdom.Server.Infrastructure;
 using AbyssKingdom.Shared.City;
+using AbyssKingdom.Shared.Expedition;
 using AbyssKingdom.Shared.Heroes;
 using AbyssKingdom.Shared.Protocol;
 
@@ -205,6 +206,16 @@ public sealed class WebSocketHandler
                     Fail(GearLogic.Unequip(city, uneq.Gear), GearResult.Ok));
                 break;
 
+            case MessageTypes.ExpeditionBattle:
+                var battle = Deserialize<ExpeditionBattleRequest>(data);
+                if (battle == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "stage and teams required"); break; }
+                await HandleExpeditionBattle(conn, session, reqId, battle, ct);
+                break;
+
+            case MessageTypes.ExpeditionClaimIdle:
+                await HandleClaimIdle(conn, session, reqId, ct);
+                break;
+
             case MessageTypes.CitySpeedup:
                 var speed = Deserialize<SpeedupRequest>(data);
                 if (speed == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "queue required"); break; }
@@ -284,6 +295,55 @@ public sealed class WebSocketHandler
         await NotifyCompleted(conn, done, trained);
         if (error != null) await SendError(conn, reqId, errorCode, error);
         else await SendCity(conn, session, reqId, ct);
+    }
+
+    private async Task HandleExpeditionBattle(WsConnection conn, PlayerSession session, int reqId, ExpeditionBattleRequest req, CancellationToken ct)
+    {
+        ExpeditionCode code;
+        ExpeditionResult? result;
+        // 種子由伺服器決定；客戶端無法預先知道或選擇
+        ulong seed = BitConverter.ToUInt64(System.Security.Cryptography.RandomNumberGenerator.GetBytes(8));
+        var teams = (req.Teams ?? new()).Select(t => (IList<HeroId>)(t ?? new())).ToList();
+        await session.Gate.WaitAsync(ct);
+        try
+        {
+            code = ExpeditionLogic.Fight(session.Record.City, req.Stage, teams, seed, _clock.NowMs, out result);
+            if (code == ExpeditionCode.Ok) session.Dirty = true;
+        }
+        finally
+        {
+            session.Gate.Release();
+        }
+        if (code != ExpeditionCode.Ok || result == null)
+        {
+            await SendError(conn, reqId, ErrorCodes.ExpeditionRejected, code.ToString());
+            return;
+        }
+        await conn.SendAsync(MessageTypes.ExpeditionResultMessage, reqId, result);
+        await SendCity(conn, session, 0, ct);
+    }
+
+    private async Task HandleClaimIdle(WsConnection conn, PlayerSession session, int reqId, CancellationToken ct)
+    {
+        ExpeditionCode code;
+        ExpeditionRewards rewards;
+        await session.Gate.WaitAsync(ct);
+        try
+        {
+            code = ExpeditionLogic.ClaimIdle(session.Record.City, _clock.NowMs, out rewards);
+            if (code == ExpeditionCode.Ok) session.Dirty = true;
+        }
+        finally
+        {
+            session.Gate.Release();
+        }
+        if (code != ExpeditionCode.Ok)
+        {
+            await SendError(conn, reqId, ErrorCodes.ExpeditionRejected, code.ToString());
+            return;
+        }
+        await conn.SendAsync(MessageTypes.ExpeditionIdleClaimed, reqId, rewards);
+        await SendCity(conn, session, 0, ct);
     }
 
     /// <summary>送出最新城市狀態；推進時若有工程完成（例如剛被加速），先推播完成通知。</summary>

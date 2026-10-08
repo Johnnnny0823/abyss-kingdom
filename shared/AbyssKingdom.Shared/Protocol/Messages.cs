@@ -1,4 +1,6 @@
 using AbyssKingdom.Shared.City;
+using System.Collections.Generic;
+using AbyssKingdom.Shared.Expedition;
 using AbyssKingdom.Shared.Heroes;
 
 namespace AbyssKingdom.Shared.Protocol
@@ -20,6 +22,8 @@ namespace AbyssKingdom.Shared.Protocol
         public const string HeroLevelUp = "hero.levelUp";
         public const string GearEquip = "gear.equip";
         public const string GearUnequip = "gear.unequip";
+        public const string ExpeditionBattle = "expedition.battle";
+        public const string ExpeditionClaimIdle = "expedition.claimIdle";
         public const string Ping = "ping";
 
         // 伺服器 → 客戶端
@@ -27,6 +31,8 @@ namespace AbyssKingdom.Shared.Protocol
         public const string CityState = "city.state";
         public const string UpgradeCompleted = "city.upgradeCompleted";
         public const string TrainingCompleted = "city.trainingCompleted";
+        public const string ExpeditionResultMessage = "expedition.result";
+        public const string ExpeditionIdleClaimed = "expedition.idleClaimed";
         public const string Error = "error";
         public const string Pong = "pong";
     }
@@ -43,6 +49,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string SpeedupRejected = "speedup_rejected";
         public const string HeroRejected = "hero_rejected";
         public const string GearRejected = "gear_rejected";
+        public const string ExpeditionRejected = "expedition_rejected";
     }
 
     public class LoginRequest
@@ -101,6 +108,13 @@ namespace AbyssKingdom.Shared.Protocol
     public class GearUnequipRequest
     {
         public long Gear { get; set; }
+    }
+
+    /// <summary>挑戰遠征關卡。Teams：每條岔路一支隊伍（主將清單）。</summary>
+    public class ExpeditionBattleRequest
+    {
+        public int Stage { get; set; }
+        public List<List<HeroId>> Teams { get; set; }
     }
 
     public class TrainingCompletedMessage

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using AbyssKingdom.Shared.Expedition;
 using AbyssKingdom.Shared.Heroes;
 
 namespace AbyssKingdom.Shared.City
@@ -33,6 +34,9 @@ namespace AbyssKingdom.Shared.City
 
         /// <summary>背包中的裝備（含穿在主將身上的）。</summary>
         public List<GearItem> Gear { get; set; } = new List<GearItem>();
+
+        /// <summary>遠征進度與掛機收益。</summary>
+        public ExpeditionState Expedition { get; set; } = new ExpeditionState();
 
         /// <summary>下一件裝備的流水號。</summary>
         public long NextGearUid { get; set; }

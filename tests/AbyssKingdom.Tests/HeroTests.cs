@@ -57,7 +57,7 @@ public static class HeroTests
     public static void AddExp_LevelsUpAcrossMultipleLevels()
     {
         var h = new HeroState { Id = HeroId.Hold };
-        HeroLogic.AddExp(h, 100 + 400 + 50); // 1→2 要 100，2→3 要 400
+        HeroLogic.AddExp(h, 50 + 200 + 50); // 1→2 要 50，2→3 要 200
         Assert.Equal(3, h.Level);
         Assert.Equal(50L, h.Exp, "剩餘經驗");
     }

@@ -85,8 +85,8 @@ namespace AbyssKingdom.Shared.Heroes
 
         public static bool TryGet(HeroId id, out HeroDef def) => ById.TryGetValue(id, out def);
 
-        /// <summary>升到下一級所需經驗：100 × 等級²（1→2 要 100，10→11 要 10,000）。</summary>
-        public static long ExpToNext(int level) => 100L * level * level;
+        /// <summary>升到下一級所需經驗：50 × 等級²（1→2 要 50，10→11 要 5,000）。數值待封測調整。</summary>
+        public static long ExpToNext(int level) => 50L * level * level;
 
         /// <summary>統率：一支行軍可帶的兵力。基礎 200，每級 +20，品質每階 +50。</summary>
         public static long Leadership(RopeGrade grade, int level) => 200 + 20L * (level - 1) + 50L * (int)grade;

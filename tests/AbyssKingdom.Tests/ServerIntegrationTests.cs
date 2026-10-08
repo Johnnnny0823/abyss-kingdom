@@ -7,6 +7,7 @@ using AbyssKingdom.Server;
 using AbyssKingdom.Server.Game;
 using AbyssKingdom.Server.Infrastructure;
 using AbyssKingdom.Shared.City;
+using AbyssKingdom.Shared.Heroes;
 using AbyssKingdom.Shared.Protocol;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -306,6 +307,34 @@ public static class ServerIntegrationTests
         using var http = new HttpClient(new HttpClientHandler { UseProxy = false }) { BaseAddress = server.HttpUri };
         var res = await http.PostAsync("/admin/grant/x", new StringContent("{}", Encoding.UTF8, "application/json"));
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode, "未設定 token 時端點不存在");
+    }
+
+    [Test]
+    public static async Task Expedition_FirstStage_WinsAndAdvances()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        await using var client = new TestClient();
+        await client.ConnectAsync(server.WsUri);
+        await client.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:explorer" });
+        await client.ExpectAsync(MessageTypes.CityState);
+
+        await client.SendAsync(MessageTypes.ExpeditionBattle, new ExpeditionBattleRequest { Stage = 2, Teams = new() { new() { HeroId.Hold } } });
+        var locked = await client.ExpectAsync(MessageTypes.Error);
+        Assert.Equal("StageLocked", locked.GetProperty("data").GetProperty("detail").GetString());
+
+        int req = await client.SendAsync(MessageTypes.ExpeditionBattle, new ExpeditionBattleRequest
+        {
+            Stage = 1,
+            Teams = new() { new() { HeroId.Hold, HeroId.Vesper, HeroId.Karst } },
+        });
+        var result = await client.ExpectAsync(MessageTypes.ExpeditionResultMessage);
+        Assert.Equal(req, result.GetProperty("reqId").GetInt32());
+        var data = result.GetProperty("data");
+        Assert.True(data.GetProperty("win").GetBoolean(), "第 1 關應該贏");
+        Assert.True(data.GetProperty("reports")[0].GetProperty("actions").GetArrayLength() > 0, "有戰報");
+        var city = City(await client.ExpectAsync(MessageTypes.CityState));
+        Assert.Equal(1, city.Expedition.Cleared);
     }
 
     [Test]
