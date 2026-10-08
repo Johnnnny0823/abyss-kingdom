@@ -5,7 +5,7 @@
 
 ## 1. 專案是什麼
 
-手機 4X / SLG 策略遊戲，參考《王國之歌》（Top Heroes）、《寒霜啟示錄》（Whiteout Survival）、《萬國覺醒》（Rise of Kingdoms）。
+4X / SLG 策略遊戲（**2026-10-08 起 PC 先行**：Windows 下載版，Steam 上架＋自架網站提供載點；手遊版之後用同一份 Unity 專案推出），參考《王國之歌》（Top Heroes）、《寒霜啟示錄》（Whiteout Survival）、《萬國覺醒》（Rise of Kingdoms）。
 差異化：把平面大地圖改成「**垂直分層的深淵**」——玩家在巨大裂口邊建城，派探窟隊往下探索；越深資源越稀有，但從深層返回要付出「**回響**」代價。
 
 設計三支柱：
@@ -29,12 +29,12 @@
 
 | 項目 | 選擇 | 理由 / 備註 |
 | --- | --- | --- |
-| 客戶端 | Unity 6 LTS（Personal 免費） | 先出 Android / PC；WebGL 不支援 `ClientWebSocket` |
+| 客戶端 | Unity 6（本機 6000.4.8f1，Personal 免費） | **PC（Windows）先行**，Steam＋自架下載；Mac 版需 Mac 才能簽章公證，暫不做；手遊之後。不做 WebGL（不支援 `ClientWebSocket`） |
 | 伺服器 | ASP.NET Core 8（C#）+ WebSocket | 與 Unity 同語言，規則程式碼共用 |
 | 共用規則 | `shared/AbyssKingdom.Shared`（netstandard2.1、C# 9） | Unity 以本機 UPM 套件引用；不得引用 NuGet 或 UnityEngine |
 | 架構 | 模組化單體、伺服器權威 | 之後人多再拆服務 |
 | 主資料庫 | Supabase（託管 PostgreSQL） | 伺服器用 service_role key 走 REST（PostgREST）；客戶端不可直連 |
-| 登入 / 推播 / 當機 | Firebase Auth（匿名 + Google）、FCM、Crashlytics、Remote Config | **不用 Firestore**（按讀寫計費、不適合 SLG） |
+| 登入 / 推播 / 當機 | Firebase Auth（匿名 + Google）。**PC 版走 Firebase Auth REST API**（Firebase Unity SDK 桌面版僅供開發，不可上線）；上 Steam 後加 Steam 登入。FCM、Crashlytics、Remote Config 留給手遊版 | **不用 Firestore**（按讀寫計費、不適合 SLG） |
 | 快取 | Redis（之後才加，同主機 Docker） | 目前狀態都在伺服器記憶體 |
 | 主機 | Oracle Cloud Always Free（Ampere A1，ARM64） | 註冊被拒（防詐騙自動拒絕）；**目前改用本機 Docker + Cloudflare Quick Tunnel**，見 docs/DEPLOY.md |
 | CI | GitHub Actions（`.github/workflows/ci.yml`） | 跑建置與測試 |
@@ -81,7 +81,7 @@ docs/                  SETUP.md（環境安裝）、ACCOUNTS.md（帳號註冊�
 
 1. ~~Unity 客戶端從未實際編譯過~~ → 2026-10-08 已在 Windows 用 Unity 6000.4.8f1 編譯通過，Play 登入、升級、完成推播皆正常，編輯器內中文顯示正常。**手機上的 IMGUI 中文字型仍未驗證**。
 2. ~~SupabasePlayerStore 只用假 HTTP 測過~~ → 2026-10-08 已對真實 Supabase 驗證：建表、登入寫入、30 秒定時存檔、重啟伺服器後讀回狀態皆正常。
-3. **FirebaseAuthVerifier 未用真實 ID Token 測過**，等 Unity 接上 Firebase SDK 後驗證。
+3. **FirebaseAuthVerifier 未用真實 ID Token 測過**，等客戶端接上 Firebase REST 訪客登入後驗證。
 4. ~~Android 預設禁止明文連線~~ → 已透過 Cloudflare Quick Tunnel 提供 `wss://`，2026-10-08 實測 wss 登入成功。
 
 ## 7. 接下來的工作（依優先順序）
@@ -89,12 +89,14 @@ docs/                  SETUP.md（環境安裝）、ACCOUNTS.md（帳號註冊�
 1. ~~**本機跑通**~~（2026-10-08 完成）：`dotnet run --project tests/AbyssKingdom.Tests`（22 passed）→ 啟動伺服器 → Unity 開 `client/` 按 Play 登入升級；修掉 Unity 編譯問題。
 2. ~~**接真實 Supabase**~~（2026-10-08 完成）：執行 SQL、用環境變數設定 URL 與 key，驗證讀寫。
 3. ~~**部署**~~（2026-10-08 完成，過渡方案）：本機 `docker compose up -d --build` 跑伺服器 + Cloudflare Quick Tunnel，見 docs/DEPLOY.md。缺點：電腦要開著、網址每次重啟會變、仍是 Dev 登入。找到雲端主機後沿用同一份 compose。
-4. **Unity 接 Firebase 登入**：Firebase Unity SDK、匿名登入、之後加「綁定 Google」；伺服器改 `Auth__Mode=Firebase`。
+4. **PC 版訪客登入**：客戶端呼叫 Firebase Auth REST API（`accounts:signUp` 匿名註冊、refresh token 存本機換新 ID Token），伺服器改 `Auth__Mode=Firebase`。之後再加「綁定 Google」（桌面 OAuth loopback）。
+   - 已完成：Windows 打包（`client/Assets/Editor/BuildScript.cs`，選單 Abyss Kingdom → Build Windows）。
 5. **第 3–4 週**：城建完善（多建築隊列？兵營訓練部隊、資源 UI）。
 6. **第 5–7 週**：第 1 層大地圖（約 200×200 格）、AOI 九宮格視野、行軍（伺服器只存起點/終點/出發時間/速度，客戶端插值）、採集與野怪。
 7. **第 8–9 週**：英雄 5 名、3 兵種克制、確定性戰鬥（定點數、伺服器結算、下發戰報）。
 8. **第 10–11 週**：聯盟（建立/加入、聊天）、攻城。
-9. **第 12 週**：10–20 位朋友封測、錄 Demo。
+9. **第 12 週**：10–20 位朋友封測（發 Windows zip）、錄 Demo。
+10. **封測之後**：Steam 上架（Steam Direct 每款 100 美元；Steam 登入；遊戲內購須走 Steam 錢包、抽成 30%）、Windows 程式碼簽章、手遊版。
 
 MVP 刻意不做：抽卡、陣營羈絆、多層深淵與回響、升降井、集結、偵察、內購（保留設計）。
 
@@ -108,7 +110,7 @@ MVP 刻意不做：抽卡、陣營羈絆、多層深淵與回響、升降井、�
 ## 9. 給 Claude Code 的開場提示（可直接貼上）
 
 ```
-這是《深淵王國》手機 SLG 專案。請先讀 docs/HANDOFF.md、CLAUDE.md、README.md，
+這是《深淵王國》SLG 專案（PC 先行，手遊之後）。請先讀 docs/HANDOFF.md、CLAUDE.md、README.md，
 然後執行 dotnet run --project tests/AbyssKingdom.Tests 確認 22 個測試全部通過。
 接著依 HANDOFF.md 第 7 節的優先順序，從第 1 項開始協助我。
 每次只做一個小功能、規則改動都要加測試、秘密一律用環境變數。

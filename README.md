@@ -1,6 +1,6 @@
 # 深淵王國 Abyss Kingdom
 
-「深淵探勘 × 4X 策略」手機 SLG。一人 + AI（Vibe Coding）開發，零成本起步。
+「深淵探勘 × 4X 策略」SLG（PC 先行，Steam＋自架下載；手遊之後）。一人 + AI（Vibe Coding）開發，零成本起步。
 企劃書與技術架構請看 Claude Docs 上的《深淵王國》SLG 手遊企劃書。
 
 ## 目前進度：第 1–2 週里程碑
