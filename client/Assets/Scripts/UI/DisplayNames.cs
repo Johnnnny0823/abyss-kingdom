@@ -112,6 +112,15 @@ namespace AbyssKingdom.Client.UI
             { SurfaceZone.Edge, "地圖邊緣" },
         };
 
+        /// <summary>「根材 600、層岩 200」這樣的文字；沒有東西回傳空字串。</summary>
+        public static string CarryText(Dictionary<ResourceType, long> carry)
+        {
+            if (carry == null) return "";
+            var parts = new List<string>();
+            foreach (var kv in carry) if (kv.Value > 0) parts.Add($"{Resources[kv.Key]} {kv.Value:N0}");
+            return string.Join("、", parts);
+        }
+
         public static string FeatureName(Feature f) =>
             f.Type == FeatureType.ResourceField ? $"{Resources[f.Resource]}田 Lv.{f.Level}"
             : f.Type == FeatureType.MonsterCamp ? $"怪物營地 Lv.{f.Level}"

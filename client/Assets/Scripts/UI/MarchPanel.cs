@@ -139,7 +139,14 @@ namespace AbyssKingdom.Client.UI
             }
             else _eta.text = "";
 
-            _status.text = reason ?? "抵達後會駐紮在那裡，可以隨時召回。";
+            var field = SurfaceLogic.FeatureAt(_x, _y);
+            if (reason == null && field != null && field.Type == FeatureType.ResourceField)
+            {
+                long load = GatherConfig.Load(troops);
+                long rate = GatherConfig.RatePerMinute(field.Level);
+                _status.text = $"載重 {load:N0} · 每分鐘採 {rate:N0} {DisplayNames.Resources[field.Resource]} · 採滿約 {DisplayNames.Duration(load * 60_000 / rate)}，滿了會自動回城";
+            }
+            else _status.text = reason ?? "抵達後會駐紮在那裡，可以隨時召回。";
             _go.SetEnabled(reason == null);
             _go.text = reason == null ? $"出征（{total:N0} 兵）" : "無法出征";
         }
@@ -232,8 +239,10 @@ namespace AbyssKingdom.Client.UI
                 var st = row.Q<Label>("status");
                 if (m == null || st == null) continue;
                 var (x, y) = SurfaceLogic.FromTile(m.Destination);
-                st.text = m.Stationed ? $"駐紮於 X:{x} Y:{y}"
-                    : m.Returning ? $"返回主城　剩 {DisplayNames.Duration(m.ArriveAt - now)}"
+                string carry = DisplayNames.CarryText(m.Carry);
+                st.text = m.Gathering ? $"採集{DisplayNames.Resources[m.GatherResource]} {MarchLogic.Gathered(m, now):N0} / {m.GatherCap:N0}　剩 {DisplayNames.Duration(m.GatherEndMs - now)}"
+                    : m.Stationed ? $"駐紮於 X:{x} Y:{y}"
+                    : m.Returning ? $"返回主城　剩 {DisplayNames.Duration(m.ArriveAt - now)}" + (carry != "" ? $"　帶著 {carry}" : "")
                     : $"前往 X:{x} Y:{y}　剩 {DisplayNames.Duration(m.ArriveAt - now)}";
             }
         }

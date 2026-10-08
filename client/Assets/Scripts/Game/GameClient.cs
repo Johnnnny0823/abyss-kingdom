@@ -154,6 +154,11 @@ namespace AbyssKingdom.Client.Game
 
         public void RequestCities() => _conn.Send(MessageTypes.WorldCities);
 
+        /// <summary>最近一次查詢的格子狀態（資源田存量、誰在採）。</summary>
+        public TileInfoMessage Tile { get; private set; }
+
+        public void RequestTile(int x, int y) => _conn.Send(MessageTypes.WorldTile, new TileInfoRequest { X = x, Y = y });
+
         public void RecallMarch(long march) => _conn.Send(MessageTypes.MapRecall, new MapRecallRequest { March = march });
 
         public void StarUp(HeroId hero) => _conn.Send(MessageTypes.HeroStarUp, new HeroStarUpRequest { Hero = hero });
@@ -216,11 +221,19 @@ namespace AbyssKingdom.Client.Game
                 case MessageTypes.WorldCities:
                     Cities = msg.DataAs<WorldCitiesMessage>().Cities ?? new List<CityPin>();
                     break;
+                case MessageTypes.WorldTile:
+                    Tile = msg.DataAs<TileInfoMessage>();
+                    break;
                 case MessageTypes.MarchArrived:
                     var ma = msg.DataAs<MarchArrivedMessage>();
                     var (tx, ty) = AbyssKingdom.Shared.Map.SurfaceLogic.FromTile(ma.Tile);
-                    Notice?.Invoke(ma.Disbanded ? $"{DisplayNames.Heroes[ma.Hero]} 的部隊已回到兵營"
-                        : $"{DisplayNames.Heroes[ma.Hero]} 抵達 X:{tx} Y:{ty}，駐紮中", false);
+                    string hero = DisplayNames.Heroes[ma.Hero];
+                    string carry = DisplayNames.CarryText(ma.Carry);
+                    Notice?.Invoke(ma.Disbanded ? (carry != "" ? $"{hero} 回到主城，帶回 {carry}" : $"{hero} 的部隊已回到兵營")
+                        : ma.GatherDone ? $"{hero} 採滿了，帶著 {carry} 返回主城"
+                        : ma.Gathering ? $"{hero} 抵達資源田，開始採集"
+                        : ma.Occupied ? $"{hero} 抵達，但這塊資源田已經有人在採（或採空了），原地駐紮"
+                        : $"{hero} 抵達 X:{tx} Y:{ty}，駐紮中", ma.Occupied);
                     break;
                 case MessageTypes.ExpeditionIdleClaimed:
                     var idle = msg.DataAs<ExpeditionRewards>();

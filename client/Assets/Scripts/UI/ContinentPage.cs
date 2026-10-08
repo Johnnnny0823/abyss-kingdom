@@ -29,6 +29,8 @@ namespace AbyssKingdom.Client.UI
         private float _nextFetch;
         private string _sig;
         private string _targetName;
+        private float _nextTile;
+        private Feature _feature;
         private (int x, int y) _target;
 
         /// <summary>按下「出征」：目標格子與名稱。</summary>
@@ -105,6 +107,17 @@ namespace AbyssKingdom.Client.UI
                 _centered = true;
             }
             _view.SetMarches(city.Surface.Marches, now);
+            if (_feature != null && _feature.Type == FeatureType.ResourceField)
+            {
+                if (Time.unscaledTime >= _nextTile)
+                {
+                    _nextTile = Time.unscaledTime + 3f;
+                    G.RequestTile(_feature.X, _feature.Y);
+                }
+                var info = G.Tile;
+                if (info != null && info.X == _feature.X && info.Y == _feature.Y)
+                    _owner.text = $"存量 {info.Stock:N0} / {info.Max:N0}" + (info.Occupant != null ? (info.Mine ? "　你的部隊正在採集" : $"　{info.Occupant} 正在採集") : "　沒人在採");
+            }
 
             var pins = G.Cities;
             string sig = pins.Count + ":" + _selected + ":" + city.Surface.X + "," + city.Surface.Y + ":" + PinsHash(pins);
@@ -113,6 +126,8 @@ namespace AbyssKingdom.Client.UI
 
             CityPin pin = _selected.HasValue ? PinAt(pins, _selected.Value.x, _selected.Value.y) : null;
             Feature feature = _selected.HasValue && pin == null ? FeatureNear(_selected.Value.x, _selected.Value.y) : null;
+            if (feature != _feature) _nextTile = 0;
+            _feature = feature;
             (int x, int y)? mark = pin != null ? (pin.X, pin.Y) : feature != null ? (feature.X, feature.Y) : _selected;
             _view.SetCities(pins, mark, pin != null);
 

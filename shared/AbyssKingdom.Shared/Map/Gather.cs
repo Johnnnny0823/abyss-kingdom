@@ -10,8 +10,8 @@ namespace AbyssKingdom.Shared.Map
         public static long LoadPerTroop(TroopType t) =>
             t == TroopType.Shield ? 12 : t == TroopType.Crossbow ? 10 : 8;
 
-        /// <summary>每分鐘採集量：Lv.1 60、Lv.2 90、Lv.3 120。</summary>
-        public static long RatePerMinute(int level) => 30 + 30 * level;
+        /// <summary>每分鐘採集量：Lv.1 300、Lv.2 450、Lv.3 600（測試用的快速值）。</summary>
+        public static long RatePerMinute(int level) => 150 + 150 * level;
 
         /// <summary>資源田的存量：Lv.1 10,000、Lv.2 20,000、Lv.3 40,000。</summary>
         public static long FieldStock(int level) => 10_000L << (level - 1);

@@ -39,7 +39,7 @@ public static class GatherTests
         Assert.Equal(m.ArriveAt, m.GatherStartMs, "從抵達時間起算");
         Assert.Equal(50 * GatherConfig.LoadPerTroop(TroopType.Shield), m.GatherCap, "上限 = 載重（存量更多）");
         Assert.Equal(f.Resource, m.GatherResource);
-        Assert.Equal(GatherConfig.RatePerMinute(1) * 3, MarchLogic.Gathered(m, m.ArriveAt + 3 * Min), "每分鐘固定採集量");
+        Assert.Equal(GatherConfig.RatePerMinute(1), MarchLogic.Gathered(m, m.ArriveAt + Min), "每分鐘固定採集量");
     }
 
     [Test]
@@ -73,9 +73,9 @@ public static class GatherTests
         MarchLogic.Start(c, HeroId.Hold, Shields(100), f.X, f.Y, T0, reg, "me");
         var m = c.Surface.Marches[0];
         MarchLogic.Advance(c, m.ArriveAt, reg, "me");
-        long t = m.ArriveAt + 5 * Min;
+        long t = m.ArriveAt + 2 * Min;
         Assert.Equal(MarchResult.Ok, MarchLogic.Recall(c, m.Id, t, reg, "me"));
-        Assert.Equal(GatherConfig.RatePerMinute(1) * 5, m.Carry[f.Resource], "只帶回 5 分鐘的量");
+        Assert.Equal(GatherConfig.RatePerMinute(1) * 2, m.Carry[f.Resource], "只帶回 2 分鐘的量");
         Assert.True(!m.Gathering && m.Returning, "停止採集、回程");
         // 放開之後別人可以採
         Assert.True(reg.Occupy(SurfaceLogic.Tile(f.X, f.Y), "other", 1, t) > 0, "資源田已放開");

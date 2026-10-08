@@ -126,6 +126,19 @@ namespace AbyssKingdom.Client.UI
                     _world.City.Hover(p, false);
                     _world.City.Click(p);
                 }).StartingIn(5000);
+            // 測試用：-gathertest 派第一位空閒主將去最近的資源田採集
+            if (Array.IndexOf(args, "-gathertest") >= 0)
+                _root.schedule.Execute(() =>
+                {
+                    var c = G.Predicted();
+                    var (hx, hy) = SurfaceLogic.CityCenter(c.Surface);
+                    var f = SurfaceLogic.Features().Where(x => x.Type == FeatureType.ResourceField && SurfaceLogic.Zone(x.X, x.Y) == SurfaceLogic.Zone(hx, hy))
+                        .OrderBy(x => SurfaceLogic.Dist2(hx, hy, x.X, x.Y)).First();
+                    _march.SetTarget(f.X, f.Y, DisplayNames.FeatureName(f));
+                    _march.Refresh(c, G.ServerNowMs);
+                    _march.AutoFillAndGo();
+                    _continent.Select(f.X, f.Y);
+                }).StartingIn(4000);
             int ti = Array.IndexOf(args, "-tile");
             if (ti >= 0 && ti + 2 < args.Length && int.TryParse(args[ti + 1], out var tx) && int.TryParse(args[ti + 2], out var ty))
                 _root.schedule.Execute(() => { _continent.Select(tx, ty); _continent.FocusTile(tx, ty); }).StartingIn(3000);
