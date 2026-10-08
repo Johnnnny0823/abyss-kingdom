@@ -184,6 +184,9 @@ namespace AbyssKingdom.Client.World
             return tm;
         }
 
+        /// <summary>讓物件永遠面向鏡頭（例如 2D 部隊圖）。</summary>
+        public void AddBillboard(Transform t) => _billboards.Add(t);
+
         // ───── 鏡頭與輸入 ─────
 
         private void ApplyLighting()

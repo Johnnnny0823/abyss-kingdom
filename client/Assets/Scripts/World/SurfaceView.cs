@@ -357,11 +357,48 @@ namespace AbyssKingdom.Client.World
                 var troop = Troop(i);
                 troop.gameObject.SetActive(true);
                 troop.localPosition = here;
+                ApplyTroopArt(troop, m);
                 troop.Find("Flag").GetComponent<Renderer>().sharedMaterial =
                     _w.Mat(m.Returning ? new Color32(70, 130, 220, 255) : new Color32(220, 170, 70, 255));
             }
             for (int k = dot; k < _dots.Count; k++) _dots[k].SetActive(false);
             for (int k = marches.Count; k < _troops.Count; k++) _troops[k].gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// 2D 部隊：主力兵種的圖（面向鏡頭）＋頭上的主將頭像。沒有兵種圖就維持 3D 模型。
+        /// 主力兵種 = 這支部隊人數最多的兵種。
+        /// </summary>
+        private void ApplyTroopArt(Transform troop, March m)
+        {
+            TroopType main = TroopType.Shield;
+            long most = -1;
+            foreach (var kv in m.Troops)
+                if (kv.Value > most) { most = kv.Value; main = kv.Key; }
+            var tex = AbyssKingdom.Client.UI.ArtLibrary.Troop(main);
+            var art = troop.Find("Art2D");
+            if (tex == null)
+            {
+                if (art != null) art.gameObject.SetActive(false);
+                return;
+            }
+            if (art == null)
+            {
+                art = _w.Group("Art2D", troop, Vector3.zero);
+                art.gameObject.AddComponent<SpriteRenderer>();
+                var iconGo = _w.Group("HeroIcon", art, new Vector3(0, .9f, 0));
+                iconGo.gameObject.AddComponent<SpriteRenderer>();
+                _w.AddBillboard(art);
+            }
+            art.gameObject.SetActive(true);
+            art.GetComponent<SpriteRenderer>().sprite = AbyssKingdom.Client.UI.ArtLibrary.SpriteOf(tex, .85f);
+            var heroIcon = AbyssKingdom.Client.UI.ArtLibrary.HeroIcon(m.Hero);
+            var iconRenderer = art.Find("HeroIcon").GetComponent<SpriteRenderer>();
+            iconRenderer.sprite = AbyssKingdom.Client.UI.ArtLibrary.SpriteOf(heroIcon, .32f);
+            iconRenderer.enabled = heroIcon != null;
+            // 有 2D 圖時把 3D 小兵藏起來（旗子保留，用來表示出征或返回）
+            foreach (Transform child in troop)
+                if (child != art && child.name != "Flag") child.gameObject.SetActive(false);
         }
 
         private GameObject Dot(int i)

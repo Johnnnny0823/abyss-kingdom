@@ -48,6 +48,13 @@ namespace AbyssKingdom.Client.UI
                 var chip = El("hero-chip");
                 chip.style.borderLeftColor = GradeColor(def.Grade);
                 var nameRow = El("row");
+                var icon = ArtLibrary.HeroIcon(def.Id);
+                if (icon != null)
+                {
+                    var face = El("hero-chip-icon");
+                    face.style.backgroundImage = new StyleBackground(icon);
+                    nameRow.Add(face);
+                }
                 nameRow.Add(Lbl(DisplayNames.Heroes[def.Id], "hero-chip-name"));
                 nameRow.Add(ElementBadge(def.Element, def.Polarity));
                 chip.Add(nameRow);
@@ -210,6 +217,11 @@ namespace AbyssKingdom.Client.UI
             _portrait.style.borderLeftColor = _portrait.style.borderRightColor =
                 _portrait.style.borderTopColor = _portrait.style.borderBottomColor = GradeColor(sel.Grade);
             _glyph.text = DisplayNames.Heroes[_selected].Substring(0, 1);
+            var art = ArtLibrary.HeroPortrait(_selected);
+            _portrait.style.backgroundImage = art != null ? new StyleBackground(art) : new StyleBackground(StyleKeyword.None);
+            _portrait.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Contain);
+            foreach (var child in _portrait.Children())
+                if (child != _troop) Show(child, art == null);
             _troop.text = "專精 " + DisplayNames.Troops[sel.Specialty];
             _name.text = DisplayNames.Heroes[_selected];
             _grade.text = DisplayNames.Grades[sel.Grade];
