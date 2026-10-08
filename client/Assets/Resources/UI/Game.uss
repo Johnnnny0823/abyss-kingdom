@@ -463,3 +463,38 @@
 .continent-canvas { background-color: rgb(30, 34, 30); }
 .city-name { position: absolute; width: 100px; -unity-text-align: upper-center; font-size: 11px; color: rgb(240, 220, 210); -unity-font-style: bold; }
 .city-name.mine { color: rgb(255, 220, 140); }
+
+/* ───── 主畫面 HUD（3D 場景在底下） ───── */
+.game { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.hud { flex-direction: row; flex-grow: 1; padding: 12px 16px; }
+.hud-left { width: 300px; }
+.hud-panel { padding: 10px 12px; margin-bottom: 10px; }
+.hud-right { width: 96px; align-items: flex-end; }
+.hud-btn {
+    width: 84px; height: 56px; margin: 0 0 10px 0;
+    border-radius: 14px; font-size: 16px;
+    background-color: rgba(22, 29, 54, 0.92); border-color: rgb(120, 98, 56);
+}
+.home-btn {
+    position: absolute; right: 22px; bottom: 22px;
+    width: 104px; height: 104px; border-radius: 52px; margin: 0;
+    font-size: 24px; letter-spacing: 2px;
+    background-color: rgb(196, 152, 72); border-width: 3px; border-color: rgb(250, 222, 150); color: rgb(30, 22, 8);
+}
+.home-btn:hover { background-color: rgb(222, 176, 92); }
+.sel-host { position: absolute; left: 0; right: 0; bottom: 18px; align-items: center; }
+.sel-card { width: 520px; margin: 0; padding: 12px 14px; background-color: rgba(14, 19, 38, 0.95); }
+.sel-card .building-card { width: auto; margin: 0; border-width: 0; background-color: rgba(0, 0, 0, 0); padding: 0 8px 0 0; }
+.sel-actions { width: 92px; align-self: stretch; }
+.sel-actions .btn { margin: 0 0 8px 0; }
+.move-hint {
+    background-color: rgba(14, 19, 38, 0.92); border-radius: 8px; padding: 8px 14px; margin-bottom: 8px;
+    color: rgb(240, 220, 160);
+}
+.page-overlay { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-color: rgba(4, 6, 14, 0.6); padding: 30px 44px; }
+.page-window {
+    flex-grow: 1; padding: 12px 18px 16px 18px;
+    background-color: rgba(10, 14, 28, 0.98); border-width: 1px; border-color: rgb(120, 98, 56); border-radius: 12px;
+}
+.page-head { margin-bottom: 6px; }
+.page-body { flex-grow: 1; }

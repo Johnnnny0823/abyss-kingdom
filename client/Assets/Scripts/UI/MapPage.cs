@@ -40,7 +40,7 @@ namespace AbyssKingdom.Client.UI
         private bool _tabActive;
 
         /// <summary>目前是 3D 剖面（預設）還是 2D 平面地圖。</summary>
-        public bool Is3D { get; private set; } = true;
+        public bool Is3D { get; private set; } // 3D 剖面已停用（深淵改成和地表一樣的大地圖），只保留 2D
 
         public MapPage()
         {
@@ -70,6 +70,7 @@ namespace AbyssKingdom.Client.UI
             side.AddToClassList("map-side");
             side.Add(Lbl("第一層 · 餘燼緣野", "panel-title"));
             _modeBtn = Btn("", () => { Is3D = !Is3D; SetTabActive(_tabActive); }, "btn-small");
+            Show(_modeBtn, false);
             _modeBtn.style.marginLeft = 0;
             _modeBtn.style.marginBottom = 6;
             _modeBtn.style.alignSelf = Align.FlexStart;

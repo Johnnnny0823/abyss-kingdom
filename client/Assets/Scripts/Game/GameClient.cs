@@ -124,6 +124,9 @@ namespace AbyssKingdom.Client.Game
 
         public void Upgrade(BuildingType building) => _conn.Send(MessageTypes.CityUpgrade, new UpgradeRequest { Building = building });
 
+        public void MoveBuilding(BuildingType building, int x, int y) =>
+            _conn.Send(MessageTypes.CityMove, new MoveBuildingRequest { Building = building, X = x, Y = y });
+
         public void Train(TroopType troop, long count) => _conn.Send(MessageTypes.CityTrain, new TrainRequest { Troop = troop, Count = count });
 
         public void Cancel(QueueType queue) => _conn.Send(MessageTypes.CityCancel, new CancelRequest { Queue = queue });

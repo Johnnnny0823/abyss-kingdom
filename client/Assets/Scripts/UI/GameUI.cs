@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AbyssKingdom.Client.Game;
 using AbyssKingdom.Client.Net;
+using AbyssKingdom.Client.World;
 using AbyssKingdom.Shared.City;
 using AbyssKingdom.Shared.Heroes;
 using UnityEngine;
@@ -28,19 +29,29 @@ namespace AbyssKingdom.Client.UI
         private Label _loginStatus, _playerName, _troopTotal, _powerDelta;
         private long _lastTotalPower;
         private readonly Dictionary<ResourceType, (Label amount, Label cap)> _resChips = new Dictionary<ResourceType, (Label, Label)>();
-        private readonly List<BuildingCard> _cards = new List<BuildingCard>();
-        private VisualElement _cityPage;
+        private Texture2D _gradient;
+        private bool _worldMode;
+
+        // 主畫面：3D 場景（城內／大地圖）＋四周的 HUD
+        private WorldScene _world;
+        private ContinentPage _continent;
+        private VisualElement _surfaceSel, _buildingSel, _cardHost;
+        private Label _moveHint;
+        private Button _homeBtn, _moveBtn, _trainBtn;
+        private readonly Dictionary<BuildingType, BuildingCard> _cards = new Dictionary<BuildingType, BuildingCard>();
+        private BuildingType? _selBuilding;
+        private QueueView _buildQueue, _hudTrainQueue, _trainQueue;
+
+        // 彈出面板（主將、遠征、兵營、背包、深淵）
+        private const int PageHeroes = 0, PageExpedition = 1, PageBarracks = 2, PageBag = 3, PageAbyss = 4;
+        private static readonly string[] PageNames = { "主將", "遠征", "兵營", "背包", "深淵" };
+        private VisualElement[] _pageRoots;
+        private VisualElement _pageOverlay, _pageBody;
+        private Label _pageTitle;
+        private int _page = -1;
         private HeroPage _heroPage;
         private ExpeditionPage _expPage;
         private MapPage _mapPage;
-        private ContinentPage _continentPage;
-        private const int TabCity = 0, TabHeroes = 1, TabExpedition = 2, TabContinent = 3, TabAbyss = 4;
-        private VisualElement _right;
-        private Texture2D _gradient;
-        private bool _worldMode;
-        private readonly List<Label> _tabs = new List<Label>();
-        private int _tab;
-        private QueueView _buildQueue, _trainQueue;
         private TrainingPanel _training;
         private VisualElement _itemList;
         private string _itemSignature;
@@ -74,8 +85,12 @@ namespace AbyssKingdom.Client.UI
             _root.Clear();
             _root.styleSheets.Add(Resources.Load<StyleSheet>("UI/Game"));
             _root.AddToClassList("root");
+            _root.pickingMode = PickingMode.Ignore;
             _gradient = MakeGradient();
             _root.style.backgroundImage = new StyleBackground(_gradient);
+            _world = WorldScene.Instance ?? WorldScene.Create();
+            _world.SetVisible(false);
+            _world.IsPointerOverUi = IsPointerOverUi;
             var font = LoadCjkFont();
             if (font != null) _root.style.unityFontDefinition = new StyleFontDefinition(FontDefinition.FromSDFFont(font));
 
@@ -90,12 +105,27 @@ namespace AbyssKingdom.Client.UI
             OverlayBefore = _toasts;
 
             G.Notice += ShowToast;
-            // 測試用：-heroes / -expedition 直接開對應頁籤
+            // 測試用：-continent 開大地圖、-heroes／-expedition／-abyss 直接開面板、-building <名稱>／-site <地點> 直接選取
             var args = Environment.GetCommandLineArgs();
-            if (Array.IndexOf(args, "-heroes") >= 0) _tab = TabHeroes;
-            if (Array.IndexOf(args, "-expedition") >= 0) _tab = TabExpedition;
-            if (Array.IndexOf(args, "-continent") >= 0) _tab = TabContinent;
-            if (Array.IndexOf(args, "-abyss") >= 0) _tab = TabAbyss;
+            if (Array.IndexOf(args, "-continent") >= 0) _world.SetMode(WorldScene.Mode.Surface);
+            if (Array.IndexOf(args, "-heroes") >= 0) OpenPage(PageHeroes);
+            if (Array.IndexOf(args, "-expedition") >= 0) OpenPage(PageExpedition);
+            if (Array.IndexOf(args, "-abyss") >= 0) OpenPage(PageAbyss);
+            int bi = Array.IndexOf(args, "-building");
+            if (bi >= 0 && bi + 1 < args.Length && Enum.TryParse<BuildingType>(args[bi + 1], out var bt)) _selBuilding = bt;
+            // 測試用：-movetest <建築> <x> <y> 走一次「移動 → 放下」流程（和滑鼠操作同一段程式）
+            int mi = Array.IndexOf(args, "-movetest");
+            if (mi >= 0 && mi + 3 < args.Length && Enum.TryParse<BuildingType>(args[mi + 1], out var mt)
+                && int.TryParse(args[mi + 2], out var mx) && int.TryParse(args[mi + 3], out var my))
+                _root.schedule.Execute(() =>
+                {
+                    _world.City.BeginMove(mt);
+                    Vector2 p = _world.Cam.WorldToScreenPoint(CityView.CenterOf(mt, mx, my));
+                    _world.City.Hover(p, false);
+                    _world.City.Click(p);
+                }).StartingIn(5000);
+            int si = Array.IndexOf(args, "-site");
+            if (si >= 0 && si + 1 < args.Length && int.TryParse(args[si + 1], out var site)) _continent.Select(site);
             if (Array.IndexOf(args, "-autofight") >= 0) _root.schedule.Execute(() => _expPage.FightNow()).StartingIn(4000);
         }
 
@@ -120,6 +150,8 @@ namespace AbyssKingdom.Client.UI
             bool inGame = G.IsLoggedIn && city != null;
             Show(_login, !inGame);
             Show(_game, inGame);
+            _world.SetVisible(inGame);
+            SetWorldMode(inGame);
             if (!inGame)
             {
                 _loginStatus.text = G.IsBusy ? "連線中…" : G.IsLoggedIn ? "讀取城市中…" : "";
@@ -161,11 +193,12 @@ namespace AbyssKingdom.Client.UI
 
         private VisualElement BuildGame()
         {
-            var game = El("grow");
+            var game = El("game");
+            game.pickingMode = PickingMode.Ignore;
 
             var top = El("topbar");
             top.Add(Lbl("深淵王國", "brand"));
-            top.Add(Lbl("永暗之喉 · 第一層", "brand-sub"));
+            top.Add(Lbl("永暗之喉", "brand-sub"));
             top.Add(El("spacer"));
             foreach (var r in CityConfig.AllResources)
             {
@@ -191,64 +224,128 @@ namespace AbyssKingdom.Client.UI
             top.Add(player);
             game.Add(top);
 
-            var main = El("main");
-            game.Add(main);
-
-            var left = El("left");
-            var tabs = El("tabs");
-            string[] tabNames = { "城鎮建築", "主將", "遠征", "大陸", "深淵" };
-            for (int i = 0; i < tabNames.Length; i++)
-            {
-                var tab = Lbl(tabNames[i], "tab");
-                int idx = i;
-                tab.RegisterCallback<ClickEvent>(_ => _tab = idx);
-                _tabs.Add(tab);
-                tabs.Add(tab);
-            }
-            left.Add(tabs);
-
-            _cityPage = new ScrollView(ScrollViewMode.Vertical);
-            _cityPage.AddToClassList("grow");
-            var grid = El("building-grid");
-            foreach (var b in CityConfig.AllBuildings)
-            {
-                var card = new BuildingCard(b);
-                _cards.Add(card);
-                grid.Add(card.Root);
-            }
-            _cityPage.Add(grid);
-            left.Add(_cityPage);
-
-            _heroPage = new HeroPage();
-            left.Add(_heroPage.Root);
-            _expPage = new ExpeditionPage();
-            left.Add(_expPage.Root);
-            _continentPage = new ContinentPage();
-            left.Add(_continentPage.Root);
-            _mapPage = new MapPage();
-            left.Add(_mapPage.Root);
-            main.Add(left);
-
-            var right = new ScrollView(ScrollViewMode.Vertical);
-            right.AddToClassList("right");
-            _right = right;
-            _buildQueue = new QueueView(QueueType.Building, OpenSpeedupDialog);
-            var buildPanel = El("panel");
+            // 左側：隊列；右側：功能按鈕
+            var hud = Pass(El("hud"));
+            var left = Pass(El("hud-left"));
+            var buildPanel = El("panel", "hud-panel");
             buildPanel.Add(Lbl("建築隊列", "panel-title"));
+            _buildQueue = new QueueView(QueueType.Building, OpenSpeedupDialog);
             buildPanel.Add(_buildQueue.Root);
-            right.Add(buildPanel);
+            left.Add(buildPanel);
+            var trainPanel = El("panel", "hud-panel");
+            trainPanel.Add(Lbl("訓練隊列", "panel-title"));
+            _hudTrainQueue = new QueueView(QueueType.Training, OpenSpeedupDialog);
+            trainPanel.Add(_hudTrainQueue.Root);
+            left.Add(trainPanel);
+            hud.Add(left);
+            hud.Add(Pass(El("spacer")));
+            var right = Pass(El("hud-right"));
+            for (int i = 0; i < PageNames.Length; i++)
+            {
+                int idx = i;
+                right.Add(Btn(PageNames[i], () => OpenPage(idx), "hud-btn"));
+            }
+            hud.Add(right);
+            game.Add(hud);
 
+            // 畫面下方的選取資訊卡
+            var selHost = Pass(El("sel-host"));
+            _moveHint = Lbl("移動建築：移到想放的位置後按左鍵放下（綠色＝可以放），右鍵或 Esc 取消", "move-hint");
+            selHost.Add(_moveHint);
+            _surfaceSel = Pass(El());
+            _continent = new ContinentPage(_world.Surface);
+            _surfaceSel.Add(_continent.Root);
+            selHost.Add(_surfaceSel);
+            _buildingSel = El("panel", "sel-card");
+            var selRow = El("row");
+            _cardHost = El("grow");
+            selRow.Add(_cardHost);
+            var actions = El("sel-actions");
+            actions.Add(Btn("✕", () => _selBuilding = null, "btn-small"));
+            _moveBtn = Btn("移動", () => { if (_selBuilding.HasValue) _world.City.BeginMove(_selBuilding.Value); }, "btn-small");
+            actions.Add(_moveBtn);
+            _trainBtn = Btn("訓練", () => OpenPage(PageBarracks), "btn-primary", "btn-small");
+            actions.Add(_trainBtn);
+            selRow.Add(actions);
+            _buildingSel.Add(selRow);
+            selHost.Add(_buildingSel);
+            game.Add(selHost);
+            foreach (var b in CityConfig.AllBuildings) _cards[b] = new BuildingCard(b);
+
+            _world.City.BuildingClicked += t => _selBuilding = (int)t < 0 ? (BuildingType?)null : t;
+            _world.City.MoveRequested += (t, x, y) => G.MoveBuilding(t, x, y);
+
+            // 右下角：回城／出城
+            _homeBtn = Btn("", ToggleHome, "home-btn");
+            game.Add(_homeBtn);
+
+            // 彈出面板
+            _heroPage = new HeroPage();
+            _expPage = new ExpeditionPage();
+            _mapPage = new MapPage();
             _trainQueue = new QueueView(QueueType.Training, OpenSpeedupDialog);
             _training = new TrainingPanel(_trainQueue);
-            right.Add(_training.Root);
-
-            var items = El("panel");
-            items.Add(Lbl("背包", "panel-title"));
+            var bag = El("panel");
             _itemList = El();
-            items.Add(_itemList);
-            right.Add(items);
-            main.Add(right);
+            bag.Add(_itemList);
+            _pageRoots = new[] { _heroPage.Root, _expPage.Root, _training.Root, bag, _mapPage.Root };
+
+            _pageOverlay = El("page-overlay");
+            var window = El("page-window");
+            var head = El("row", "page-head");
+            _pageTitle = Lbl("", "section-title", "grow");
+            head.Add(_pageTitle);
+            head.Add(Btn("關閉", ClosePage, "btn-small"));
+            window.Add(head);
+            _pageBody = El("page-body");
+            window.Add(_pageBody);
+            _pageOverlay.Add(window);
+            Show(_pageOverlay, false);
+            game.Add(_pageOverlay);
             return game;
+        }
+
+        private static VisualElement Pass(VisualElement e)
+        {
+            e.pickingMode = PickingMode.Ignore;
+            return e;
+        }
+
+        /// <summary>滑鼠是否在介面元素上（是的話 3D 場景就不處理點擊與拖曳）。</summary>
+        private bool IsPointerOverUi(Vector2 screen)
+        {
+            var panel = _root?.panel;
+            if (panel == null) return false;
+            var p = RuntimePanelUtils.ScreenToPanel(panel, new Vector2(screen.x, Screen.height - screen.y));
+            return panel.Pick(p) != null;
+        }
+
+        private void ToggleHome()
+        {
+            bool toSurface = _world.Current == WorldScene.Mode.City;
+            _world.SetMode(toSurface ? WorldScene.Mode.Surface : WorldScene.Mode.City);
+            _selBuilding = null;
+            var city = G.Predicted();
+            if (toSurface && city != null) _continent.CenterOnHome(city);
+        }
+
+        private void OpenPage(int page)
+        {
+            if (_page == PageAbyss && page != PageAbyss) _mapPage.SetTabActive(false);
+            _page = page;
+            _pageBody.Clear();
+            _pageBody.Add(_pageRoots[page]);
+            _pageTitle.text = PageNames[page];
+            Show(_pageOverlay, true);
+            _world.City.CancelMove();
+            if (page == PageAbyss) _mapPage.SetTabActive(true);
+        }
+
+        private void ClosePage()
+        {
+            if (_page == PageAbyss) _mapPage.SetTabActive(false);
+            _page = -1;
+            Show(_pageOverlay, false);
         }
 
         private void Refresh(CityState city)
@@ -276,23 +373,43 @@ namespace AbyssKingdom.Client.UI
             }
             _lastTotalPower = total;
 
-            for (int i = 0; i < _tabs.Count; i++) _tabs[i].EnableInClassList("selected", i == _tab);
-            Show(_cityPage, _tab == 0);
-            Show(_heroPage.Root, _tab == 1);
-            Show(_expPage.Root, _tab == 2);
-            Show(_continentPage.Root, _tab == TabContinent);
-            Show(_mapPage.Root, _tab == TabAbyss);
-            Show(_right, _tab != TabAbyss && _tab != TabContinent); // 地圖頁用滿寬度
-            _mapPage.SetTabActive(_tab == TabAbyss);
-            SetWorldMode(_tab == TabAbyss && _mapPage.Is3D);
-            if (_tab == TabCity) foreach (var card in _cards) card.Refresh(city);
-            else if (_tab == TabHeroes) _heroPage.Refresh(city);
-            else if (_tab == TabExpedition) _expPage.Refresh(city);
-            else if (_tab == TabContinent) _continentPage.Refresh(city);
-            else _mapPage.Refresh(city);
+            bool inCity = _world.Current == WorldScene.Mode.City;
+            _homeBtn.text = inCity ? "出城" : "回城";
+            Show(_surfaceSel, !inCity);
+            Show(_moveHint, inCity && _world.City.Moving != null);
+            if (inCity)
+            {
+                _world.City.Refresh(city, _selBuilding);
+                bool sel = _selBuilding.HasValue && _world.City.Moving == null;
+                Show(_buildingSel, sel);
+                if (sel)
+                {
+                    var card = _cards[_selBuilding.Value];
+                    if (card.Root.parent != _cardHost)
+                    {
+                        _cardHost.Clear();
+                        _cardHost.Add(card.Root);
+                    }
+                    card.Refresh(city);
+                    Show(_trainBtn, _selBuilding == BuildingType.Barracks && city.GetLevel(BuildingType.Barracks) > 0);
+                }
+            }
+            else
+            {
+                Show(_buildingSel, false);
+                _continent.Refresh(city);
+            }
+
             _buildQueue.Refresh(city, now);
-            _training.Refresh(city, now);
-            RefreshItems(city);
+            _hudTrainQueue.Refresh(city, now);
+            switch (_page)
+            {
+                case PageHeroes: _heroPage.Refresh(city); break;
+                case PageExpedition: _expPage.Refresh(city); break;
+                case PageBarracks: _training.Refresh(city, now); break;
+                case PageBag: RefreshItems(city); break;
+                case PageAbyss: _mapPage.Refresh(city); break;
+            }
             if (_dialog != null) RefreshDialog(city, now);
         }
 
@@ -490,7 +607,7 @@ namespace AbyssKingdom.Client.UI
             public QueueView(QueueType queue, Action<QueueType> openSpeedup)
             {
                 _queue = queue;
-                _idle = Lbl(queue == QueueType.Building ? "空閒中 — 從左側選擇建築開始升級" : "訓練隊列空閒中", "queue-idle");
+                _idle = Lbl(queue == QueueType.Building ? "空閒中 — 點城內的建築開始升級" : "訓練隊列空閒中", "queue-idle");
                 Root.Add(_idle);
                 _active = El();
                 _title = Lbl("", "queue-title");
@@ -649,7 +766,7 @@ namespace AbyssKingdom.Client.UI
             }
         }
 
-        /// <summary>3D 深淵顯示時，介面底色改成透明，讓 3D 場景透出來。</summary>
+        /// <summary>進入遊戲後介面底色改成透明，讓 3D 場景透出來。</summary>
         private void SetWorldMode(bool on)
         {
             if (on == _worldMode) return;

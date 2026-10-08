@@ -1,0 +1,312 @@
+using System;
+using System.Collections.Generic;
+using AbyssKingdom.Shared.City;
+using UnityEngine;
+
+namespace AbyssKingdom.Client.World
+{
+    /// <summary>
+    /// 城內畫面的灰盒：CityLayout 的 24×24 格子上擺建築（高度隨等級長高），可點選與移動。
+    /// 移動時建築跟著滑鼠吸附格子，綠色＝可以放、紅色＝不行；左鍵確認、右鍵或 Esc 取消。
+    /// </summary>
+    public sealed class CityView
+    {
+        public const float CellSize = 0.5f;
+
+        public readonly Transform Root;
+        public event Action<BuildingType> BuildingClicked;
+        public event Action<BuildingType, int, int> MoveRequested;
+
+        public BuildingType? Moving { get; private set; }
+
+        private readonly WorldScene _w;
+        private readonly Dictionary<BuildingType, Transform> _buildings = new Dictionary<BuildingType, Transform>();
+        private readonly Dictionary<BuildingType, string> _signatures = new Dictionary<BuildingType, string>();
+        private readonly Dictionary<BuildingType, (Cell cell, float until)> _pending = new Dictionary<BuildingType, (Cell, float)>();
+        private readonly GameObject _ghost, _gridLines, _select;
+        private Material _ok, _bad;
+        private CityState _state;
+        private BuildingType? _selected;
+        private Cell _hoverCell;
+
+        public Vector2 Bounds => new Vector2(CityLayout.GridSize * CellSize / 2f, CityLayout.GridSize * CellSize / 2f);
+
+        public CityView(WorldScene w)
+        {
+            _w = w;
+            Root = w.Group("City", w.transform, Vector3.zero);
+            float size = CityLayout.GridSize * CellSize;
+
+            // 城外草地、城內地面、城牆
+            w.Prim(PrimitiveType.Cube, new Color32(84, 116, 70, 255), new Vector3(0, -0.03f, 0), new Vector3(size + 14, 0.02f, size + 14), Root);
+            w.Prim(PrimitiveType.Cube, new Color32(150, 136, 104, 255), new Vector3(0, -0.01f, 0), new Vector3(size, 0.02f, size), Root);
+            var wall = new Color32(130, 120, 104, 255);
+            for (int side = 0; side < 4; side++)
+            {
+                bool horizontal = side < 2;
+                float off = (side % 2 == 0 ? -1 : 1) * (size / 2f + 0.15f);
+                var pos = horizontal ? new Vector3(0, 0.2f, off) : new Vector3(off, 0.2f, 0);
+                var scale = horizontal ? new Vector3(size + 0.6f, 0.4f, 0.3f) : new Vector3(0.3f, 0.4f, size + 0.6f);
+                w.Prim(PrimitiveType.Cube, wall, pos, scale, Root);
+            }
+            for (int i = 0; i < 4; i++)
+            {
+                var c = new Vector3((i % 2 == 0 ? -1 : 1) * (size / 2f + 0.15f), 0.35f, (i / 2 == 0 ? -1 : 1) * (size / 2f + 0.15f));
+                w.Prim(PrimitiveType.Cylinder, wall, c, new Vector3(0.6f, 0.35f, 0.6f), Root);
+            }
+            // 城門（南側）
+            w.Prim(PrimitiveType.Cube, new Color32(90, 70, 50, 255), new Vector3(0, 0.2f, -(size / 2f + 0.15f)), new Vector3(1.2f, 0.42f, 0.34f), Root);
+
+            // 格線（只在移動建築時顯示）
+            _gridLines = w.Group("Grid", Root, Vector3.zero).gameObject;
+            var line = new Color32(120, 108, 84, 255);
+            for (int i = 0; i <= CityLayout.GridSize; i++)
+            {
+                float p = -size / 2f + i * CellSize;
+                w.Prim(PrimitiveType.Cube, line, new Vector3(p, 0.002f, 0), new Vector3(0.015f, 0.002f, size), _gridLines.transform);
+                w.Prim(PrimitiveType.Cube, line, new Vector3(0, 0.002f, p), new Vector3(size, 0.002f, 0.015f), _gridLines.transform);
+            }
+            _gridLines.SetActive(false);
+
+            _ghost = w.Prim(PrimitiveType.Cube, Color.green, Vector3.zero, Vector3.one, Root);
+            _ghost.SetActive(false);
+            _ok = w.Mat(new Color32(80, 220, 110, 255));
+            _bad = w.Mat(new Color32(230, 70, 60, 255));
+
+            _select = w.Prim(PrimitiveType.Cube, Color.white, Vector3.zero, Vector3.one, Root);
+            _select.GetComponent<Renderer>().sharedMaterial = w.Glow;
+            _select.SetActive(false);
+        }
+
+        /// <summary>格子 (x, y) 為佔地左上角時，建築中心的世界座標。</summary>
+        public static Vector3 CenterOf(BuildingType type, int x, int y)
+        {
+            float f = CityLayout.Footprint(type);
+            float half = CityLayout.GridSize / 2f;
+            return new Vector3((x + f / 2f - half) * CellSize, 0, -(y + f / 2f - half) * CellSize);
+        }
+
+        public Vector3 PositionOf(BuildingType type)
+        {
+            var c = CellOf(type);
+            return CenterOf(type, c.X, c.Y);
+        }
+
+        private Cell CellOf(BuildingType type)
+        {
+            if (_pending.TryGetValue(type, out var p)) return p.cell;
+            return _state != null ? CityLayout.CellOf(_state, type) : CityLayout.DefaultCell(type);
+        }
+
+        // ───── 狀態 ─────
+
+        public void Refresh(CityState state, BuildingType? selected)
+        {
+            _state = state;
+            _selected = selected;
+            foreach (var type in CityConfig.AllBuildings)
+            {
+                // 等伺服器確認移動：位置一致或逾時就放掉預測
+                if (_pending.TryGetValue(type, out var p))
+                {
+                    var real = CityLayout.CellOf(state, type);
+                    if ((real.X == p.cell.X && real.Y == p.cell.Y) || Time.unscaledTime > p.until) _pending.Remove(type);
+                }
+
+                int level = state.GetLevel(type);
+                bool upgrading = state.Upgrade != null && state.Upgrade.Building == type;
+                string sig = level + ":" + upgrading;
+                if (!_signatures.TryGetValue(type, out var old) || old != sig)
+                {
+                    _signatures[type] = sig;
+                    if (_buildings.TryGetValue(type, out var t)) UnityEngine.Object.Destroy(t.gameObject);
+                    _buildings[type] = BuildBuilding(type, level, upgrading);
+                }
+                if (Moving != type) _buildings[type].localPosition = PositionOf(type);
+            }
+
+            _select.SetActive(selected.HasValue && Moving == null);
+            if (selected.HasValue)
+            {
+                float f = CityLayout.Footprint(selected.Value) * CellSize;
+                _select.transform.localPosition = PositionOf(selected.Value) + Vector3.up * 0.01f;
+                _select.transform.localScale = new Vector3(f, 0.01f, f);
+            }
+        }
+
+        private static readonly Dictionary<BuildingType, Color32> Colors = new Dictionary<BuildingType, Color32>
+        {
+            { BuildingType.Keep, new Color32(214, 196, 150, 255) },
+            { BuildingType.Sawmill, new Color32(150, 104, 62, 255) },
+            { BuildingType.Quarry, new Color32(140, 146, 160, 255) },
+            { BuildingType.Farm, new Color32(120, 160, 70, 255) },
+            { BuildingType.CrystalMine, new Color32(90, 140, 220, 255) },
+            { BuildingType.Warehouse, new Color32(176, 150, 110, 255) },
+            { BuildingType.Barracks, new Color32(170, 80, 66, 255) },
+        };
+
+        private Transform BuildBuilding(BuildingType type, int level, bool upgrading)
+        {
+            var t = _w.Group(type.ToString(), Root, Vector3.zero);
+            float f = CityLayout.Footprint(type) * CellSize;
+            var color = Colors[type];
+            var roof = new Color32((byte)(color.r * 0.55f), (byte)(color.g * 0.55f), (byte)(color.b * 0.6f), 255);
+            _w.Prim(PrimitiveType.Cube, new Color32(120, 112, 96, 255), new Vector3(0, 0.02f, 0), new Vector3(f * 0.94f, 0.04f, f * 0.94f), t);
+
+            if (level <= 0)
+            {
+                // 未建造：空地基＋四根木樁
+                for (int i = 0; i < 4; i++)
+                    _w.Prim(PrimitiveType.Cylinder, new Color32(140, 110, 70, 255), new Vector3((i % 2 - 0.5f) * f * 0.7f, 0.12f, (i / 2 - 0.5f) * f * 0.7f), new Vector3(0.05f, 0.12f, 0.05f), t);
+            }
+            else
+            {
+                float h = 0.25f + 0.06f * level;
+                float body = f * (type == BuildingType.Keep ? 0.62f : 0.66f);
+                _w.Prim(PrimitiveType.Cube, color, new Vector3(0, 0.04f + h / 2f, 0), new Vector3(body, h, body * 0.85f), t);
+                var r = _w.Prim(PrimitiveType.Cube, roof, new Vector3(0, 0.04f + h, 0), new Vector3(body * 0.72f, body * 0.72f, body * 0.88f), t);
+                r.transform.localRotation = Quaternion.Euler(0, 0, 45);
+                r.transform.localScale = new Vector3(body * 0.6f, body * 0.6f, body * 0.88f);
+                if (type == BuildingType.Keep)
+                {
+                    for (int i = 0; i < 4; i++)
+                    {
+                        var c = new Vector3((i % 2 - 0.5f) * f * 0.78f, 0, (i / 2 - 0.5f) * f * 0.78f);
+                        _w.Prim(PrimitiveType.Cylinder, color, c + Vector3.up * (h * 0.6f), new Vector3(0.22f, h * 0.6f, 0.22f), t);
+                        _w.Prim(PrimitiveType.Cylinder, roof, c + Vector3.up * (h * 1.2f + 0.04f), new Vector3(0.26f, 0.04f, 0.26f), t);
+                    }
+                }
+                else Decor(type, t, f);
+            }
+
+            if (upgrading)
+            {
+                // 施工中：鷹架與發光標記
+                for (int i = 0; i < 4; i++)
+                    _w.Prim(PrimitiveType.Cylinder, new Color32(190, 150, 90, 255), new Vector3((i % 2 - 0.5f) * f * 0.85f, 0.3f, (i / 2 - 0.5f) * f * 0.85f), new Vector3(0.035f, 0.3f, 0.035f), t);
+                var mark = _w.Prim(PrimitiveType.Cube, Color.white, new Vector3(0, 0.04f + 0.25f + 0.06f * level + f * 0.55f, 0), new Vector3(0.14f, 0.14f, 0.14f), t);
+                mark.GetComponent<Renderer>().sharedMaterial = _w.Glow;
+                mark.transform.localRotation = Quaternion.Euler(45, 45, 0);
+            }
+
+            var name = AbyssKingdom.Client.UI.DisplayNames.Buildings[type];
+            _w.Text(t, new Vector3(0, 0.55f + 0.06f * level + f * 0.3f, 0), 0.034f, Color.white).text =
+                level > 0 ? $"{name} Lv.{level}" : $"{name}（未建造）";
+            return t;
+        }
+
+        private void Decor(BuildingType type, Transform t, float f)
+        {
+            float e = f * 0.42f;
+            switch (type)
+            {
+                case BuildingType.Sawmill:
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var log = _w.Prim(PrimitiveType.Cylinder, new Color32(120, 84, 50, 255), new Vector3(e, 0.06f + i * 0.08f, -e * 0.5f + i * 0.02f), new Vector3(0.08f, 0.22f, 0.08f), t);
+                        log.transform.localRotation = Quaternion.Euler(90, 0, 0);
+                    }
+                    break;
+                case BuildingType.Quarry:
+                    for (int i = 0; i < 3; i++)
+                        _w.Prim(PrimitiveType.Cube, new Color32(160, 164, 176, 255), new Vector3(e - i * 0.12f, 0.08f, -e), new Vector3(0.12f, 0.12f, 0.12f), t);
+                    break;
+                case BuildingType.Farm:
+                    for (int i = 0; i < 2; i++)
+                        _w.Prim(PrimitiveType.Cube, new Color32(170, 170, 80, 255), new Vector3((i - 0.5f) * f * 0.5f, 0.05f, -e), new Vector3(f * 0.4f, 0.03f, 0.22f), t);
+                    break;
+                case BuildingType.CrystalMine:
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var c = _w.Prim(PrimitiveType.Cube, new Color32(120, 190, 255, 255), new Vector3(e - i * 0.1f, 0.15f, -e), new Vector3(0.06f, 0.26f, 0.06f), t);
+                        c.transform.localRotation = Quaternion.Euler(0, i * 30, 12 - i * 12);
+                    }
+                    break;
+                case BuildingType.Warehouse:
+                    for (int i = 0; i < 4; i++)
+                        _w.Prim(PrimitiveType.Cube, new Color32(150, 110, 70, 255), new Vector3(e - (i % 2) * 0.13f, 0.06f + (i / 2) * 0.12f, -e), new Vector3(0.11f, 0.11f, 0.11f), t);
+                    break;
+                case BuildingType.Barracks:
+                    _w.Prim(PrimitiveType.Cylinder, new Color32(80, 70, 60, 255), new Vector3(e, 0.4f, -e), new Vector3(0.03f, 0.4f, 0.03f), t);
+                    _w.Prim(PrimitiveType.Cube, new Color32(200, 60, 50, 255), new Vector3(e + 0.1f, 0.7f, -e), new Vector3(0.2f, 0.13f, 0.01f), t);
+                    break;
+            }
+        }
+
+        // ───── 點選與移動 ─────
+
+        private bool CellAt(Vector2 mouse, BuildingType type, out Cell cell)
+        {
+            cell = null;
+            if (!_w.Ground(mouse, out var hit)) return false;
+            float f = CityLayout.Footprint(type);
+            float half = CityLayout.GridSize / 2f;
+            // 讓建築中心對準滑鼠
+            int x = Mathf.RoundToInt(hit.x / CellSize + half - f / 2f);
+            int y = Mathf.RoundToInt(-hit.z / CellSize + half - f / 2f);
+            cell = new Cell(x, y);
+            return true;
+        }
+
+        public void BeginMove(BuildingType type)
+        {
+            Moving = type;
+            _gridLines.SetActive(true);
+            _select.SetActive(false);
+        }
+
+        public void CancelMove()
+        {
+            if (Moving == null) return;
+            var type = Moving.Value;
+            Moving = null;
+            _gridLines.SetActive(false);
+            _ghost.SetActive(false);
+            if (_buildings.TryGetValue(type, out var t)) t.localPosition = PositionOf(type);
+        }
+
+        public void Hover(Vector2 mouse, bool overUi)
+        {
+            if (Moving == null || _state == null) return;
+            var type = Moving.Value;
+            if (overUi || !CellAt(mouse, type, out var cell)) return;
+            _hoverCell = cell;
+            bool ok = CityLayout.CanMove(_state, type, cell.X, cell.Y) == MoveResult.Ok;
+            float f = CityLayout.Footprint(type) * CellSize;
+            var pos = CenterOf(type, cell.X, cell.Y);
+            _buildings[type].localPosition = pos + Vector3.up * 0.08f;
+            _ghost.SetActive(true);
+            _ghost.transform.localPosition = pos + Vector3.up * 0.005f;
+            _ghost.transform.localScale = new Vector3(f, 0.01f, f);
+            _ghost.GetComponent<Renderer>().sharedMaterial = ok ? _ok : _bad;
+        }
+
+        public void Click(Vector2 mouse)
+        {
+            if (Moving != null)
+            {
+                var type = Moving.Value;
+                if (_hoverCell != null && _state != null && CityLayout.CanMove(_state, type, _hoverCell.X, _hoverCell.Y) == MoveResult.Ok)
+                {
+                    _pending[type] = (_hoverCell, Time.unscaledTime + 3f);
+                    MoveRequested?.Invoke(type, _hoverCell.X, _hoverCell.Y);
+                    CancelMove();
+                }
+                return;
+            }
+
+            if (!_w.Ground(mouse, out var hit)) return;
+            foreach (var type in CityConfig.AllBuildings)
+            {
+                var c = PositionOf(type);
+                float half = CityLayout.Footprint(type) * CellSize / 2f;
+                if (Mathf.Abs(hit.x - c.x) <= half && Mathf.Abs(hit.z - c.z) <= half)
+                {
+                    BuildingClicked?.Invoke(type);
+                    return;
+                }
+            }
+            BuildingClicked?.Invoke((BuildingType)(-1)); // 點空地：取消選取
+        }
+    }
+}

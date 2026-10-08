@@ -374,6 +374,8 @@ namespace AbyssKingdom.Client.UI
                 case "ChapterComplete": return "本章已全部通關";
                 case "NothingToClaim": return "目前沒有可領取的掛機收益";
                 case "HeroNotOwned": return "尚未擁有這位主將";
+                case "Overlaps": return "這裡和其他建築重疊了";
+                case "OutOfBounds": return "超出城牆範圍";
             }
             return $"{code}：{detail}";
         }

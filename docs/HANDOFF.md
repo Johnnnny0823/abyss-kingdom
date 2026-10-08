@@ -23,7 +23,7 @@ PC 先行（Steam＋自架下載、手遊之後）的 4X / SLG：玩家在垂直
 | 資料庫 | Supabase（PostgreSQL，伺服器用 service_role 走 REST） | 城市整包 jsonb；客戶端不可直連 |
 | 登入 | Firebase Auth：PC 版走 **REST API** 匿名登入（Unity SDK 桌面版不可上線） | 之後加綁定 Google、Steam 登入；手遊版再用 Firebase SDK、FCM、Crashlytics |
 | 主機 | **本機 Docker＋Cloudflare Quick Tunnel**（`docs/DEPLOY.md`） | Oracle 註冊被拒；找到雲端主機後沿用同一份 compose |
-| 測試 | 自製迷你框架（無 NuGet），`dotnet run --project tests/AbyssKingdom.Tests` | 目前 133 個測試 |
+| 測試 | 自製迷你框架（無 NuGet），`dotnet run --project tests/AbyssKingdom.Tests` | 目前 139 個測試 |
 | CI | GitHub Actions（`.github/workflows/ci.yml`） | |
 
 ## 4. 程式結構（2026-10-08）
@@ -44,7 +44,8 @@ client/
   Assets/Scripts/Game/    GameClient（狀態與玩家意圖）
   Assets/Scripts/World/   AbyssWorld（深淵 3D 剖面灰盒，deferred 算繪、圖層 31）
   Assets/Resources/Abyss/ 3D 材質（打包時由 Editor/AbyssMaterials.cs 產生）
-  Assets/Scripts/UI/      GameUI、HeroPage、ExpeditionPage、ContinentPage（地表大陸）、MapPage（深淵地圖）、UiKit、Icons（向量圖示）、DisplayNames（所有顯示文字）
+  Assets/Scripts/UI/      GameUI（主畫面 HUD、回城按鈕、彈出面板）、HeroPage、ExpeditionPage、ContinentPage（大地圖資訊卡）、MapPage（舊的深淵 2D 地圖）、UiKit、Icons（向量圖示）、DisplayNames（所有顯示文字）
+  Assets/Scripts/World/   WorldScene（3D 鏡頭與輸入）、CityView（城內建築擺放）、SurfaceView（大地圖）、AbyssWorld（舊的深淵剖面，已停用）
   Assets/Resources/UI/    Game.uss（樣式）、AbyssTheme.tss
   Assets/Editor/BuildScript.cs   一鍵打包（選單 Abyss Kingdom → Build Windows）
 db/001_players.sql   docs/（HANDOFF、DEPLOY、SETUP、ACCOUNTS、design/GDD.md）
@@ -82,7 +83,7 @@ docker-compose.yml   伺服器＋Cloudflare Quick Tunnel
 - 測試：`dotnet run --project tests/AbyssKingdom.Tests`（可加名稱片段當過濾，例如 `-- Probe`）。
 - 編譯客戶端（Unity 必須先關）：`Unity.exe -batchmode -quit -nographics -projectPath client -logFile <log>`；打包加 `-executeMethod BuildScript.BuildWindows`。
 - 更新線上伺服器：先把 Windows 使用者環境變數讀進 `$env:`，再 `docker compose up -d --build server`（tunnel 網址不變）。
-- 打包版測試參數：`-server <url>`、`-autologin`（訪客）、`-devlogin`（開發模式）、`-heroes`／`-expedition`／`-continent`／`-abyss`（直接開頁籤）、`-select <節點>`（深淵頁直接選取節點）、`-autofight`（自動出征）。截圖前在本機 5090 埠開 Dev 伺服器（可設 `Admin__Token` 用 GM 工具準備資料），**不要用使用者的訪客帳號做測試**。
+- 打包版測試參數：`-server <url>`、`-autologin`（訪客）、`-devlogin`（開發模式）、`-continent`（開大地圖）、`-heroes`／`-expedition`／`-abyss`（直接開面板）、`-building <Keep|Barracks…>`、`-site <地點>`、`-movetest <建築> <x> <y>`（自動走一次移動建築流程）、`-select <節點>`（深淵頁直接選取節點）、`-autofight`（自動出征）。截圖前在本機 5090 埠開 Dev 伺服器（可設 `Admin__Token` 用 GM 工具準備資料），**不要用使用者的訪客帳號做測試**。
 - 給朋友的 zip：`client/Builds/AbyssKingdom-Windows.zip`（排除 `*DoNotShip*` 資料夾）。
 
 ## 9. 給 Claude Code 的開場提示（可直接貼上）
