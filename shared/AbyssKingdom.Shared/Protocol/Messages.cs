@@ -31,6 +31,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string MapMarch = "map.march";
         public const string MapRecall = "map.recall";
         public const string WorldCities = "world.cities";
+        public const string WorldTile = "world.tile";
         public const string Ping = "ping";
 
         // 伺服器 → 客戶端
@@ -165,6 +166,25 @@ namespace AbyssKingdom.Shared.Protocol
         public bool Mine { get; set; }
     }
 
+    /// <summary>查詢地表某一格的即時狀態（目前只有資源田的存量與誰在採）。</summary>
+    public class TileInfoRequest
+    {
+        public int X { get; set; }
+        public int Y { get; set; }
+    }
+
+    public class TileInfoMessage
+    {
+        public int X { get; set; }
+        public int Y { get; set; }
+        /// <summary>資源田剩餘存量／最大存量（不是資源田時都是 0）。</summary>
+        public long Stock { get; set; }
+        public long Max { get; set; }
+        /// <summary>正在採集的領主名稱；沒人在採時為 null。</summary>
+        public string Occupant { get; set; }
+        public bool Mine { get; set; }
+    }
+
     public class WorldCitiesMessage
     {
         public List<CityPin> Cities { get; set; } = new List<CityPin>();
@@ -183,6 +203,14 @@ namespace AbyssKingdom.Shared.Protocol
         /// <summary>抵達的格子（SurfaceLogic.Tile 編碼）。</summary>
         public int Tile { get; set; }
         public bool Disbanded { get; set; }
+        /// <summary>抵達資源田、開始採集。</summary>
+        public bool Gathering { get; set; }
+        /// <summary>抵達資源田，但已經有人在採（或採空了）。</summary>
+        public bool Occupied { get; set; }
+        /// <summary>採滿，自動回城。</summary>
+        public bool GatherDone { get; set; }
+        /// <summary>帶著（或帶回）的資源。</summary>
+        public Dictionary<ResourceType, long> Carry { get; set; }
     }
 
     public class HeroStarUpRequest

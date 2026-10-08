@@ -74,6 +74,7 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | → | `hero.starUp` | `{ hero }`（消耗信物＋響晶升一顆星） |
 | → | `map.march` | `{ hero, troops: { "Rider": 50 }, x, y }`（從主城出征到地表格子 (x, y)；直線行進，跨分區時自動繞經關隘；狀態在 `city.surface.marches`） |
 | → | `map.recall` | `{ march }`（召回行軍，路上或駐紮中都可以；回到主城後部隊歸營） |
+| → | `world.tile` | `{ x, y }`（查詢某一格的即時狀態：資源田的存量、誰在採集） |
 | → | `world.cities` | —（取得地表所有主城的公開資訊；自己的主城位置在 `city.surface.x / y`） |
 | → | `ping` | — |
 | ← | `login.ok` | `{ playerId, displayName, serverTimeMs }` |
@@ -83,6 +84,7 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | ← | `expedition.result` | `{ stage, win, reports: [戰報…], rewards }`，之後再送一次 `city.state` |
 | ← | `expedition.idleClaimed` | `{ resources, items }` |
 | ← | `domain.trialResult` | `{ hero, domain, success, report }`，之後再送一次 `city.state` |
-| ← | `map.marchArrived` | `{ march, hero, tile, disbanded }`（tile = y × 800 + x；伺服器主動推播，reqId = 0） |
+| ← | `map.marchArrived` | `{ march, hero, tile, disbanded, gathering, occupied, gatherDone, carry }`（tile = y × 800 + x；抵達、開始採集、資源田被佔用、採滿回城、回城解散都用這個；伺服器主動推播，reqId = 0） |
+| ← | `world.tile` | `{ x, y, stock, max, occupant, mine }` |
 | ← | `world.cities` | `{ cities: [{ x, y, name, power, mine }] }` |
 | ← | `error` | `{ code, detail }` |

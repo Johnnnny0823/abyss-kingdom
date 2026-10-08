@@ -237,18 +237,24 @@ public sealed class WebSocketHandler
                 await conn.SendAsync(MessageTypes.WorldCities, reqId, new WorldCitiesMessage { Cities = _world.Pins(session.PlayerId) });
                 break;
 
+            case MessageTypes.WorldTile:
+                var tileReq = Deserialize<TileInfoRequest>(data);
+                if (tileReq == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "x and y required"); break; }
+                await conn.SendAsync(MessageTypes.WorldTile, reqId, _world.TileInfo(tileReq.X, tileReq.Y, session.PlayerId, _clock.NowMs));
+                break;
+
             case MessageTypes.MapMarch:
                 var march = Deserialize<MapMarchRequest>(data);
                 if (march == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "hero, troops and destination required"); break; }
                 await RunCityAction(conn, session, reqId, ErrorCodes.MapRejected, ct, (city, now) =>
-                    Fail(MarchLogic.Start(city, march.Hero, march.Troops, march.X, march.Y, now), MarchResult.Ok));
+                    Fail(MarchLogic.Start(city, march.Hero, march.Troops, march.X, march.Y, now, _world, session.PlayerId), MarchResult.Ok));
                 break;
 
             case MessageTypes.MapRecall:
                 var recall = Deserialize<MapRecallRequest>(data);
                 if (recall == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "march required"); break; }
                 await RunCityAction(conn, session, reqId, ErrorCodes.MapRejected, ct, (city, now) =>
-                    Fail(MarchLogic.Recall(city, recall.March, now), MarchResult.Ok));
+                    Fail(MarchLogic.Recall(city, recall.March, now, _world, session.PlayerId), MarchResult.Ok));
                 break;
 
             case MessageTypes.HeroStarUp:

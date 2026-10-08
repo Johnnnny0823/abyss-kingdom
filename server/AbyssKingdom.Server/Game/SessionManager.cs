@@ -102,7 +102,7 @@ public sealed class SessionManager : BackgroundService
         if (GearLogic.EnsureStarterGear(record.City)) session.Dirty = true;
         if (LegacyMigration.Run(record.City)) session.Dirty = true; // 舊深淵行軍的部隊還給兵營
         if (await _world.EnsureSiteAsync(record, ct)) session.Dirty = true; // 地表主城位置
-        if (MarchLogic.Advance(record.City, _clock.NowMs).Count > 0) session.Dirty = true; // 離線期間抵達的行軍
+        if (MarchLogic.Advance(record.City, _clock.NowMs, _world, playerId).Count > 0) session.Dirty = true; // 離線期間抵達、採集的行軍
         var added = _online.GetOrAdd(playerId, session);
         if (!ReferenceEquals(added, session))
         {
@@ -136,7 +136,7 @@ public sealed class SessionManager : BackgroundService
             try
             {
                 completed = CityLogic.Advance(session.Record.City, now, out trained);
-                marchEvents = MarchLogic.Advance(session.Record.City, now);
+                marchEvents = MarchLogic.Advance(session.Record.City, now, _world, session.PlayerId);
                 if (completed != null || trained != null || marchEvents.Count > 0)
                 {
                     session.Dirty = true;
@@ -166,6 +166,7 @@ public sealed class SessionManager : BackgroundService
                     await SafeSend(session, MessageTypes.MarchArrived, new MarchArrivedMessage
                     {
                         March = ev.MarchId, Hero = ev.Hero, Tile = ev.Tile, Disbanded = ev.Disbanded,
+                        Gathering = ev.Gathering, Occupied = ev.Occupied, GatherDone = ev.GatherDone, Carry = ev.Carry,
                     });
                 await SafeSend(session, MessageTypes.CityState, new CityStateMessage { ServerTimeMs = now, City = JsonSerializer.Deserialize<CityState>(snapshot, _json) });
             }

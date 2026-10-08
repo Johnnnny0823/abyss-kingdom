@@ -449,6 +449,69 @@ public static class ServerIntegrationTests
     }
 
     [Test]
+    public static async Task Gather_OneMarchPerField_FullReturnsWithResources()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        var field = SurfaceLogic.Features().First(f => f.Type == FeatureType.ResourceField && f.Level == 1
+            && SurfaceLogic.Sites().Any(s => s.z == SurfaceZone.Outer && SurfaceLogic.Dist2(s.x, s.y, f.X, f.Y) < 225));
+        var sites = SurfaceLogic.Sites().Where(s => s.z == SurfaceZone.Outer && SurfaceLogic.Dist2(s.x, s.y, field.X, field.Y) < 900).Take(2).ToList();
+
+        async Task<TestClient> Join(string name, int i)
+        {
+            var c = new TestClient();
+            await c.ConnectAsync(server.WsUri);
+            await c.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:" + name, DisplayName = name });
+            await c.ExpectAsync(MessageTypes.CityState);
+            await server.Sessions.ModifyCityAsync("dev-" + name, city =>
+            {
+                city.Surface.X = sites[i].x;
+                city.Surface.Y = sites[i].y;
+                city.Troops[TroopType.Shield] = 100;
+            }, CancellationToken.None);
+            await c.ExpectAsync(MessageTypes.CityState);
+            return c;
+        }
+        await using var a = await Join("gatherer", 0);
+        await using var b = await Join("latecomer", sites.Count > 1 ? 1 : 0);
+
+        await a.SendAsync(MessageTypes.MapMarch, new MapMarchRequest { Hero = HeroId.Hold, Troops = new() { [TroopType.Shield] = 50 }, X = field.X, Y = field.Y });
+        var ma = City(await a.ExpectAsync(MessageTypes.CityState)).Surface.Marches[0];
+        server.Clock.Advance(ma.ArriveAt - server.Clock.NowMs);
+        await server.Sessions.TickAsync(CancellationToken.None);
+        var arrived = await a.ExpectAsync(MessageTypes.MarchArrived);
+        Assert.True(arrived.GetProperty("data").GetProperty("gathering").GetBoolean(), "開始採集");
+        var arrivedCity = City(await a.ExpectAsync(MessageTypes.CityState));
+        var gathering = arrivedCity.Surface.Marches[0];
+
+        await b.SendAsync(MessageTypes.WorldTile, new TileInfoRequest { X = field.X, Y = field.Y });
+        var info = (await b.ExpectAsync(MessageTypes.WorldTile)).GetProperty("data");
+        Assert.Equal("gatherer", info.GetProperty("occupant").GetString(), "看得到誰在採");
+        Assert.Equal(GatherConfig.FieldStock(1), info.GetProperty("stock").GetInt64());
+
+        await b.SendAsync(MessageTypes.MapMarch, new MapMarchRequest { Hero = HeroId.Hold, Troops = new() { [TroopType.Shield] = 10 }, X = field.X, Y = field.Y });
+        var mb = City(await b.ExpectAsync(MessageTypes.CityState)).Surface.Marches[0];
+        if (mb.ArriveAt > server.Clock.NowMs) server.Clock.Advance(mb.ArriveAt - server.Clock.NowMs);
+        await server.Sessions.TickAsync(CancellationToken.None);
+        Assert.True((await b.ExpectAsync(MessageTypes.MarchArrived)).GetProperty("data").GetProperty("occupied").GetBoolean(), "同一塊田只能一支部隊採");
+
+        long before = arrivedCity.GetResource(field.Resource);
+        server.Clock.Advance(gathering.GatherEndMs - server.Clock.NowMs);
+        await server.Sessions.TickAsync(CancellationToken.None);
+        Assert.True((await a.ExpectAsync(MessageTypes.MarchArrived)).GetProperty("data").GetProperty("gatherDone").GetBoolean(), "採滿回城");
+        var returning = City(await a.ExpectAsync(MessageTypes.CityState)).Surface.Marches[0];
+        server.Clock.Advance(returning.ArriveAt - server.Clock.NowMs);
+        await server.Sessions.TickAsync(CancellationToken.None);
+        Assert.True((await a.ExpectAsync(MessageTypes.MarchArrived)).GetProperty("data").GetProperty("disbanded").GetBoolean(), "回城解散");
+        var home = City(await a.ExpectAsync(MessageTypes.CityState));
+        Assert.True(home.GetResource(field.Resource) >= before + 600, "帶回 50 × 12 的資源");
+
+        await b.SendAsync(MessageTypes.WorldTile, new TileInfoRequest { X = field.X, Y = field.Y });
+        var after = (await b.ExpectAsync(MessageTypes.WorldTile)).GetProperty("data");
+        Assert.Equal(GatherConfig.FieldStock(1) - 600, after.GetProperty("stock").GetInt64(), "資源田存量減少");
+    }
+
+    [Test]
     public static async Task SecondLogin_KicksFirstConnection()
     {
         await using var server = new TestServer();

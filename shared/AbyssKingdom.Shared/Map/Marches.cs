@@ -23,6 +23,19 @@ namespace AbyssKingdom.Shared.Map
         /// <summary>召回中：回到主城後解散，部隊回兵營。</summary>
         public bool Returning { get; set; }
 
+        // ───── 採集（駐紮在資源田時） ─────
+        /// <summary>開始採集的時間；0 = 沒有在採集。</summary>
+        public long GatherStartMs { get; set; }
+        public long GatherRatePerMin { get; set; }
+        /// <summary>這次最多能採多少（載重與存量取小）。</summary>
+        public long GatherCap { get; set; }
+        public ResourceType GatherResource { get; set; }
+        /// <summary>帶在身上的資源，回到主城時入庫。</summary>
+        public Dictionary<ResourceType, long> Carry { get; set; } = new Dictionary<ResourceType, long>();
+
+        public bool Gathering => GatherStartMs > 0;
+        public long GatherEndMs => GatherStartMs + (GatherCap * 60_000 + GatherRatePerMin - 1) / System.Math.Max(1, GatherRatePerMin);
+
         public int Destination => Path[Path.Count - 1];
         public long ArriveAt => ArriveAtMs[ArriveAtMs.Count - 1];
         public long TotalTroops()
@@ -56,14 +69,18 @@ namespace AbyssKingdom.Shared.Map
         public long MarchId;
         public HeroId Hero;
         public int Tile;
-        public bool Disbanded;   // 召回抵達主城、部隊回營
+        public bool Disbanded;   // 召回抵達主城、部隊回營（Carry 是帶回的資源）
+        public bool Gathering;   // 抵達資源田、開始採集
+        public bool Occupied;    // 抵達資源田，但已經有人在採（或採空了），只能駐紮
+        public bool GatherDone;  // 採滿，自動回城
+        public Dictionary<ResourceType, long> Carry;
     }
 
     public static class MarchConfig
     {
         public const int MaxMarches = 3;
-        /// <summary>移動 1 格所需毫秒（速度 100% 時）。</summary>
-        public const long MsPerTile = 3_000;
+        /// <summary>移動 1 格所需毫秒（速度 100% 時）。測試用的快速值：100 格約 1 分鐘。</summary>
+        public const long MsPerTile = 600;
 
         /// <summary>兵種行軍速度百分比：裂蹄騎最快。</summary>
         public static long SpeedPercent(TroopType t) => t == TroopType.Rider ? 150 : 100;
@@ -81,11 +98,31 @@ namespace AbyssKingdom.Shared.Map
             public Pt(int x, int y, SurfaceZone z, int pair = -1) { X = x; Y = y; Z = z; Pair = pair; }
         }
 
-        /// <summary>分區內側不能穿過的圓（深淵或山脈外緣，+1 讓剛好擦邊也算碰到）。</summary>
+        /// <summary>分區內側不能穿過的圓（深淵或山脈外緣）。能站的格子一定在圓外，所以起終點本身不會被判成穿過。</summary>
         static int InnerRadius(SurfaceZone z) =>
             z == SurfaceZone.Rim ? SurfaceConfig.PitRadius
-            : z == SurfaceZone.Middle ? SurfaceConfig.RimOuter + SurfaceConfig.WallHalfWidth + 1
-            : SurfaceConfig.MiddleOuter + SurfaceConfig.WallHalfWidth + 1;
+            : z == SurfaceZone.Middle ? SurfaceConfig.RimOuter + SurfaceConfig.WallHalfWidth
+            : SurfaceConfig.MiddleOuter + SurfaceConfig.WallHalfWidth;
+
+        /// <summary>站在關隘缺口裡（山脈帶內）的點：回傳那個關隘的編號，讓它直接連到關隘兩側；否則 -1。</summary>
+        static int PassGapAt(int x, int y)
+        {
+            long d = SurfaceLogic.Dist2(x, y, SurfaceConfig.Center, SurfaceConfig.Center);
+            for (int b = 0; b < 2; b++)
+            {
+                int rr = SurfaceConfig.Boundaries[b];
+                long lo = (long)(rr - SurfaceConfig.WallHalfWidth - 1) * (rr - SurfaceConfig.WallHalfWidth - 1);
+                long hi = (long)(rr + SurfaceConfig.WallHalfWidth + 1) * (rr + SurfaceConfig.WallHalfWidth + 1);
+                if (d < lo || d > hi) continue;
+                for (int i = 0; i < SurfaceConfig.PassesPerBoundary; i++)
+                {
+                    var p = SurfaceLogic.Pass(b, i);
+                    if (SurfaceLogic.Dist2(x, y, p.x, p.y) <= (long)SurfaceConfig.PassRadius * SurfaceConfig.PassRadius)
+                        return b * SurfaceConfig.PassesPerBoundary + i;
+                }
+            }
+            return -1;
+        }
 
         static int MidRadius(SurfaceZone z) =>
             z == SurfaceZone.Rim ? (SurfaceConfig.PitRadius + SurfaceConfig.RimOuter) / 2 + 8
@@ -117,8 +154,8 @@ namespace AbyssKingdom.Shared.Map
             if (!SurfaceLogic.Walkable(fx, fy) || !SurfaceLogic.Walkable(tx, ty)) return null;
             var pts = new List<Pt>
             {
-                new Pt(fx, fy, SurfaceLogic.Zone(fx, fy)),
-                new Pt(tx, ty, SurfaceLogic.Zone(tx, ty)),
+                new Pt(fx, fy, SurfaceLogic.Zone(fx, fy), PassGapAt(fx, fy)),
+                new Pt(tx, ty, SurfaceLogic.Zone(tx, ty), PassGapAt(tx, ty)),
             };
             for (int b = 0; b < 2; b++)
                 for (int i = 0; i < SurfaceConfig.PassesPerBoundary; i++)
@@ -224,9 +261,10 @@ namespace AbyssKingdom.Shared.Map
         }
 
         /// <summary>出征：從主城出發，前往目標格子。部隊從兵營扣除。</summary>
-        public static MarchResult Start(CityState city, HeroId hero, Dictionary<TroopType, long> troops, int x, int y, long nowMs)
+        public static MarchResult Start(CityState city, HeroId hero, Dictionary<TroopType, long> troops, int x, int y, long nowMs,
+            IFieldRegistry fields = null, string owner = null)
         {
-            Advance(city, nowMs);
+            Advance(city, nowMs, fields, owner);
             var state = city.Surface;
             if (!state.Placed) return MarchResult.NoCity;
             if (!SurfaceLogic.Walkable(x, y)) return MarchResult.UnknownNode;
@@ -262,22 +300,65 @@ namespace AbyssKingdom.Shared.Map
             return MarchResult.Ok;
         }
 
-        /// <summary>召回：駐紮中或還在路上的行軍都可以召回，從目前位置走回主城，抵達後解散、部隊回兵營。</summary>
-        public static MarchResult Recall(CityState city, long marchId, long nowMs)
+        /// <summary>召回：駐紮中、採集中或還在路上的行軍都可以召回，從目前位置走回主城，抵達後解散、部隊回兵營。</summary>
+        public static MarchResult Recall(CityState city, long marchId, long nowMs, IFieldRegistry fields = null, string owner = null)
         {
-            Advance(city, nowMs);
+            Advance(city, nowMs, fields, owner);
             var state = city.Surface;
             var march = state.Marches.Find(m => m.Id == marchId);
             if (march == null) return MarchResult.UnknownMarch;
             if (march.Returning) return MarchResult.Ok;
+            if (march.Gathering) StopGathering(march, nowMs, fields, owner);
+            TurnBack(city, march, nowMs);
+            return MarchResult.Ok;
+        }
+
+        static void TurnBack(CityState city, March march, long nowMs)
+        {
             var here = CurrentTile(march, nowMs);
-            var home = SurfaceLogic.CityCenter(state);
+            var home = SurfaceLogic.CityCenter(city.Surface);
             var path = FindPath(here.x, here.y, home.x, home.y) ?? new List<(int, int)> { here, home };
             march.Path = Encode(path);
             march.ArriveAtMs = Schedule(march.Path, nowMs, SpeedPercent(march.Troops));
             march.Stationed = false;
             march.Returning = true;
-            return MarchResult.Ok;
+        }
+
+        /// <summary>目前已採到多少。</summary>
+        public static long Gathered(March m, long nowMs)
+        {
+            if (!m.Gathering || nowMs <= m.GatherStartMs) return 0;
+            return Math.Min(m.GatherCap, m.GatherRatePerMin * (nowMs - m.GatherStartMs) / 60_000);
+        }
+
+        /// <summary>結束採集：把採到的放進背包、放開資源田。</summary>
+        static long StopGathering(March m, long nowMs, IFieldRegistry fields, string owner)
+        {
+            long got = Gathered(m, nowMs);
+            if (got > 0) m.Carry[m.GatherResource] = (m.Carry.TryGetValue(m.GatherResource, out var c) ? c : 0) + got;
+            fields?.Release(m.Destination, owner, m.Id, got, nowMs);
+            m.GatherStartMs = 0;
+            return got;
+        }
+
+        /// <summary>抵達資源田：向全服登記佔用，成功就開始採集（從抵達時間起算）。</summary>
+        static bool TryBeginGather(March m, IFieldRegistry fields, string owner, out bool occupied)
+        {
+            occupied = false;
+            var (x, y) = SurfaceLogic.FromTile(m.Destination);
+            var f = SurfaceLogic.FeatureAt(x, y);
+            if (fields == null || f == null || f.Type != FeatureType.ResourceField) return false;
+            long stock = fields.Occupy(m.Destination, owner, m.Id, m.ArriveAt);
+            if (stock <= 0)
+            {
+                occupied = true;
+                return false;
+            }
+            m.GatherStartMs = m.ArriveAt;
+            m.GatherRatePerMin = GatherConfig.RatePerMinute(f.Level);
+            m.GatherResource = f.Resource;
+            m.GatherCap = Math.Min(stock, GatherConfig.Load(m.Troops));
+            return true;
         }
 
         /// <summary>行軍此刻所在的格子（路上就取兩點之間按比例的位置）。</summary>
@@ -291,24 +372,43 @@ namespace AbyssKingdom.Shared.Map
             return SurfaceLogic.Walkable(p.Item1, p.Item2) ? p : a;
         }
 
-        /// <summary>推進所有行軍到 nowMs：抵達終點就駐紮；召回抵達主城就解散。回傳發生的事件。</summary>
-        public static List<MarchEvent> Advance(CityState city, long nowMs)
+        /// <summary>
+        /// 推進所有行軍到 nowMs：抵達終點就駐紮（資源田就開始採集）；採滿就自動回城；
+        /// 回到主城就解散、部隊回兵營、帶回的資源入庫。回傳發生的事件。
+        /// fields 為 null 時（客戶端預測、簡單測試）不處理採集。
+        /// </summary>
+        public static List<MarchEvent> Advance(CityState city, long nowMs, IFieldRegistry fields = null, string owner = null)
         {
             var events = new List<MarchEvent>();
             var state = city.Surface;
             for (int i = state.Marches.Count - 1; i >= 0; i--)
             {
                 var m = state.Marches[i];
+
+                // 採滿：從採滿的那一刻起往回走
+                if (m.Gathering && fields != null && nowMs >= m.GatherEndMs)
+                {
+                    long end = m.GatherEndMs;
+                    StopGathering(m, end, fields, owner);
+                    TurnBack(city, m, end);
+                    events.Add(new MarchEvent { MarchId = m.Id, Hero = m.Hero, Tile = m.Destination, GatherDone = true, Carry = new Dictionary<ResourceType, long>(m.Carry) });
+                }
+
                 if (m.Stationed || nowMs < m.ArriveAt) continue;
                 if (m.Returning)
                 {
                     foreach (var kv in m.Troops) city.Troops[kv.Key] = city.GetTroops(kv.Key) + kv.Value;
+                    foreach (var kv in m.Carry) city.Resources[kv.Key] = city.GetResource(kv.Key) + kv.Value;
                     state.Marches.RemoveAt(i);
-                    events.Add(new MarchEvent { MarchId = m.Id, Hero = m.Hero, Tile = m.Destination, Disbanded = true });
+                    events.Add(new MarchEvent { MarchId = m.Id, Hero = m.Hero, Tile = m.Destination, Disbanded = true, Carry = m.Carry });
                     continue;
                 }
                 m.Stationed = true;
-                events.Add(new MarchEvent { MarchId = m.Id, Hero = m.Hero, Tile = m.Destination });
+                bool gathering = TryBeginGather(m, fields, owner, out bool occupied);
+                events.Add(new MarchEvent { MarchId = m.Id, Hero = m.Hero, Tile = m.Destination, Gathering = gathering, Occupied = occupied });
+
+                // 離線很久：抵達後可能早就採滿、甚至已經回到城裡
+                if (gathering && nowMs >= m.GatherEndMs) i++;
             }
             return events;
         }
