@@ -55,15 +55,15 @@ namespace AbyssKingdom.Client.UI
         // 兵種名稱（2026-10-08 使用者定案）
         public static readonly Dictionary<TroopType, string> Troops = new Dictionary<TroopType, string>
         {
-            { TroopType.Shield, "沉錨衛" },
+            { TroopType.Shield, "磐盾衛" },
             { TroopType.Crossbow, "鳴弦手" },
-            { TroopType.Rider, "懸索騎" },
+            { TroopType.Rider, "裂蹄騎" },
         };
 
         public static readonly Dictionary<TroopType, string> TroopRoles = new Dictionary<TroopType, string>
         {
-            { TroopType.Shield, "前排坦克 · 克制懸索騎" },
-            { TroopType.Crossbow, "遠程輸出 · 克制沉錨衛" },
+            { TroopType.Shield, "前排坦克 · 克制裂蹄騎" },
+            { TroopType.Crossbow, "遠程輸出 · 克制磐盾衛" },
             { TroopType.Rider, "機動突擊 · 克制鳴弦手" },
         };
 
@@ -79,33 +79,33 @@ namespace AbyssKingdom.Client.UI
         public static readonly Dictionary<HeroId, string> HeroTitles = new Dictionary<HeroId, string>
         {
             { HeroId.Hold, "鐵錘同盟 · 老盾衛隊長" },
-            { HeroId.Vesper, "銀繩公會 · 探路射手" },
-            { HeroId.Karst, "自由探窟團 · 崖壁索騎" },
+            { HeroId.Vesper, "銀弦公會 · 遊擊射手" },
+            { HeroId.Karst, "自由傭兵團 · 疾蹄騎手" },
         };
 
         public static readonly Dictionary<HeroId, string> HeroBios = new Dictionary<HeroId, string>
         {
-            { HeroId.Hold, "在裂口邊守了三十年的錨，說話不多，退後的次數更少。" },
+            { HeroId.Hold, "在裂口邊守了三十年的盾，說話不多，退後的次數更少。" },
             { HeroId.Vesper, "聽得見弦上的回響，總是第一個發現往下的路。" },
-            { HeroId.Karst, "把繩索當成道路的人，崖壁對他來說只是另一片平原。" },
+            { HeroId.Karst, "他說馬蹄比任何道路都可靠，整片大陸對他來說都太小了。" },
         };
 
-        /// <summary>繩級顯示名稱（品質）。</summary>
+        /// <summary>契級顯示名稱（品質）。</summary>
         public static readonly Dictionary<RopeGrade, string> Grades = new Dictionary<RopeGrade, string>
         {
-            { RopeGrade.Common, "白繩 · 普通" },
-            { RopeGrade.Uncommon, "綠繩 · 罕見" },
-            { RopeGrade.Rare, "藍繩 · 稀有" },
-            { RopeGrade.Epic, "紫繩 · 史詩" },
-            { RopeGrade.Legendary, "金繩 · 傳說" },
-            { RopeGrade.Mythic, "黑繩 · 神秘" },
+            { RopeGrade.Common, "白契 · 普通" },
+            { RopeGrade.Uncommon, "綠契 · 罕見" },
+            { RopeGrade.Rare, "藍契 · 稀有" },
+            { RopeGrade.Epic, "紫契 · 史詩" },
+            { RopeGrade.Legendary, "金契 · 傳說" },
+            { RopeGrade.Mythic, "黑契 · 神秘" },
         };
 
         // ───── 深淵地圖 ─────
 
         public static readonly Dictionary<NodeType, string> NodeTypes = new Dictionary<NodeType, string>
         {
-            { NodeType.Gate, "垂降口" },
+            { NodeType.Gate, "深淵入口" },
             { NodeType.Cavern, "資源洞室" },
             { NodeType.MonsterNest, "深淵小怪巢" },
             { NodeType.Fissure, "地脈裂隙" },
@@ -140,12 +140,12 @@ namespace AbyssKingdom.Client.UI
         public static string SurfaceNodeName(MapNode n) =>
             n.Type == NodeType.ResourceField ? $"{Resources[n.Resource]}田 Lv.{n.Level}"
             : n.Type == NodeType.MonsterCamp ? $"怪物營地 Lv.{n.Level}"
-            : n.Type == NodeType.Gate ? "垂降口（深淵入口）"
+            : n.Type == NodeType.Gate ? "深淵入口"
             : NodeTypes[n.Type];
 
         public static readonly Dictionary<NodeType, string> NodeDescriptions = new Dictionary<NodeType, string>
         {
-            { NodeType.Gate, "從裂口邊緣垂降下來的入口，探窟隊由此進出深淵。" },
+            { NodeType.Gate, "通往深淵下一層大陸的入口，賽季結束後開放。" },
             { NodeType.Cavern, "岩壁間的洞室，散落著可採集的資源。" },
             { NodeType.MonsterNest, "深淵小怪盤踞的巢穴。清掉牠們可以取得材料。" },
             { NodeType.Fissure, "地脈從岩層裂縫湧出。佔領後，同脈的主將會得到加成，並產出稀有資源。" },
@@ -217,42 +217,42 @@ namespace AbyssKingdom.Client.UI
             return parts.Count == 0 ? "無" : string.Join("、", parts);
         }
 
-        // ───── 四股索（程式內部 = 四境；2026-10-08 使用者定案） ─────
+        // ───── 四印（程式內部 = 四境；2026-10-08 使用者定案） ─────
 
         public static readonly Dictionary<Domain, string> Domains = new Dictionary<Domain, string>
         {
-            { Domain.Power, "崩索 · 力" },
-            { Domain.Technique, "結索 · 技" },
-            { Domain.Speed, "墜索 · 速" },
-            { Domain.Durability, "錨索 · 韌" },
+            { Domain.Power, "崩印 · 力" },
+            { Domain.Technique, "巧印 · 技" },
+            { Domain.Speed, "迅印 · 速" },
+            { Domain.Durability, "磐印 · 韌" },
         };
 
         public static readonly Dictionary<Domain, string> DomainGlyphs = new Dictionary<Domain, string>
         {
             { Domain.Power, "崩" },
-            { Domain.Technique, "結" },
-            { Domain.Speed, "墜" },
-            { Domain.Durability, "錨" },
+            { Domain.Technique, "巧" },
+            { Domain.Speed, "迅" },
+            { Domain.Durability, "磐" },
         };
 
         public static readonly Dictionary<Domain, string> DomainBonus = new Dictionary<Domain, string>
         {
-            { Domain.Power, "崩索——一擊崩開岩壁的力量。編成：攻擊 +15%。修練：打出傷害。斷索試煉：20 回合內擊倒不還手的重甲。" },
-            { Domain.Technique, "結索——打結與收放的技巧。編成：克制倍率 +15%，被克制時懲罰減少。修練：打出克制。斷索試煉：對抗剋制你的敵人。" },
-            { Domain.Speed, "墜索——深淵裡最快的是墜落。編成：出手速度 +2。修練：搶先出手。斷索試煉：和更快的同兵種敵人比誰先倒下。" },
-            { Domain.Durability, "錨索——釘死在崖壁不鬆動。編成：承受傷害 -15%。修練：扛住傷害並活下來。斷索試煉：撐過 20 回合不倒。" },
+            { Domain.Power, "崩印——擊碎一切的蠻力。刻成：攻擊 +15%。修練：打出傷害。印證試煉：20 回合內擊倒不還手的重甲。" },
+            { Domain.Technique, "巧印——看穿破綻的技巧。刻成：克制倍率 +15%，被克制時懲罰減少。修練：打出克制。印證試煉：對抗剋制你的敵人。" },
+            { Domain.Speed, "迅印——先發制人的速度。刻成：出手速度 +2。修練：搶先出手。印證試煉：和更快的同兵種敵人比誰先倒下。" },
+            { Domain.Durability, "磐印——如磐石般不動。刻成：承受傷害 -15%。修練：扛住傷害並活下來。印證試煉：撐過 20 回合不倒。" },
         };
 
         public static readonly string[] StarTiers = { "金星", "藍星", "紅星", "銀彩星" };
 
-        /// <summary>編成幾股索的稱號。</summary>
+        /// <summary>刻成幾道印的稱號。</summary>
         public static readonly Dictionary<DomainTier, string> Tiers = new Dictionary<DomainTier, string>
         {
-            { DomainTier.Unbound, "尚未繫索" },
-            { DomainTier.Roped, "繫索者" },
-            { DomainTier.Delver, "下探者" },
-            { DomainTier.Deepwalker, "深行者" },
-            { DomainTier.AbyssReacher, "抵淵者" },
+            { DomainTier.Unbound, "尚未立契" },
+            { DomainTier.Roped, "立契者" },
+            { DomainTier.Delver, "承印者" },
+            { DomainTier.Deepwalker, "深契者" },
+            { DomainTier.AbyssReacher, "淵契主" },
         };
 
         public static readonly Dictionary<EquipSlot, string> Slots = new Dictionary<EquipSlot, string>
@@ -267,8 +267,8 @@ namespace AbyssKingdom.Client.UI
 
         public static readonly Dictionary<GearId, string> Gear = new Dictionary<GearId, string>
         {
-            { GearId.RustAnchorBlade, "鏽錨刃" },
-            { GearId.RopeHood, "繩編兜帽" },
+            { GearId.RustAnchorBlade, "鏽鐵刃" },
+            { GearId.RopeHood, "契紋兜帽" },
             { GearId.StrataPlate, "層岩胸甲" },
             { GearId.EchoGloves, "鳴指手套" },
             { GearId.LanternCharm, "燈魅護符" },
@@ -323,10 +323,10 @@ namespace AbyssKingdom.Client.UI
                 case ItemType.HeroShardHold: return "信物 · 霍德";
                 case ItemType.HeroShardVesper: return "信物 · 薇絲珀";
                 case ItemType.HeroShardKarst: return "信物 · 卡斯特";
-                case ItemType.DomainScrollPower: return "索譜 · 崩";
-                case ItemType.DomainScrollTechnique: return "索譜 · 結";
-                case ItemType.DomainScrollSpeed: return "索譜 · 墜";
-                case ItemType.DomainScrollDurability: return "索譜 · 錨";
+                case ItemType.DomainScrollPower: return "印譜 · 崩";
+                case ItemType.DomainScrollTechnique: return "印譜 · 巧";
+                case ItemType.DomainScrollSpeed: return "印譜 · 迅";
+                case ItemType.DomainScrollDurability: return "印譜 · 磐";
             }
             ItemConfig.TryGetSpeedup(item, out var category, out var ms);
             long minutes = ms / ItemConfig.MsPerMinute;
@@ -363,9 +363,9 @@ namespace AbyssKingdom.Client.UI
                 case "TooManyMarches": return "同時最多 3 支行軍";
                 case "NotStationed": return "行軍抵達後才能召回";
                 case "AlreadyThere": return "已經在這裡了";
-                case "NotReady": return "修練值還沒滿，還不能挑戰斷索試煉";
-                case "AlreadyMastered": return "這股索已經編成";
-                case "StarsRequired": return "要先把對應的星色升滿，才能挑戰下一股索";
+                case "NotReady": return "修練值還沒滿，還不能挑戰印證試煉";
+                case "AlreadyMastered": return "這道印已經刻成";
+                case "StarsRequired": return "要先把對應的星色升滿，才能挑戰下一道印";
                 case "NotEnoughShards": return "信物不足";
                 case "MaxStars": return "已經升到最高星";
                 case "WrongTeamCount": return "岔路關卡需要兩支隊伍";

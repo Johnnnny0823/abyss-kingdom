@@ -60,7 +60,7 @@ namespace AbyssKingdom.Client.Game
         {
             Instance = this;
             ServerUrl = PlayerPrefs.GetString(PrefServerUrl, DefaultServerUrl);
-            PlayerName = PlayerPrefs.GetString(PrefName, "探窟者");
+            PlayerName = PlayerPrefs.GetString(PrefName, "新任領主");
 
             var args = Environment.GetCommandLineArgs();
             for (int i = 0; i < args.Length; i++)
@@ -211,7 +211,7 @@ namespace AbyssKingdom.Client.Game
                 case MessageTypes.DomainTrialResultMessage:
                     var trial = msg.DataAs<DomainTrialResult>();
                     string who = DisplayNames.Heroes[trial.Hero], dom = DisplayNames.Domains[trial.Domain];
-                    Notice?.Invoke(trial.Success ? $"{who} 通過斷索試煉，{dom}編成！" : $"{who} 的 {dom} 斷索試煉失敗，修練值保留，變強後再來", !trial.Success);
+                    Notice?.Invoke(trial.Success ? $"{who} 通過印證試煉，{dom}刻成！" : $"{who} 的 {dom} 印證試煉失敗，修練值保留，變強後再來", !trial.Success);
                     break;
                 case MessageTypes.WorldCities:
                     Cities = msg.DataAs<WorldCitiesMessage>().Cities ?? new List<CityPin>();

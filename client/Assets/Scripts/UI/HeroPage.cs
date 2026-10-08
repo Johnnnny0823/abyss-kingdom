@@ -160,10 +160,10 @@ namespace AbyssKingdom.Client.UI
             info.Add(books);
             info.Add(Lbl("點左右的裝備格可以更換裝備；升級和換裝都會即時反映在戰力上。", "muted", "hint"));
 
-            // 四股索
+            // 四印
             var domainHead = El("row");
             domainHead.style.marginTop = 16;
-            domainHead.Add(Lbl("四股索", "panel-title"));
+            domainHead.Add(Lbl("四印", "panel-title"));
             _tier = Lbl("", "tier-badge");
             domainHead.Add(_tier);
             domainHead.Add(El("spacer"));
@@ -176,7 +176,7 @@ namespace AbyssKingdom.Client.UI
                 _domains[d] = row;
                 info.Add(row.Root);
             }
-            info.Add(Lbl("戰鬥中的表現會累積修練值（表現為主）；索譜可以補（材料為輔）。修練值滿了就能挑戰斷索試煉，失敗不會扣修練值。編成越多股，稱號越高。", "muted", "hint"));
+            info.Add(Lbl("戰鬥中的表現會累積修練值（表現為主）；印譜可以補（材料為輔）。修練值滿了就能挑戰印證試煉，失敗不會扣修練值。刻成的印越多，稱號越高。", "muted", "hint"));
             detail.Add(info);
         }
 
@@ -255,7 +255,7 @@ namespace AbyssKingdom.Client.UI
             int mastered = hero.Mastered.Count;
             _tier.text = DisplayNames.Tiers[DomainConfig.Tier(mastered)];
             _tier.EnableInClassList("lit", mastered >= 1);
-            _order.text = mastered == 0 ? "還沒有編成任何一股索" : "編索順序：" + string.Join(" → ", hero.Mastered.Select(d => DisplayNames.DomainGlyphs[d]));
+            _order.text = mastered == 0 ? "還沒有刻成任何一道印" : "刻印順序：" + string.Join(" → ", hero.Mastered.Select(d => DisplayNames.DomainGlyphs[d]));
             foreach (var row in _domains.Values) row.Refresh(city, hero);
 
             foreach (var pair in _slots)
@@ -277,7 +277,7 @@ namespace AbyssKingdom.Client.UI
             }
         }
 
-        /// <summary>四股索中的一列：境名、修練進度、狀態（修練中／挑戰試煉／已通達）、索譜。</summary>
+        /// <summary>四印中的一列：境名、修練進度、狀態（修練中／挑戰試煉／已通達）、印譜。</summary>
         private sealed class DomainRow
         {
             public readonly VisualElement Root = El("domain-row");
@@ -309,9 +309,9 @@ namespace AbyssKingdom.Client.UI
                 bar.Add(_fill);
                 col.Add(bar);
                 Root.Add(col);
-                _done = Lbl("已編成", "domain-done");
+                _done = Lbl("已刻成", "domain-done");
                 Root.Add(_done);
-                _trial = Btn("斷索試煉", () => GameClient.Instance.DomainTrial(_hero(), _domain), "btn-primary", "btn-small");
+                _trial = Btn("印證試煉", () => GameClient.Instance.DomainTrial(_hero(), _domain), "btn-primary", "btn-small");
                 Root.Add(_trial);
                 _scroll = Btn("", () => GameClient.Instance.UseDomainScroll(_hero(), _scrollItem), "btn-small");
                 Root.Add(_scroll);
@@ -330,10 +330,10 @@ namespace AbyssKingdom.Client.UI
                 Show(_trial, ready);
                 bool starsOk = DomainLogic.StarsReady(hero);
                 _trial.SetEnabled(starsOk);
-                _trial.text = starsOk ? "斷索試煉" : $"需{DisplayNames.StarTiers[System.Math.Min(3, hero.Mastered.Count)]}滿";
+                _trial.text = starsOk ? "印證試煉" : $"需{DisplayNames.StarTiers[System.Math.Min(3, hero.Mastered.Count)]}滿";
                 long scrolls = city.GetItemCount(_scrollItem);
                 Show(_scroll, !mastered && !ready && scrolls > 0);
-                _scroll.text = $"索譜 +100 ×{scrolls}";
+                _scroll.text = $"印譜 +100 ×{scrolls}";
             }
         }
 

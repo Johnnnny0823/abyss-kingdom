@@ -141,7 +141,7 @@ namespace AbyssKingdom.Client.World
                     _w.Prim(PrimitiveType.Cylinder, new Color32(8, 8, 12, 255), new Vector3(0, 0.006f, 0), new Vector3(0.26f, 0.004f, 0.26f), t);
                     _w.Prim(PrimitiveType.Cylinder, new Color32(110, 86, 60, 255), new Vector3(0.15f, 0.14f, 0), new Vector3(0.02f, 0.14f, 0.02f), t);
                     _w.Prim(PrimitiveType.Cube, new Color32(110, 86, 60, 255), new Vector3(0.07f, 0.27f, 0), new Vector3(0.18f, 0.02f, 0.02f), t);
-                    _w.Text(t, new Vector3(0, 0.4f, 0), 0.014f, new Color(0.75f, 0.8f, 1f)).text = "垂降口";
+                    _w.Text(t, new Vector3(0, 0.4f, 0), 0.014f, new Color(0.75f, 0.8f, 1f)).text = "深淵入口";
                     break;
             }
         }
