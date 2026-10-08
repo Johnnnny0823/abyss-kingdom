@@ -166,6 +166,10 @@ public sealed class WebSocketHandler
                 await HandleUpgrade(conn, session, reqId, data, ct);
                 break;
 
+            case MessageTypes.CityTrain:
+                await HandleTrain(conn, session, reqId, data, ct);
+                break;
+
             default:
                 await SendError(conn, reqId, ErrorCodes.UnknownType, type);
                 break;
@@ -231,6 +235,35 @@ public sealed class WebSocketHandler
         if (result != UpgradeResult.Ok)
         {
             await SendError(conn, reqId, ErrorCodes.UpgradeRejected, result.ToString());
+            return;
+        }
+        await SendCity(conn, session, reqId, ct);
+    }
+
+    private async Task HandleTrain(WsConnection conn, PlayerSession session, int reqId, JsonElement data, CancellationToken ct)
+    {
+        var req = Deserialize<TrainRequest>(data);
+        if (req == null)
+        {
+            await SendError(conn, reqId, ErrorCodes.BadRequest, "troop and count required");
+            return;
+        }
+
+        TrainResult result;
+        await session.Gate.WaitAsync(ct);
+        try
+        {
+            result = CityLogic.StartTraining(session.Record.City, req.Troop, req.Count, _clock.NowMs);
+            if (result == TrainResult.Ok) session.Dirty = true;
+        }
+        finally
+        {
+            session.Gate.Release();
+        }
+
+        if (result != TrainResult.Ok)
+        {
+            await SendError(conn, reqId, ErrorCodes.TrainRejected, result.ToString());
             return;
         }
         await SendCity(conn, session, reqId, ct);

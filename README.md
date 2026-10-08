@@ -66,8 +66,10 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | → | `login` | `{ token, displayName }` |
 | → | `city.get` | — |
 | → | `city.upgrade` | `{ building: "Keep" }` |
+| → | `city.train` | `{ troop: "Shield", count: 50 }`（需兵營；單批上限 = 兵營等級 × 50） |
 | → | `ping` | — |
 | ← | `login.ok` | `{ playerId, displayName, serverTimeMs }` |
 | ← | `city.state` | `{ serverTimeMs, city }` |
 | ← | `city.upgradeCompleted` | `{ building, level }`（伺服器主動推播，reqId = 0） |
+| ← | `city.trainingCompleted` | `{ troop, count }`（伺服器主動推播，reqId = 0） |
 | ← | `error` | `{ code, detail }` |

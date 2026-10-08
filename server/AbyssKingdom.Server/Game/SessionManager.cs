@@ -110,19 +110,20 @@ public sealed class SessionManager : BackgroundService
         _log.LogInformation("Player {Id} logged out. Online={Count}", session.PlayerId, _online.Count);
     }
 
-    /// <summary>每秒推進所有上線玩家的城市；有升級完成就推播。</summary>
+    /// <summary>每秒推進所有上線玩家的城市；有升級或訓練完成就推播。</summary>
     public async Task TickAsync(CancellationToken ct)
     {
         var now = _clock.NowMs;
         foreach (var session in _online.Values)
         {
             UpgradeJob? completed;
+            TrainingJob? trained;
             byte[]? snapshot = null;
             await session.Gate.WaitAsync(ct);
             try
             {
-                completed = CityLogic.Advance(session.Record.City, now);
-                if (completed != null)
+                completed = CityLogic.Advance(session.Record.City, now, out trained);
+                if (completed != null || trained != null)
                 {
                     session.Dirty = true;
                     snapshot = JsonSerializer.SerializeToUtf8Bytes(session.Record.City, _json);
@@ -133,13 +134,20 @@ public sealed class SessionManager : BackgroundService
                 session.Gate.Release();
             }
 
-            if (completed != null && snapshot != null)
+            if (snapshot != null)
             {
-                await SafeSend(session, MessageTypes.UpgradeCompleted, new UpgradeCompletedMessage
-                {
-                    Building = completed.Building,
-                    Level = completed.TargetLevel,
-                });
+                if (completed != null)
+                    await SafeSend(session, MessageTypes.UpgradeCompleted, new UpgradeCompletedMessage
+                    {
+                        Building = completed.Building,
+                        Level = completed.TargetLevel,
+                    });
+                if (trained != null)
+                    await SafeSend(session, MessageTypes.TrainingCompleted, new TrainingCompletedMessage
+                    {
+                        Troop = trained.Troop,
+                        Count = trained.Count,
+                    });
                 await SafeSend(session, MessageTypes.CityState, new CityStateMessage { ServerTimeMs = now, City = JsonSerializer.Deserialize<CityState>(snapshot, _json) });
             }
         }

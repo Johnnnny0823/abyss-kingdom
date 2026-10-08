@@ -87,6 +87,47 @@ namespace AbyssKingdom.Shared.City
             return seconds * 1000;
         }
 
+        // ───── 部隊（數值為測試用，之後統一調平衡） ─────
+
+        public static readonly TroopType[] AllTroops = (TroopType[])Enum.GetValues(typeof(TroopType));
+
+        /// <summary>每級兵營可增加的單批訓練上限。</summary>
+        public const long TroopBatchPerBarracksLevel = 50;
+
+        /// <summary>單批最多可訓練幾名（兵營 0 級 = 不能訓練）。</summary>
+        public static long MaxTrainBatch(int barracksLevel)
+        {
+            return Math.Max(0, barracksLevel) * TroopBatchPerBarracksLevel;
+        }
+
+        /// <summary>每名士兵的訓練成本。</summary>
+        public static long TroopCost(TroopType troop, ResourceType resource)
+        {
+            switch (troop)
+            {
+                case TroopType.Shield:
+                    return resource == ResourceType.Food ? 20 : resource == ResourceType.Crystal ? 0 : 10;
+                case TroopType.Crossbow:
+                    return resource == ResourceType.Food || resource == ResourceType.Wood ? 20 : 0;
+                case TroopType.Rider:
+                    switch (resource)
+                    {
+                        case ResourceType.Food: return 30;
+                        case ResourceType.Stone: return 10;
+                        case ResourceType.Crystal: return 5;
+                        default: return 0;
+                    }
+                default:
+                    return 0;
+            }
+        }
+
+        /// <summary>每名士兵的訓練時間（毫秒）。</summary>
+        public static long TroopTrainMsPerUnit(TroopType troop)
+        {
+            return troop == TroopType.Rider ? 3000 : 2000;
+        }
+
         static long BaseCost(BuildingType type, ResourceType resource)
         {
             switch (type)

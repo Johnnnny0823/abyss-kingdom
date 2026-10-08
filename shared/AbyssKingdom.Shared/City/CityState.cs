@@ -18,6 +18,12 @@ namespace AbyssKingdom.Shared.City
         /// <summary>目前的升級工程（MVP 只有一條建築隊列）；null 代表空閒。</summary>
         public UpgradeJob Upgrade { get; set; }
 
+        /// <summary>已訓練完成的部隊數量。</summary>
+        public Dictionary<TroopType, long> Troops { get; set; } = new Dictionary<TroopType, long>();
+
+        /// <summary>兵營訓練隊列（一條，與建築隊列分開）；null 代表空閒。</summary>
+        public TrainingJob Training { get; set; }
+
         /// <summary>資源最後結算到的時間。</summary>
         public long LastSettledAtMs { get; set; }
 
@@ -31,6 +37,11 @@ namespace AbyssKingdom.Shared.City
             return Buildings.TryGetValue(type, out var v) ? v : 0;
         }
 
+        public long GetTroops(TroopType type)
+        {
+            return Troops.TryGetValue(type, out var v) ? v : 0;
+        }
+
         public static CityState CreateNew(long nowMs)
         {
             var s = new CityState { LastSettledAtMs = nowMs };
@@ -41,6 +52,8 @@ namespace AbyssKingdom.Shared.City
             }
             foreach (var b in CityConfig.AllBuildings)
                 s.Buildings[b] = CityConfig.StartingLevel(b);
+            foreach (var t in CityConfig.AllTroops)
+                s.Troops[t] = 0;
             return s;
         }
     }
@@ -49,6 +62,14 @@ namespace AbyssKingdom.Shared.City
     {
         public BuildingType Building { get; set; }
         public int TargetLevel { get; set; }
+        public long StartedAtMs { get; set; }
+        public long FinishAtMs { get; set; }
+    }
+
+    public class TrainingJob
+    {
+        public TroopType Troop { get; set; }
+        public long Count { get; set; }
         public long StartedAtMs { get; set; }
         public long FinishAtMs { get; set; }
     }

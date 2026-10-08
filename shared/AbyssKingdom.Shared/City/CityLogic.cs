@@ -14,6 +14,20 @@ namespace AbyssKingdom.Shared.City
         /// </summary>
         public static UpgradeJob Advance(CityState state, long nowMs)
         {
+            return Advance(state, nowMs, out _);
+        }
+
+        /// <summary>同上，另外回傳這次完成的訓練（沒有則為 null）。訓練不影響產量，完成時直接入營。</summary>
+        public static UpgradeJob Advance(CityState state, long nowMs, out TrainingJob completedTraining)
+        {
+            completedTraining = null;
+            if (state.Training != null && state.Training.FinishAtMs <= nowMs)
+            {
+                completedTraining = state.Training;
+                state.Troops[completedTraining.Troop] = state.GetTroops(completedTraining.Troop) + completedTraining.Count;
+                state.Training = null;
+            }
+
             UpgradeJob completed = null;
             if (state.Upgrade != null && state.Upgrade.FinishAtMs <= nowMs)
             {
@@ -102,6 +116,43 @@ namespace AbyssKingdom.Shared.City
                 FinishAtMs = nowMs + CityConfig.UpgradeDurationMs(building, target),
             };
             return UpgradeResult.Ok;
+        }
+
+        /// <summary>檢查能不能訓練（不修改狀態）。呼叫前應先 Advance 到現在。</summary>
+        public static TrainResult CanTrain(CityState state, TroopType troop, long count)
+        {
+            if (!Enum.IsDefined(typeof(TroopType), troop)) return TrainResult.UnknownTroop;
+            int barracks = state.GetLevel(BuildingType.Barracks);
+            if (barracks <= 0) return TrainResult.BarracksRequired;
+            if (count <= 0) return TrainResult.InvalidCount;
+            if (count > CityConfig.MaxTrainBatch(barracks)) return TrainResult.ExceedsBatchLimit;
+            if (state.Training != null) return TrainResult.QueueBusy;
+            foreach (var r in CityConfig.AllResources)
+            {
+                if (state.GetResource(r) < CityConfig.TroopCost(troop, r) * count)
+                    return TrainResult.NotEnoughResources;
+            }
+            return TrainResult.Ok;
+        }
+
+        /// <summary>開始訓練：先結算到現在，檢查條件，扣資源並排入訓練隊列。</summary>
+        public static TrainResult StartTraining(CityState state, TroopType troop, long count, long nowMs)
+        {
+            Advance(state, nowMs);
+            var check = CanTrain(state, troop, count);
+            if (check != TrainResult.Ok) return check;
+
+            foreach (var r in CityConfig.AllResources)
+                state.Resources[r] = state.GetResource(r) - CityConfig.TroopCost(troop, r) * count;
+
+            state.Training = new TrainingJob
+            {
+                Troop = troop,
+                Count = count,
+                StartedAtMs = nowMs,
+                FinishAtMs = nowMs + CityConfig.TroopTrainMsPerUnit(troop) * count,
+            };
+            return TrainResult.Ok;
         }
     }
 }

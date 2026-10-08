@@ -13,12 +13,14 @@ namespace AbyssKingdom.Shared.Protocol
         public const string Login = "login";
         public const string CityGet = "city.get";
         public const string CityUpgrade = "city.upgrade";
+        public const string CityTrain = "city.train";
         public const string Ping = "ping";
 
         // 伺服器 → 客戶端
         public const string LoginOk = "login.ok";
         public const string CityState = "city.state";
         public const string UpgradeCompleted = "city.upgradeCompleted";
+        public const string TrainingCompleted = "city.trainingCompleted";
         public const string Error = "error";
         public const string Pong = "pong";
     }
@@ -30,6 +32,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string BadRequest = "bad_request";
         public const string UnknownType = "unknown_type";
         public const string UpgradeRejected = "upgrade_rejected";
+        public const string TrainRejected = "train_rejected";
     }
 
     public class LoginRequest
@@ -49,6 +52,18 @@ namespace AbyssKingdom.Shared.Protocol
     public class UpgradeRequest
     {
         public BuildingType Building { get; set; }
+    }
+
+    public class TrainRequest
+    {
+        public TroopType Troop { get; set; }
+        public long Count { get; set; }
+    }
+
+    public class TrainingCompletedMessage
+    {
+        public TroopType Troop { get; set; }
+        public long Count { get; set; }
     }
 
     public class CityStateMessage

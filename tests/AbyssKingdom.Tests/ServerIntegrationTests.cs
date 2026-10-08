@@ -190,6 +190,41 @@ public static class ServerIntegrationTests
     }
 
     [Test]
+    public static async Task Train_RejectedWithoutBarracks_ThenCompletesAndPushes()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        await using var client = new TestClient();
+        await client.ConnectAsync(server.WsUri);
+        await client.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:trainer" });
+        await client.ExpectAsync(MessageTypes.CityState);
+
+        await client.SendAsync(MessageTypes.CityTrain, new TrainRequest { Troop = TroopType.Shield, Count = 5 });
+        var err = await client.ExpectAsync(MessageTypes.Error);
+        Assert.Equal("BarracksRequired", err.GetProperty("data").GetProperty("detail").GetString());
+
+        // 蓋兵營 → 快轉完成
+        await client.SendAsync(MessageTypes.CityUpgrade, new UpgradeRequest { Building = BuildingType.Barracks });
+        await client.ExpectAsync(MessageTypes.CityState);
+        server.Clock.Advance(CityConfig.UpgradeDurationMs(BuildingType.Barracks, 1) + 1);
+        await server.Sessions.TickAsync(CancellationToken.None);
+        await client.ExpectAsync(MessageTypes.UpgradeCompleted);
+        await client.ExpectAsync(MessageTypes.CityState);
+
+        int req = await client.SendAsync(MessageTypes.CityTrain, new TrainRequest { Troop = TroopType.Shield, Count = 5 });
+        var started = await client.ExpectAsync(MessageTypes.CityState);
+        Assert.Equal(req, started.GetProperty("reqId").GetInt32(), "回應帶回 reqId");
+        Assert.NotNull(City(started).Training, "訓練已排入");
+
+        server.Clock.Advance(5 * CityConfig.TroopTrainMsPerUnit(TroopType.Shield));
+        await server.Sessions.TickAsync(CancellationToken.None);
+        var done = await client.ExpectAsync(MessageTypes.TrainingCompleted);
+        Assert.Equal("Shield", done.GetProperty("data").GetProperty("troop").GetString());
+        Assert.Equal(5, done.GetProperty("data").GetProperty("count").GetInt32());
+        Assert.Equal(5L, City(await client.ExpectAsync(MessageTypes.CityState)).GetTroops(TroopType.Shield), "推播的城市含新部隊");
+    }
+
+    [Test]
     public static async Task SecondLogin_KicksFirstConnection()
     {
         await using var server = new TestServer();
