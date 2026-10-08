@@ -71,6 +71,7 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | → | `domain.useScroll` | `{ hero, item: "DomainScrollPower", count }`（索譜補修練值） |
 | → | `domain.trial` | `{ hero, domain: "Power" }`（修練值滿、且對應星色升滿才能挑戰） |
 | → | `hero.starUp` | `{ hero }`（消耗信物＋響晶升一顆星） |
+| → | `map.explore` | `{ node }`（斥候探路：揭開與已探索節點相鄰的節點；地圖由共用規則依種子生成，探索狀態在 `city.map`） |
 | → | `ping` | — |
 | ← | `login.ok` | `{ playerId, displayName, serverTimeMs }` |
 | ← | `city.state` | `{ serverTimeMs, city }` |

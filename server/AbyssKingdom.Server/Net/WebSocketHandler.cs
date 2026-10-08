@@ -7,6 +7,7 @@ using AbyssKingdom.Server.Infrastructure;
 using AbyssKingdom.Shared.City;
 using AbyssKingdom.Shared.Expedition;
 using AbyssKingdom.Shared.Heroes;
+using AbyssKingdom.Shared.Map;
 using AbyssKingdom.Shared.Protocol;
 
 namespace AbyssKingdom.Server.Net;
@@ -221,6 +222,13 @@ public sealed class WebSocketHandler
                 if (scroll == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "hero and item required"); break; }
                 await RunCityAction(conn, session, reqId, ErrorCodes.DomainRejected, ct, (city, now) =>
                     Fail(DomainLogic.UseScroll(city, scroll.Hero, scroll.Item, scroll.Count), DomainResult.Ok));
+                break;
+
+            case MessageTypes.MapExplore:
+                var explore = Deserialize<MapExploreRequest>(data);
+                if (explore == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "node required"); break; }
+                await RunCityAction(conn, session, reqId, ErrorCodes.MapRejected, ct, (city, now) =>
+                    Fail(MapLogic.Explore(city, explore.Node), MapResult.Ok));
                 break;
 
             case MessageTypes.HeroStarUp:

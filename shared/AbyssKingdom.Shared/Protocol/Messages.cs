@@ -27,6 +27,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string DomainUseScroll = "domain.useScroll";
         public const string DomainTrial = "domain.trial";
         public const string HeroStarUp = "hero.starUp";
+        public const string MapExplore = "map.explore";
         public const string Ping = "ping";
 
         // 伺服器 → 客戶端
@@ -55,6 +56,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string GearRejected = "gear_rejected";
         public const string ExpeditionRejected = "expedition_rejected";
         public const string DomainRejected = "domain_rejected";
+        public const string MapRejected = "map_rejected";
     }
 
     public class LoginRequest
@@ -127,6 +129,12 @@ namespace AbyssKingdom.Shared.Protocol
         public HeroId Hero { get; set; }
         public ItemType Item { get; set; }
         public long Count { get; set; } = 1;
+    }
+
+    /// <summary>斥候探路：揭開與已探索節點相鄰的節點。</summary>
+    public class MapExploreRequest
+    {
+        public int Node { get; set; }
     }
 
     public class HeroStarUpRequest

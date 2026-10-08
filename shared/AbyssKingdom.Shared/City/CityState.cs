@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using AbyssKingdom.Shared.Expedition;
 using AbyssKingdom.Shared.Heroes;
+using AbyssKingdom.Shared.Map;
 
 namespace AbyssKingdom.Shared.City
 {
@@ -34,6 +35,9 @@ namespace AbyssKingdom.Shared.City
 
         /// <summary>背包中的裝備（含穿在主將身上的）。</summary>
         public List<GearItem> Gear { get; set; } = new List<GearItem>();
+
+        /// <summary>深淵大地圖的探索狀態。</summary>
+        public MapState Map { get; set; } = new MapState();
 
         /// <summary>遠征進度與掛機收益。</summary>
         public ExpeditionState Expedition { get; set; } = new ExpeditionState();

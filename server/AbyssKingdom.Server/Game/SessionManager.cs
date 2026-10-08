@@ -4,6 +4,7 @@ using AbyssKingdom.Server.Infrastructure;
 using AbyssKingdom.Server.Persistence;
 using AbyssKingdom.Shared.City;
 using AbyssKingdom.Shared.Heroes;
+using AbyssKingdom.Shared.Map;
 using AbyssKingdom.Shared.Protocol;
 
 namespace AbyssKingdom.Server.Game;
@@ -96,6 +97,7 @@ public sealed class SessionManager : BackgroundService
         if (CityLogic.GrantStarterItemsOnce(record.City)) session.Dirty = true;
         if (HeroLogic.EnsureStarterHeroes(record.City)) session.Dirty = true;
         if (GearLogic.EnsureStarterGear(record.City)) session.Dirty = true;
+        if (MapLogic.EnsureStarted(record.City, playerId)) session.Dirty = true;
         var added = _online.GetOrAdd(playerId, session);
         if (!ReferenceEquals(added, session))
         {
