@@ -123,6 +123,46 @@ namespace AbyssKingdom.Client.World
                 checkedCount++;
                 yield return null;
             }
+            // City-view buildings: 1 m = 1 city cell (0.5 world units). Grounded, centered, within budget.
+            var cityNames = new System.Collections.Generic.List<string> { "Site" };
+            foreach (var b in new[] { "Keep", "Sawmill", "Quarry", "Farm", "CrystalMine", "Warehouse", "Barracks", "Hospital" })
+                for (int tier = 1; tier <= 3; tier++) cityNames.Add(b + "_" + tier);
+            foreach (var cn in cityNames)
+            {
+                var go = ModelLibrary.Spawn("City/" + cn, stage.transform, Vector3.zero, .5f);
+                if (go == null) continue;
+                var renderers = go.GetComponentsInChildren<Renderer>();
+                var bounds = renderers[0].bounds;
+                foreach (var r in renderers) bounds.Encapsulate(r.bounds);
+                int totalTris = go.GetComponentsInChildren<MeshFilter>().Sum(m => Enumerable.Range(0, m.sharedMesh.subMeshCount).Sum(k => (int)m.sharedMesh.GetIndexCount(k) / 3));
+                float width = cn.StartsWith("Keep") ? 1.8f : 1.35f;
+                bool ok = Math.Abs(bounds.min.y) < .002f && Math.Abs(bounds.center.x - 1000) < .003f && Math.Abs(bounds.center.z - 1000) < .003f &&
+                    Math.Abs(bounds.size.x - width) < .003f && totalTris <= 2000;
+                if (!ok) failed++;
+                Debug.Log($"ART_CHECK City/{cn} {(ok ? "PASS" : "FAIL")} size={bounds.size:F4} bottom={bounds.min.y:F4} triangles={totalTris}");
+                inspection.orthographicSize = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z) * .79f;
+                inspection.transform.position = bounds.center - inspection.transform.forward * 10;
+                inspection.Render();
+                RenderTexture.active = rt;
+                var texture = new Texture2D(960, 960, TextureFormat.RGB24, false);
+                texture.ReadPixels(new Rect(0, 0, 960, 960), 0, 0);
+                texture.Apply();
+                File.WriteAllBytes(Path.Combine(_output, "City_" + cn + ".png"), texture.EncodeToPNG());
+                RenderTexture.active = null;
+                Destroy(texture);
+                go.SetActive(false);
+                Destroy(go);
+                checkedCount++;
+                yield return null;
+            }
+
+            // The real city view through the normal camera.
+            world.SetMode(WorldScene.Mode.City);
+            yield return new WaitForSecondsRealtime(1.5f);
+            yield return new WaitForEndOfFrame();
+            CaptureFrame("city-view.png");
+            yield return null;
+
             Debug.Log($"ART_CHECK COMPLETE models={checkedCount} failures={failed}");
             inspection.targetTexture = null;
             rt.Release();

@@ -17,7 +17,7 @@ OUTPUT = ROOT / 'client/Assets/Resources/Models/World'
 REPORTS = ROOT / 'artifacts/models'
 # Colors are sRGB; convert to linear for Blender's Principled Base Color.
 PALETTE = {
-    'stone': '#647F96', 'dark': '#243747', 'rune': '#63E0CB', 'gold': '#E5B96C',
+    'stone': '#7F9AB1', 'dark': '#34495D', 'rune': '#6FF0D9', 'gold': '#F0C276',
     'wood': '#705342', 'leaf': '#346C65', 'leaflight': '#68A894',
     'snow': '#D8E4E1', 'soil': '#424D55', 'bone': '#D7C8AC',
     'fungus': '#DAAF74', 'hostile': '#99505B',
@@ -34,6 +34,7 @@ SPECS = {
 }
 BATCHES = {'city': ['City'], 'terrain': list(SPECS)[1:9], 'landmarks': list(SPECS)[9:]}
 MATERIALS = {}
+MAX_MATERIALS = 4  # world models; city buildings raise this
 
 
 def material(key):
@@ -318,7 +319,7 @@ def export(name):
     tris = len(obj.data.loop_triangles)
     mats = len(obj.data.materials)
     assert tris <= SPECS[name][3], (name, tris)
-    assert 1 <= mats <= 4, (name, mats)
+    assert 1 <= mats <= MAX_MATERIALS, (name, mats)
     assert min(v.co.z for v in obj.data.vertices) >= -1e-6
     # Explicit triangulation gives the same face budget in Blender and Unity.
     mod = obj.modifiers.new('ExportTriangles', 'TRIANGULATE')

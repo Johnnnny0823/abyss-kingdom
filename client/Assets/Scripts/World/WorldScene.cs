@@ -74,7 +74,7 @@ namespace AbyssKingdom.Client.World
             _sun = sunGo.AddComponent<Light>();
             _sun.type = LightType.Directional;
             _sun.color = new Color(1f, 0.95f, 0.85f);
-            _sun.intensity = 1.05f;
+            _sun.intensity = 1.2f;
             _sun.shadows = LightShadows.Soft;
             _sun.cullingMask = 1 << Layer;
 
@@ -143,6 +143,9 @@ namespace AbyssKingdom.Client.World
 
         public Material Glow => _glow;
 
+        /// <summary>灰盒與地面共用的基底材質（Standard）。</summary>
+        public Material BaseMaterial => _base;
+
         public GameObject Prim(PrimitiveType type, Color32 color, Vector3 pos, Vector3 scale, Transform parent)
         {
             var go = GameObject.CreatePrimitive(type);
@@ -190,7 +193,7 @@ namespace AbyssKingdom.Client.World
                 if (l != _sun && l.type == LightType.Directional) l.cullingMask &= ~(1 << Layer);
             RenderSettings.fog = false;
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.42f, 0.43f, 0.48f);
+            RenderSettings.ambientLight = new Color(0.56f, 0.57f, 0.6f);
         }
 
         private void ClampFocus(View v)

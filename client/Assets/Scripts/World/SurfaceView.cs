@@ -15,6 +15,9 @@ namespace AbyssKingdom.Client.World
     public sealed class SurfaceView
     {
         public const float S = 0.2f;          // 1 格 = 0.2 世界單位
+
+        // 模型顯示倍率：讓主城、資源點、部隊在一般遊玩距離也看得清楚（只影響畫面，不影響規則上的佔地）
+        private const float CityScale = 1.5f, FeatureScale = 1.45f, TreeScale = 1.25f, TroopScale = 1.7f, TowerScale = 1.2f;
         private const int ChunkTiles = 40;
         private const int Chunks = SurfaceConfig.Size / ChunkTiles;
 
@@ -64,20 +67,29 @@ namespace AbyssKingdom.Client.World
 
         // ───── 建構 ─────
 
-        private void Disc(float radiusTiles, float top, Color32 c)
+        private GameObject Disc(float radiusTiles, float top, Color32 c)
         {
             float d = radiusTiles * 2 * S;
-            _w.Prim(PrimitiveType.Cylinder, c, new Vector3(0, top - 0.01f, 0), new Vector3(d, 0.01f, d), Root);
+            return _w.Prim(PrimitiveType.Cylinder, c, new Vector3(0, top - 0.01f, 0), new Vector3(d, 0.01f, d), Root);
+        }
+
+        /// <summary>貼地面貼圖的圓盤：貼圖大約每 10 個世界單位（50 格）重複一次。</summary>
+        private void GroundDisc(float radiusTiles, float top, GroundTextures.Style style)
+        {
+            var disc = Disc(radiusTiles, top, Color.white);
+            float d = radiusTiles * 2 * S;
+            disc.GetComponent<Renderer>().sharedMaterial = GroundTextures.Material(_w.BaseMaterial, style, d / 10f);
         }
 
         private void BuildGround()
         {
             float size = SurfaceConfig.Size * S;
-            _w.Prim(PrimitiveType.Cube, new Color32(52, 50, 48, 255), new Vector3(0, -0.03f, 0), new Vector3(size + 40, 0.02f, size + 40), Root);
-            Disc(SurfaceConfig.OuterRadius + 6, -0.010f, new Color32(84, 78, 66, 255));   // 地圖邊緣的荒地
-            Disc(SurfaceConfig.OuterRadius, -0.008f, new Color32(104, 132, 80, 255));     // 外環（新手區）
-            Disc(SurfaceConfig.MiddleOuter, -0.006f, new Color32(128, 128, 82, 255));     // 中環
-            Disc(SurfaceConfig.RimOuter, -0.004f, new Color32(146, 118, 84, 255));        // 崖緣
+            var ground = _w.Prim(PrimitiveType.Cube, Color.white, new Vector3(0, -0.03f, 0), new Vector3(size + 40, 0.02f, size + 40), Root);
+            ground.GetComponent<Renderer>().sharedMaterial = GroundTextures.Material(_w.BaseMaterial, GroundTextures.Style.Wasteland, (size + 40) / 10f);
+            GroundDisc(SurfaceConfig.OuterRadius + 6, -0.010f, GroundTextures.Style.Wasteland);   // 地圖邊緣的荒地
+            GroundDisc(SurfaceConfig.OuterRadius, -0.008f, GroundTextures.Style.LushGrass);       // 外環（新手區）：青草
+            GroundDisc(SurfaceConfig.MiddleOuter, -0.006f, GroundTextures.Style.DryGrass);        // 中環：乾草
+            GroundDisc(SurfaceConfig.RimOuter, -0.004f, GroundTextures.Style.RockyDirt);          // 崖緣：碎石泥地
             for (int i = 0; i < 7; i++)                                                    // 深淵：一圈圈往下變黑
                 Disc(SurfaceConfig.PitRadius + 4 - i * 9, -0.002f + 0.0005f * i, new Color32((byte)(46 - i * 6), (byte)(38 - i * 5), (byte)(48 - i * 6), 255));
         }
@@ -114,7 +126,7 @@ namespace AbyssKingdom.Client.World
                     foreach (var s in new[] { -1f, 1f })
                     {
                         var tower = center + side * (SurfaceConfig.PassRadius * S * s);
-                        if (ModelLibrary.Spawn("World/PassTower", t, tower, S, 0, Mathf.Atan2(radial.x, radial.z) * Mathf.Rad2Deg) != null) continue;
+                        if (ModelLibrary.Spawn("World/PassTower", t, tower, S * TowerScale, 0, Mathf.Atan2(radial.x, radial.z) * Mathf.Rad2Deg) != null) continue;
                         _w.Prim(PrimitiveType.Cylinder, stone, tower + Vector3.up * 0.35f, new Vector3(0.35f, 0.35f, 0.35f), t);
                         _w.Prim(PrimitiveType.Cylinder, new Color32(150, 60, 50, 255), tower + Vector3.up * 0.76f, new Vector3(0.42f, 0.06f, 0.42f), t);
                     }
@@ -137,11 +149,12 @@ namespace AbyssKingdom.Client.World
         {
             // 有美術模型就用模型（文字標籤另外放），沒有就用下面的灰盒
             var pos = TilePos(f.X, f.Y);
-            if (ModelLibrary.Spawn(ModelOf(f), ChunkOf(f.X, f.Y), pos, S, f.X * 31 + f.Y, Hash(f.X, f.Y) % 4 * 90) != null)
+            float fs = f.Type == FeatureType.AbyssGate ? 1f : FeatureScale;
+            if (ModelLibrary.Spawn(ModelOf(f), ChunkOf(f.X, f.Y), pos, S * fs, f.X * 31 + f.Y, Hash(f.X, f.Y) % 4 * 90) != null)
             {
                 var chunk = ChunkOf(f.X, f.Y);
-                if (f.Type == FeatureType.ResourceField) _w.Text(chunk, pos + Vector3.up * 0.45f, 0.033f, new Color(1f, 0.97f, 0.9f)).text = "Lv." + f.Level;
-                else if (f.Type == FeatureType.MonsterCamp) _w.Text(chunk, pos + Vector3.up * 0.5f, 0.033f, new Color(1f, 0.7f, 0.65f)).text = "怪 Lv." + f.Level;
+                if (f.Type == FeatureType.ResourceField) _w.Text(chunk, pos + Vector3.up * 0.6f, 0.038f, new Color(1f, 0.97f, 0.9f)).text = "Lv." + f.Level;
+                else if (f.Type == FeatureType.MonsterCamp) _w.Text(chunk, pos + Vector3.up * 0.62f, 0.038f, new Color(1f, 0.7f, 0.65f)).text = "怪 Lv." + f.Level;
                 else _w.Text(chunk, pos + Vector3.up * 1.1f, 0.048f, new Color(0.8f, 0.78f, 1f)).text = "深淵入口";
                 return;
             }
@@ -227,7 +240,7 @@ namespace AbyssKingdom.Client.World
                     for (int i = 0; i < 3; i++)
                     {
                         var tp = p + new Vector3((i - 1) * 0.18f, 0, (i % 2) * 0.16f);
-                        if (ModelLibrary.Spawn("World/Tree", t, tp, S, Hash(cx * 3 + i, cy), Hash(cy, cx * 3 + i) % 360) == null)
+                        if (ModelLibrary.Spawn("World/Tree", t, tp, S * TreeScale, Hash(cx * 3 + i, cy), Hash(cy, cx * 3 + i) % 360) == null)
                             TreeAt(t, tp, 2.2f + i % 2 * 0.5f);
                     }
                 }
@@ -237,9 +250,9 @@ namespace AbyssKingdom.Client.World
         {
             var root = _w.Group("Castle", parent, pos).gameObject;
             var t = root.transform;
-            if (ModelLibrary.Spawn("World/City", t, Vector3.zero, S) != null)
+            if (ModelLibrary.Spawn("World/City", t, Vector3.zero, S * CityScale) != null)
             {
-                var ring = _w.Prim(PrimitiveType.Cylinder, mine ? new Color32(230, 190, 90, 255) : new Color32(190, 70, 60, 255), Vector3.up * 0.002f, new Vector3(0.62f, 0.002f, 0.62f), t);
+                var ring = _w.Prim(PrimitiveType.Cylinder, mine ? new Color32(230, 190, 90, 255) : new Color32(190, 70, 60, 255), Vector3.up * 0.002f, new Vector3(0.88f, 0.002f, 0.88f), t);
                 ring.name = "OwnerRing";
                 return root;
             }
@@ -276,7 +289,7 @@ namespace AbyssKingdom.Client.World
                 {
                     if (c.castle != null) UnityEngine.Object.Destroy(c.castle);
                     var castle = Castle(ChunkOf(pin.X, pin.Y), CityPos(pin.X, pin.Y), pin.Mine);
-                    var name = _w.Text(castle.transform, new Vector3(0, 0.66f, 0), 0.026f, pin.Mine ? new Color(1f, 0.86f, 0.5f) : Color.white);
+                    var name = _w.Text(castle.transform, new Vector3(0, 0.95f, 0), 0.03f, pin.Mine ? new Color(1f, 0.86f, 0.5f) : Color.white);
                     c = (castle, name, pin.Mine);
                     _castles[key] = c;
                 }
@@ -286,7 +299,7 @@ namespace AbyssKingdom.Client.World
                 _shields.TryGetValue(key, out var shield);
                 if (pin.Shielded && shield == null)
                 {
-                    shield = _w.Prim(PrimitiveType.Cylinder, Color.white, CityPos(pin.X, pin.Y) + Vector3.up * 0.003f, new Vector3(0.9f, 0.003f, 0.9f), ChunkOf(pin.X, pin.Y));
+                    shield = _w.Prim(PrimitiveType.Cylinder, Color.white, CityPos(pin.X, pin.Y) + Vector3.up * 0.003f, new Vector3(1.15f, 0.003f, 1.15f), ChunkOf(pin.X, pin.Y));
                     shield.GetComponent<Renderer>().sharedMaterial = _w.Mat(new Color32(110, 180, 255, 255));
                     _shields[key] = shield;
                 }
@@ -370,10 +383,11 @@ namespace AbyssKingdom.Client.World
             while (_troops.Count <= i)
             {
                 var t = _w.Group("Troop", Root, Vector3.zero);
-                if (ModelLibrary.Spawn("World/Troop", t, Vector3.zero, S) != null)
+                if (ModelLibrary.Spawn("World/Troop", t, Vector3.zero, S * TroopScale) != null)
                 {
                     // 模型之外仍保留一面小旗：顏色表示出征（金）或返回（藍）
-                    _w.Prim(PrimitiveType.Cube, Color.white, new Vector3(0.1f, 0.5f, 0), new Vector3(0.16f, 0.1f, 0.008f), t).name = "Flag";
+                    _w.Prim(PrimitiveType.Cylinder, new Color32(80, 70, 60, 255), new Vector3(0.12f, 0.3f, 0), new Vector3(0.012f, 0.3f, 0.012f), t);
+                    _w.Prim(PrimitiveType.Cube, Color.white, new Vector3(0.2f, 0.52f, 0), new Vector3(0.18f, 0.11f, 0.008f), t).name = "Flag";
                     _troops.Add(t);
                     continue;
                 }

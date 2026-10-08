@@ -38,8 +38,10 @@ namespace AbyssKingdom.Client.World
             float size = CityLayout.GridSize * CellSize;
 
             // 城外草地、城內地面、城牆
-            w.Prim(PrimitiveType.Cube, new Color32(84, 116, 70, 255), new Vector3(0, -0.03f, 0), new Vector3(size + 14, 0.02f, size + 14), Root);
-            w.Prim(PrimitiveType.Cube, new Color32(150, 136, 104, 255), new Vector3(0, -0.01f, 0), new Vector3(size, 0.02f, size), Root);
+            var meadow = w.Prim(PrimitiveType.Cube, Color.white, new Vector3(0, -0.03f, 0), new Vector3(size + 14, 0.02f, size + 14), Root);
+            meadow.GetComponent<Renderer>().sharedMaterial = GroundTextures.Material(w.BaseMaterial, GroundTextures.Style.Meadow, (size + 14) / 5f);
+            var yard = w.Prim(PrimitiveType.Cube, Color.white, new Vector3(0, -0.01f, 0), new Vector3(size, 0.02f, size), Root);
+            yard.GetComponent<Renderer>().sharedMaterial = GroundTextures.Material(w.BaseMaterial, GroundTextures.Style.Courtyard, size / 4f);
             var wall = new Color32(130, 120, 104, 255);
             for (int side = 0; side < 4; side++)
             {
@@ -151,6 +153,27 @@ namespace AbyssKingdom.Client.World
             var t = _w.Group(type.ToString(), Root, Vector3.zero);
             float f = CityLayout.Footprint(type) * CellSize;
             var color = Colors[type];
+            var buildingName = AbyssKingdom.Client.UI.DisplayNames.Buildings[type];
+
+            // 美術模型：依等級分三種外觀（1~3、4~6、7~10 級），未建造用空地基
+            int tier = level <= 3 ? 1 : level <= 6 ? 2 : 3;
+            var model = ModelLibrary.Spawn(level > 0 ? $"City/{type}_{tier}" : "City/Site", t, Vector3.zero, CellSize);
+            if (model != null)
+            {
+                float top = 0;
+                foreach (var r in model.GetComponentsInChildren<Renderer>()) top = Mathf.Max(top, r.bounds.max.y);
+                if (upgrading)
+                {
+                    for (int i = 0; i < 4; i++)
+                        _w.Prim(PrimitiveType.Cylinder, new Color32(190, 150, 90, 255), new Vector3((i % 2 - 0.5f) * f * 0.85f, top * 0.5f, (i / 2 - 0.5f) * f * 0.85f), new Vector3(0.035f, top * 0.5f, 0.035f), t);
+                    var glow = _w.Prim(PrimitiveType.Cube, Color.white, new Vector3(0, top + 0.25f, 0), new Vector3(0.14f, 0.14f, 0.14f), t);
+                    glow.GetComponent<Renderer>().sharedMaterial = _w.Glow;
+                    glow.transform.localRotation = Quaternion.Euler(45, 45, 0);
+                }
+                _w.Text(t, new Vector3(0, top + (upgrading ? 0.5f : 0.25f), 0), 0.034f, Color.white).text =
+                    level > 0 ? $"{buildingName} Lv.{level}" : $"{buildingName}（未建造）";
+                return t;
+            }
             var roof = new Color32((byte)(color.r * 0.55f), (byte)(color.g * 0.55f), (byte)(color.b * 0.6f), 255);
             _w.Prim(PrimitiveType.Cube, new Color32(120, 112, 96, 255), new Vector3(0, 0.02f, 0), new Vector3(f * 0.94f, 0.04f, f * 0.94f), t);
 
@@ -228,8 +251,8 @@ namespace AbyssKingdom.Client.World
                         _w.Prim(PrimitiveType.Cube, new Color32(150, 110, 70, 255), new Vector3(e - (i % 2) * 0.13f, 0.06f + (i / 2) * 0.12f, -e), new Vector3(0.11f, 0.11f, 0.11f), t);
                     break;
                 case BuildingType.Hospital:
-                    _w.Prim(PrimitiveType.Cube, new Color32(200, 50, 50, 255), new Vector3(0, 0.45f, -f * 0.3f), new Vector3(0.3f, 0.09f, 0.02f), t);
-                    _w.Prim(PrimitiveType.Cube, new Color32(200, 50, 50, 255), new Vector3(0, 0.45f, -f * 0.3f), new Vector3(0.09f, 0.3f, 0.02f), t);
+                    var seal = _w.Prim(PrimitiveType.Cube, new Color32(90, 220, 200, 255), new Vector3(0, 0.45f, -f * 0.3f), new Vector3(0.18f, 0.18f, 0.02f), t);
+                    seal.transform.localRotation = Quaternion.Euler(0, 0, 45);
                     break;
                 case BuildingType.Barracks:
                     _w.Prim(PrimitiveType.Cylinder, new Color32(80, 70, 60, 255), new Vector3(e, 0.4f, -e), new Vector3(0.03f, 0.4f, 0.03f), t);
