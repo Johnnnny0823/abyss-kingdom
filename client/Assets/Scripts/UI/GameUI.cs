@@ -32,8 +32,10 @@ namespace AbyssKingdom.Client.UI
         private VisualElement _cityPage;
         private HeroPage _heroPage;
         private ExpeditionPage _expPage;
+        private MapPage _mapPage;
+        private VisualElement _right;
         private readonly List<Label> _tabs = new List<Label>();
-        private int _tab; // 0 城鎮建築、1 主將、2 遠征
+        private int _tab; // 0 城鎮建築、1 主將、2 遠征、3 深淵
         private QueueView _buildQueue, _trainQueue;
         private TrainingPanel _training;
         private VisualElement _itemList;
@@ -87,6 +89,7 @@ namespace AbyssKingdom.Client.UI
             var args = Environment.GetCommandLineArgs();
             if (Array.IndexOf(args, "-heroes") >= 0) _tab = 1;
             if (Array.IndexOf(args, "-expedition") >= 0) _tab = 2;
+            if (Array.IndexOf(args, "-abyss") >= 0) _tab = 3;
             if (Array.IndexOf(args, "-autofight") >= 0) _root.schedule.Execute(() => _expPage.FightNow()).StartingIn(4000);
         }
 
@@ -187,7 +190,7 @@ namespace AbyssKingdom.Client.UI
 
             var left = El("left");
             var tabs = El("tabs");
-            string[] tabNames = { "城鎮建築", "主將", "遠征" };
+            string[] tabNames = { "城鎮建築", "主將", "遠征", "深淵" };
             for (int i = 0; i < tabNames.Length; i++)
             {
                 var tab = Lbl(tabNames[i], "tab");
@@ -214,10 +217,13 @@ namespace AbyssKingdom.Client.UI
             left.Add(_heroPage.Root);
             _expPage = new ExpeditionPage();
             left.Add(_expPage.Root);
+            _mapPage = new MapPage();
+            left.Add(_mapPage.Root);
             main.Add(left);
 
             var right = new ScrollView(ScrollViewMode.Vertical);
             right.AddToClassList("right");
+            _right = right;
             _buildQueue = new QueueView(QueueType.Building, OpenSpeedupDialog);
             var buildPanel = El("panel");
             buildPanel.Add(Lbl("建築隊列", "panel-title"));
@@ -266,9 +272,12 @@ namespace AbyssKingdom.Client.UI
             Show(_cityPage, _tab == 0);
             Show(_heroPage.Root, _tab == 1);
             Show(_expPage.Root, _tab == 2);
+            Show(_mapPage.Root, _tab == 3);
+            Show(_right, _tab != 3); // 深淵頁讓地圖用滿寬度
             if (_tab == 0) foreach (var card in _cards) card.Refresh(city);
             else if (_tab == 1) _heroPage.Refresh(city);
-            else _expPage.Refresh(city);
+            else if (_tab == 2) _expPage.Refresh(city);
+            else _mapPage.Refresh(city);
             _buildQueue.Refresh(city, now);
             _training.Refresh(city, now);
             RefreshItems(city);

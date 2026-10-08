@@ -143,6 +143,8 @@ namespace AbyssKingdom.Client.Game
 
         public void ClaimExpeditionIdle() => _conn.Send(MessageTypes.ExpeditionClaimIdle);
 
+        public void ExploreNode(int node) => _conn.Send(MessageTypes.MapExplore, new MapExploreRequest { Node = node });
+
         public void StarUp(HeroId hero) => _conn.Send(MessageTypes.HeroStarUp, new HeroStarUpRequest { Hero = hero });
 
         public void UseDomainScroll(HeroId hero, ItemType item, long count = 1) =>

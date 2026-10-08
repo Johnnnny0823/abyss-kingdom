@@ -3,6 +3,7 @@ using AbyssKingdom.Shared.Battle;
 using AbyssKingdom.Shared.City;
 using AbyssKingdom.Shared.Expedition;
 using AbyssKingdom.Shared.Heroes;
+using AbyssKingdom.Shared.Map;
 
 namespace AbyssKingdom.Client.UI
 {
@@ -99,6 +100,45 @@ namespace AbyssKingdom.Client.UI
             { RopeGrade.Legendary, "金繩 · 傳說" },
             { RopeGrade.Mythic, "黑繩 · 神秘" },
         };
+
+        // ───── 深淵地圖 ─────
+
+        public static readonly Dictionary<NodeType, string> NodeTypes = new Dictionary<NodeType, string>
+        {
+            { NodeType.Gate, "垂降口" },
+            { NodeType.Cavern, "資源洞室" },
+            { NodeType.MonsterNest, "深淵小怪巢" },
+            { NodeType.Fissure, "地脈裂隙" },
+            { NodeType.ShaftHub, "升降井樞紐" },
+            { NodeType.GuardianLair, "守層者巢穴" },
+        };
+
+        public static readonly Dictionary<NodeType, string> NodeDescriptions = new Dictionary<NodeType, string>
+        {
+            { NodeType.Gate, "從裂口邊緣垂降下來的入口，探窟隊由此進出深淵。" },
+            { NodeType.Cavern, "岩壁間的洞室，散落著可採集的資源。" },
+            { NodeType.MonsterNest, "深淵小怪盤踞的巢穴。清掉牠們可以取得材料。" },
+            { NodeType.Fissure, "地脈從岩層裂縫湧出。佔領後，同脈的主將會得到加成，並產出稀有資源。" },
+            { NodeType.ShaftHub, "連通上下層的升降井樞紐。控制樞紐，就控制了誰能往下走、往上撤。" },
+            { NodeType.GuardianLair, "守層者「百眼紙傘」的巢穴。這一層最危險的地方。" },
+        };
+
+        /// <summary>節點上的單字圖示；裂隙顯示它的淵脈。</summary>
+        public static string NodeGlyph(NodeType t, Element e)
+        {
+            switch (t)
+            {
+                case NodeType.Gate: return "降";
+                case NodeType.MonsterNest: return "巢";
+                case NodeType.Fissure: return e == Element.None ? "脈" : Elements[e];
+                case NodeType.ShaftHub: return "井";
+                case NodeType.GuardianLair: return "守";
+                default: return "洞";
+            }
+        }
+
+        public static string NodeName(MapNode n) =>
+            n.Type == NodeType.Fissure ? $"地脈裂隙 · {Elements[n.Element]}脈" : NodeTypes[n.Type];
 
         // ───── 淵脈與浮沉（程式內部 = 五行陰陽，2026-10-08 使用者定案改用深淵風格名稱） ─────
         // 根剋層、層剋潮、潮剋燼、燼剋鐘、鐘剋根；根→燼→層→鐘→潮→根 相生。浮 = 陽、沉 = 陰。
@@ -280,6 +320,10 @@ namespace AbyssKingdom.Client.UI
                 case "invalid token": return "登入驗證失敗，請重新登入";
                 case "MaxLevel": return "主將已達等級上限";
                 case "StageLocked": return "要先通關前一關";
+                case "NotAdjacent": return "只能探索和已探索節點相鄰的地方";
+                case "Sealed": return "封鎖力場擋住了這條廊道";
+                case "AlreadyExplored": return "這裡已經探索過了";
+                case "UnknownNode": return "找不到這個節點";
                 case "NotReady": return "修練值還沒滿，還不能挑戰斷索試煉";
                 case "AlreadyMastered": return "這股索已經編成";
                 case "StarsRequired": return "要先把對應的星色升滿，才能挑戰下一股索";
