@@ -36,6 +36,9 @@ namespace AbyssKingdom.Shared.City
         /// <summary>背包中的裝備（含穿在主將身上的）。</summary>
         public List<GearItem> Gear { get; set; } = new List<GearItem>();
 
+        /// <summary>地表：主城位置。</summary>
+        public SurfaceState Surface { get; set; } = new SurfaceState();
+
         /// <summary>深淵大地圖的探索狀態。</summary>
         public MapState Map { get; set; } = new MapState();
 

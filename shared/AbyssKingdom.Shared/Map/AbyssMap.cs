@@ -14,6 +14,11 @@ namespace AbyssKingdom.Shared.Map
         Fissure = 3,       // 地脈裂隙（屬於一條淵脈）
         ShaftHub = 4,      // 升降井樞紐
         GuardianLair = 5,  // 守層者巢穴
+        // ───── 地表 ─────
+        CitySite = 6,      // 主城用地
+        ResourceField = 7, // 資源田（Resource、Level）
+        MonsterCamp = 8,   // 怪物營地（Level）
+        Pass = 9,          // 山谷關隘（分區之間唯一的通道）
     }
 
     /// <summary>廊道上的力場：Veil 遮蔽視野（看不到另一頭，但可以通過），Seal 封鎖通行（之後可破解）。</summary>
@@ -31,6 +36,8 @@ namespace AbyssKingdom.Shared.Map
         public int Column, Row;   // 生成用的格位（Row 越大越深）
         public int X, Y;          // 顯示座標
         public Element Element;   // 只有地脈裂隙有
+        public ResourceType Resource; // 只有地表資源田有
+        public int Level;             // 地表資源田、怪物營地的等級
         public readonly List<int> Edges = new List<int>();
     }
 

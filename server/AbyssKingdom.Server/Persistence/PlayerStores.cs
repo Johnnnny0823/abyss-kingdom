@@ -19,6 +19,8 @@ public interface IPlayerStore
 {
     Task<PlayerRecord?> LoadAsync(string playerId, CancellationToken ct);
     Task SaveAsync(PlayerRecord record, CancellationToken ct);
+    /// <summary>讀取所有玩家（伺服器啟動時建立地表世界狀態用）。</summary>
+    Task<List<PlayerRecord>> ListAllAsync(CancellationToken ct);
 }
 
 /// <summary>本機開發用：存在記憶體，伺服器重啟就消失。存的是 JSON 副本，行為與資料庫一致。</summary>
@@ -41,6 +43,9 @@ public sealed class InMemoryPlayerStore : IPlayerStore
         _rows[record.Id] = JsonSerializer.Serialize(record, _json);
         return Task.CompletedTask;
     }
+
+    public Task<List<PlayerRecord>> ListAllAsync(CancellationToken ct) =>
+        Task.FromResult(_rows.Values.Select(s => JsonSerializer.Deserialize<PlayerRecord>(s, _json)!).ToList());
 }
 
 /// <summary>
@@ -90,6 +95,16 @@ public sealed class SupabasePlayerStore : IPlayerStore
         var row = rows?.FirstOrDefault();
         if (row == null) return null;
         return new PlayerRecord { Id = row.Id, DisplayName = row.DisplayName, City = row.City, CreatedAtMs = row.CreatedAtMs };
+    }
+
+    public async Task<List<PlayerRecord>> ListAllAsync(CancellationToken ct)
+    {
+        // MVP：一次讀完（玩家數少）；之後玩家多時改成分頁或只讀需要的欄位
+        using var req = Request(HttpMethod.Get, "players?select=*");
+        using var res = await _http.CreateClient().SendAsync(req, ct);
+        res.EnsureSuccessStatusCode();
+        var rows = JsonSerializer.Deserialize<List<Row>>(await res.Content.ReadAsStringAsync(ct), _snake) ?? new();
+        return rows.Select(r => new PlayerRecord { Id = r.Id, DisplayName = r.DisplayName, City = r.City, CreatedAtMs = r.CreatedAtMs }).ToList();
     }
 
     public async Task SaveAsync(PlayerRecord record, CancellationToken ct)

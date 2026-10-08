@@ -61,17 +61,19 @@ public sealed class WebSocketHandler
 
     private readonly SessionManager _sessions;
     private readonly IAuthVerifier _auth;
+    private readonly WorldService _world;
     private readonly IClock _clock;
     private readonly JsonSerializerOptions _json;
     private readonly ILogger<WebSocketHandler> _log;
 
-    public WebSocketHandler(SessionManager sessions, IAuthVerifier auth, IClock clock, JsonSerializerOptions json, ILogger<WebSocketHandler> log)
+    public WebSocketHandler(SessionManager sessions, IAuthVerifier auth, IClock clock, JsonSerializerOptions json, ILogger<WebSocketHandler> log, WorldService world)
     {
         _sessions = sessions;
         _auth = auth;
         _clock = clock;
         _json = json;
         _log = log;
+        _world = world;
     }
 
     public async Task RunAsync(WebSocket socket, CancellationToken ct)
@@ -222,6 +224,10 @@ public sealed class WebSocketHandler
                 if (scroll == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "hero and item required"); break; }
                 await RunCityAction(conn, session, reqId, ErrorCodes.DomainRejected, ct, (city, now) =>
                     Fail(DomainLogic.UseScroll(city, scroll.Hero, scroll.Item, scroll.Count), DomainResult.Ok));
+                break;
+
+            case MessageTypes.WorldCities:
+                await conn.SendAsync(MessageTypes.WorldCities, reqId, new WorldCitiesMessage { Cities = _world.Pins(session.PlayerId) });
                 break;
 
             case MessageTypes.MapMarch:

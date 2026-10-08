@@ -39,6 +39,7 @@ public static class GameServer
         else
             services.AddSingleton<IPlayerStore, InMemoryPlayerStore>();
 
+        services.AddSingleton<WorldService>();
         services.AddSingleton<SessionManager>();
         services.AddHostedService(sp => sp.GetRequiredService<SessionManager>());
         services.AddSingleton<WebSocketHandler>();

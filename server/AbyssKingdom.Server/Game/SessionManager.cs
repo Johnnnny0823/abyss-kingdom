@@ -44,13 +44,15 @@ public sealed class SessionManager : BackgroundService
 
     private readonly ConcurrentDictionary<string, PlayerSession> _online = new();
     private readonly IPlayerStore _store;
+    private readonly WorldService _world;
     private readonly IClock _clock;
     private readonly ILogger<SessionManager> _log;
     private readonly JsonSerializerOptions _json;
 
-    public SessionManager(IPlayerStore store, IClock clock, JsonSerializerOptions json, ILogger<SessionManager> log)
+    public SessionManager(IPlayerStore store, IClock clock, JsonSerializerOptions json, ILogger<SessionManager> log, WorldService world)
     {
         _json = json;
+        _world = world;
         _store = store;
         _clock = clock;
         _log = log;
@@ -98,6 +100,7 @@ public sealed class SessionManager : BackgroundService
         if (HeroLogic.EnsureStarterHeroes(record.City)) session.Dirty = true;
         if (GearLogic.EnsureStarterGear(record.City)) session.Dirty = true;
         if (MapLogic.EnsureStarted(record.City, playerId)) session.Dirty = true;
+        if (await _world.EnsureSiteAsync(record, ct)) session.Dirty = true; // 地表主城位置
         if (MarchLogic.Advance(record.City, _clock.NowMs).Count > 0) session.Dirty = true; // 離線期間抵達的行軍
         var added = _online.GetOrAdd(playerId, session);
         if (!ReferenceEquals(added, session))
@@ -183,6 +186,7 @@ public sealed class SessionManager : BackgroundService
             CityLogic.Advance(session.Record.City, _clock.NowMs);
             await _store.SaveAsync(session.Record, ct);
             session.Dirty = false;
+            _world.Update(session.Record);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

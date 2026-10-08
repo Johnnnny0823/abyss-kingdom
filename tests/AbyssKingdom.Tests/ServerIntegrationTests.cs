@@ -376,6 +376,33 @@ public static class ServerIntegrationTests
     }
 
     [Test]
+    public static async Task Surface_EachPlayerGetsAUniqueCitySite_AndSeesOthers()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        await using var a = new TestClient();
+        await a.ConnectAsync(server.WsUri);
+        await a.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:north", DisplayName = "北境" });
+        int siteA = City(await a.ExpectAsync(MessageTypes.CityState)).Surface.Site;
+        await using var b = new TestClient();
+        await b.ConnectAsync(server.WsUri);
+        await b.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:south", DisplayName = "南境" });
+        int siteB = City(await b.ExpectAsync(MessageTypes.CityState)).Surface.Site;
+
+        var map = AbyssKingdom.Shared.Map.SurfaceConfig.Map();
+        Assert.True(siteA >= 0 && siteB >= 0, "都分到主城位置");
+        Assert.True(siteA != siteB, "位置不重複");
+        Assert.Equal(AbyssKingdom.Shared.Map.NodeType.CitySite, map.Nodes[siteA].Type);
+
+        await a.SendAsync(MessageTypes.WorldCities, null);
+        var pins = (await a.ExpectAsync(MessageTypes.WorldCities)).GetProperty("data").GetProperty("cities");
+        Assert.Equal(2, pins.GetArrayLength(), "看得到兩座城");
+        var mine = pins.EnumerateArray().Single(p => p.GetProperty("mine").GetBoolean());
+        Assert.Equal(siteA, mine.GetProperty("site").GetInt32());
+        Assert.True(pins.EnumerateArray().Any(p => p.GetProperty("name").GetString() == "南境"), "看得到鄰居的名字");
+    }
+
+    [Test]
     public static async Task SecondLogin_KicksFirstConnection()
     {
         await using var server = new TestServer();

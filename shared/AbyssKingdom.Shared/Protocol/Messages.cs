@@ -29,6 +29,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string HeroStarUp = "hero.starUp";
         public const string MapMarch = "map.march";
         public const string MapRecall = "map.recall";
+        public const string WorldCities = "world.cities";
         public const string Ping = "ping";
 
         // 伺服器 → 客戶端
@@ -139,6 +140,20 @@ namespace AbyssKingdom.Shared.Protocol
         public HeroId Hero { get; set; }
         public Dictionary<TroopType, long> Troops { get; set; }
         public int Destination { get; set; }
+    }
+
+    /// <summary>地表上一座主城（給所有玩家看的公開資訊）。</summary>
+    public class CityPin
+    {
+        public int Site { get; set; }
+        public string Name { get; set; }
+        public long Power { get; set; }
+        public bool Mine { get; set; }
+    }
+
+    public class WorldCitiesMessage
+    {
+        public List<CityPin> Cities { get; set; } = new List<CityPin>();
     }
 
     public class MapRecallRequest

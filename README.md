@@ -73,6 +73,7 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | → | `hero.starUp` | `{ hero }`（消耗信物＋響晶升一顆星） |
 | → | `map.march` | `{ hero, troops: { "Rider": 50 }, destination }`（從自己的垂降口出征；只能走已探索廊道，終點可為相鄰未知節點；地圖依種子生成，狀態在 `city.map`） |
 | → | `map.recall` | `{ march }`（召回駐紮中的行軍，回到垂降口後部隊歸營） |
+| → | `world.cities` | —（取得地表所有主城的公開資訊；自己的主城位置在 `city.surface.site`） |
 | → | `ping` | — |
 | ← | `login.ok` | `{ playerId, displayName, serverTimeMs }` |
 | ← | `city.state` | `{ serverTimeMs, city }` |
@@ -82,4 +83,5 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | ← | `expedition.idleClaimed` | `{ resources, items }` |
 | ← | `domain.trialResult` | `{ hero, domain, success, report }`，之後再送一次 `city.state` |
 | ← | `map.marchArrived` | `{ march, hero, node, discovered, disbanded }`（伺服器主動推播，reqId = 0） |
+| ← | `world.cities` | `{ cities: [{ site, name, power, mine }] }` |
 | ← | `error` | `{ code, detail }` |
