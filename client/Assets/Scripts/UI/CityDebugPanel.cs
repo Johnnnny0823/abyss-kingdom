@@ -104,23 +104,40 @@ namespace AbyssKingdom.Client.UI
             _serverOffsetMs = serverMs - DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
-        private async void Connect()
+        /// <param name="guest">true：Firebase 訪客登入（伺服器 Auth__Mode=Firebase）；false：開發模式 "dev:名字"。</param>
+        private async void Connect(bool guest)
         {
             _connecting = true;
-            _serverUrl = _serverUrl.Trim();
-            PlayerPrefs.SetString(PrefServerUrl, _serverUrl);
-            PlayerPrefs.SetString(PrefName, _name);
-            PlayerPrefs.Save();
-            Log("連線中…");
-            bool ok = await _conn.ConnectAsync(_serverUrl);
-            _connecting = false;
-            if (!ok)
+            try
             {
-                Log("連線失敗：" + _conn.LastError);
-                return;
+                _serverUrl = _serverUrl.Trim();
+                PlayerPrefs.SetString(PrefServerUrl, _serverUrl);
+                PlayerPrefs.SetString(PrefName, _name);
+                PlayerPrefs.Save();
+
+                string token = "dev:" + _name;
+                if (guest)
+                {
+                    Log("取得訪客帳號…");
+                    token = await FirebaseGuestAuth.GetIdTokenAsync();
+                }
+
+                Log("連線中…");
+                if (!await _conn.ConnectAsync(_serverUrl))
+                {
+                    Log("連線失敗：" + _conn.LastError);
+                    return;
+                }
+                _conn.Send(MessageTypes.Login, new LoginRequest { Token = token, DisplayName = _name });
             }
-            // 開發模式登入；之後改成 Firebase 取得的 ID Token
-            _conn.Send(MessageTypes.Login, new LoginRequest { Token = "dev:" + _name, DisplayName = _name });
+            catch (Exception ex)
+            {
+                Log("登入失敗：" + ex.Message);
+            }
+            finally
+            {
+                _connecting = false;
+            }
         }
 
         private void Log(string line)
@@ -151,10 +168,11 @@ namespace AbyssKingdom.Client.UI
             {
                 GUILayout.Label("伺服器網址");
                 _serverUrl = GUILayout.TextField(_serverUrl);
-                GUILayout.Label("名字（開發模式登入）");
+                GUILayout.Label("名字");
                 _name = GUILayout.TextField(_name, 16);
                 GUI.enabled = !_connecting;
-                if (GUILayout.Button("連線並登入", GUILayout.Height(40))) Connect();
+                if (FirebaseGuestAuth.IsConfigured && GUILayout.Button("訪客登入", GUILayout.Height(40))) Connect(guest: true);
+                if (GUILayout.Button("開發模式登入（伺服器需為 Dev 模式）", GUILayout.Height(30))) Connect(guest: false);
                 GUI.enabled = true;
             }
             else

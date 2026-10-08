@@ -81,7 +81,7 @@ docs/                  SETUP.md（環境安裝）、ACCOUNTS.md（帳號註冊�
 
 1. ~~Unity 客戶端從未實際編譯過~~ → 2026-10-08 已在 Windows 用 Unity 6000.4.8f1 編譯通過，Play 登入、升級、完成推播皆正常，編輯器內中文顯示正常。**手機上的 IMGUI 中文字型仍未驗證**。
 2. ~~SupabasePlayerStore 只用假 HTTP 測過~~ → 2026-10-08 已對真實 Supabase 驗證：建表、登入寫入、30 秒定時存檔、重啟伺服器後讀回狀態皆正常。
-3. **FirebaseAuthVerifier 未用真實 ID Token 測過**，等客戶端接上 Firebase REST 訪客登入後驗證。
+3. ~~FirebaseAuthVerifier 未用真實 ID Token 測過~~ → 2026-10-08 用 REST 取得的真實匿名 ID Token 驗證：真 token 登入成功（playerId = Firebase UID），`dev:` 與竄改過的 token 皆被拒。
 4. ~~Android 預設禁止明文連線~~ → 已透過 Cloudflare Quick Tunnel 提供 `wss://`，2026-10-08 實測 wss 登入成功。
 
 ## 7. 接下來的工作（依優先順序）
@@ -89,7 +89,7 @@ docs/                  SETUP.md（環境安裝）、ACCOUNTS.md（帳號註冊�
 1. ~~**本機跑通**~~（2026-10-08 完成）：`dotnet run --project tests/AbyssKingdom.Tests`（22 passed）→ 啟動伺服器 → Unity 開 `client/` 按 Play 登入升級；修掉 Unity 編譯問題。
 2. ~~**接真實 Supabase**~~（2026-10-08 完成）：執行 SQL、用環境變數設定 URL 與 key，驗證讀寫。
 3. ~~**部署**~~（2026-10-08 完成，過渡方案）：本機 `docker compose up -d --build` 跑伺服器 + Cloudflare Quick Tunnel，見 docs/DEPLOY.md。缺點：電腦要開著、網址每次重啟會變、仍是 Dev 登入。找到雲端主機後沿用同一份 compose。
-4. **PC 版訪客登入**：客戶端呼叫 Firebase Auth REST API（`accounts:signUp` 匿名註冊、refresh token 存本機換新 ID Token），伺服器改 `Auth__Mode=Firebase`。之後再加「綁定 Google」（桌面 OAuth loopback）。
+4. ~~**PC 版訪客登入**~~（2026-10-08 完成；`client/Assets/Scripts/Net/FirebaseGuestAuth.cs`，Docker 伺服器已改 `Auth__Mode=Firebase`）：客戶端呼叫 Firebase Auth REST API（`accounts:signUp` 匿名註冊、refresh token 存本機換新 ID Token），伺服器改 `Auth__Mode=Firebase`。之後再加「綁定 Google」（桌面 OAuth loopback）。
    - 已完成：Windows 打包（`client/Assets/Editor/BuildScript.cs`，選單 Abyss Kingdom → Build Windows）。
 5. **第 3–4 週**：城建完善（多建築隊列？兵營訓練部隊、資源 UI）。
 6. **第 5–7 週**：第 1 層大地圖（約 200×200 格）、AOI 九宮格視野、行軍（伺服器只存起點/終點/出發時間/速度，客戶端插值）、採集與野怪。

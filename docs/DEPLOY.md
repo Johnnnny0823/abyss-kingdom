@@ -46,6 +46,6 @@ wss://xxxx-xxxx-xxxx.trycloudflare.com/ws
 
 ## 注意事項
 
-- **目前是 `Auth__Mode=Dev`**：任何知道網址的人都能用任意名字登入，也能登入別人的名字。只適合給信任的朋友測試；正式開放前必須接上 Firebase 登入（HANDOFF 第 7 節第 4 項）並改成 `Auth__Mode=Firebase`。
+- **compose 預設 `Auth__Mode=Firebase`**：玩家用客戶端的「訪客登入」（Firebase 匿名帳號）。開發模式 `dev:名字` 會被拒絕；要在本機用 Unity 測 dev 登入，請另外 `dotnet run --project server/AbyssKingdom.Server`（預設 Dev 模式，但 5080 埠會跟 Docker 衝突，先停 Docker 的 server 或改 `Urls`）。
 - Quick Tunnel 是 Cloudflare 的免費試用服務，沒有可用性保證。要固定網址需要 Cloudflare 帳號 + 自己的網域（Named Tunnel），之後再升級。
 - 本機 `127.0.0.1:5080` 仍可直接連（`ws://127.0.0.1:5080/ws`），方便自己用 Unity 測。
