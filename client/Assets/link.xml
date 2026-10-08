@@ -1,0 +1,5 @@
+<!-- IL2CPP 程式碼裁剪白名單：協定與城市狀態由 Newtonsoft 反射建立，不能被裁掉 -->
+<linker>
+  <assembly fullname="AbyssKingdom.Shared" preserve="all" />
+  <assembly fullname="AbyssKingdom.Client" preserve="all" />
+</linker>

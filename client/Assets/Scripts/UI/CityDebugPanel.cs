@@ -58,6 +58,16 @@ namespace AbyssKingdom.Client.UI
 
         private long ServerNowMs => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + _serverOffsetMs;
 
+        private const string PrefServerUrl = "debug.serverUrl";
+        private const string PrefName = "debug.name";
+
+        private void Awake()
+        {
+            // 記住上次的網址與名字（tunnel 網址很長，玩家不用每次重貼）
+            _serverUrl = PlayerPrefs.GetString(PrefServerUrl, _serverUrl);
+            _name = PlayerPrefs.GetString(PrefName, _name);
+        }
+
         private void Update()
         {
             while (_conn.TryDequeue(out var msg)) Handle(msg);
@@ -97,6 +107,10 @@ namespace AbyssKingdom.Client.UI
         private async void Connect()
         {
             _connecting = true;
+            _serverUrl = _serverUrl.Trim();
+            PlayerPrefs.SetString(PrefServerUrl, _serverUrl);
+            PlayerPrefs.SetString(PrefName, _name);
+            PlayerPrefs.Save();
             Log("連線中…");
             bool ok = await _conn.ConnectAsync(_serverUrl);
             _connecting = false;
