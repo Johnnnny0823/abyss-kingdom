@@ -56,6 +56,9 @@ namespace AbyssKingdom.Shared.City
 
         // 境書：定向補四境修練值（材料為輔）
         DomainScrollPower = 1101, DomainScrollTechnique = 1102, DomainScrollSpeed = 1103, DomainScrollDurability = 1104,
+
+        // 主將信物：升星材料。1200 = 通用；1200 + HeroId = 該主將專屬
+        HeroShardAny = 1200, HeroShardHold = 1201, HeroShardVesper = 1202, HeroShardKarst = 1203,
     }
 
     public static class ItemConfig
@@ -98,6 +101,9 @@ namespace AbyssKingdom.Shared.City
                 default: domain = default; xp = 0; return false;
             }
         }
+
+        /// <summary>某位主將的專屬信物。</summary>
+        public static ItemType ShardFor(Heroes.HeroId hero) => (ItemType)(1200 + (int)hero);
 
         /// <summary>某類加速道具能不能用在某條隊列。</summary>
         public static bool CanApply(ItemCategory category, QueueType queue)

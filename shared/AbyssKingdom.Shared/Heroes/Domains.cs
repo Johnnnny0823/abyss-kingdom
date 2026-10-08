@@ -35,6 +35,7 @@ namespace AbyssKingdom.Shared.Heroes
         InvalidCount = 6,
         NotEnoughItems = 7,
         TrialFailed = 8,
+        StarsRequired = 9,
     }
 
     public sealed class DomainTrialResult
@@ -73,6 +74,10 @@ namespace AbyssKingdom.Shared.Heroes
         /// <summary>修練值已滿、可以挑戰通達試煉。</summary>
         public static bool ReadyForTrial(HeroState h, Domain d) =>
             !IsMastered(h, d) && Xp(h, d) >= DomainConfig.XpToMaster(h.Mastered.Count);
+
+        /// <summary>挑戰下一股索的試煉前，對應的星色必須升滿（第 1 股要 5 金星，第 2 股要 5 藍星…）。</summary>
+        public static bool StarsReady(HeroState h) =>
+            h.Mastered.Count >= StarConfig.TierCount || StarConfig.TierComplete(h.Stars, h.Mastered.Count);
 
         /// <summary>增加修練值；已通達的境不再累積，未通達的最多累積到門檻（滿了就等試煉）。</summary>
         public static void AddXp(HeroState h, Domain d, long amount)
@@ -141,6 +146,7 @@ namespace AbyssKingdom.Shared.Heroes
             if (!city.Heroes.TryGetValue(id, out var hero)) return DomainResult.HeroNotOwned;
             if (IsMastered(hero, domain)) return DomainResult.AlreadyMastered;
             if (!ReadyForTrial(hero, domain)) return DomainResult.NotReady;
+            if (!StarsReady(hero)) return DomainResult.StarsRequired;
 
             var ours = HeroSquad(city, id);
             var enemy = TrialEnemy(domain, def.Specialty, hero.Mastered.Count);
@@ -185,6 +191,13 @@ namespace AbyssKingdom.Shared.Heroes
                 LeaderDefense = 100 + 60 * t,
                 LeaderHp = 1500 + 1200 * t,
             };
+            // 挑戰第 tier+1 股時，主將至少有 5×(tier+1) 顆星（屬性 +20%~+80%），敵人同步變強
+            long starPct = StarConfig.StatPercent(StarConfig.StarsPerTier * (tier + 1));
+            e.Count = e.Count * starPct / 100;
+            e.LeaderAttack = e.LeaderAttack * starPct / 100;
+            e.LeaderDefense = e.LeaderDefense * starPct / 100;
+            e.LeaderHp = e.LeaderHp * starPct / 100;
+
             switch (domain)
             {
                 case Domain.Power:
@@ -193,7 +206,7 @@ namespace AbyssKingdom.Shared.Heroes
                     e.AttackPercent = 0;
                     e.LeaderDefense *= 3;
                     e.LeaderHp *= 2;
-                    e.Count = 800 + 300 * t;
+                    e.Count = (800 + 300 * t) * starPct / 100;
                     break;
                 case Domain.Technique:
                     e.Troop = CounterOf(heroTroop); // 敵人剋制你
@@ -208,7 +221,7 @@ namespace AbyssKingdom.Shared.Heroes
                 case Domain.Durability:
                     // 打不死的敵人：只考驗主將能不能撐過 20 回合
                     e.Troop = TroopType.Crossbow;
-                    e.Count = 220 + 60 * t;
+                    e.Count = (220 + 60 * t) * starPct / 100;
                     e.AttackPercent = 20 + 3 * t;
                     e.DamageTakenPercent = 0;
                     break;

@@ -18,6 +18,7 @@ public static class DomainTests
             var c = CityState.CreateNew(T0);
             var h = c.Heroes[hero];
             h.Level = lv;
+            h.Stars = StarConfig.StarsPerTier * (mastered + 1); // 只測試煉本身，星數剛好夠
             foreach (var d in DomainConfig.All.Where(d => d != domain).Take(mastered)) h.Mastered.Add(d);
             h.DomainXp[domain] = DomainConfig.XpToMaster(mastered);
             DomainLogic.Trial(c, hero, domain, seed, out var r);
@@ -49,8 +50,8 @@ public static class DomainTests
     [Test]
     public static void Curve_HeroesHaveNaturalStrengths()
     {
-        Assert.True(TrialWins(HeroId.Vesper, 1, Domain.Power, 0) > TrialWins(HeroId.Hold, 1, Domain.Power, 0), "射手的震境比較容易");
-        Assert.True(TrialWins(HeroId.Hold, 1, Domain.Durability, 0) > TrialWins(HeroId.Vesper, 1, Domain.Durability, 0), "盾衛的磐境比較容易");
+        Assert.True(TrialWins(HeroId.Vesper, 3, Domain.Power, 0) > TrialWins(HeroId.Hold, 3, Domain.Power, 0), "射手的崩索（力）比較容易");
+        Assert.True(TrialWins(HeroId.Hold, 5, Domain.Durability, 0) > TrialWins(HeroId.Vesper, 5, Domain.Durability, 0), "盾衛的錨索（韌）比較容易");
     }
 
     // ───── 規則 ─────
@@ -86,6 +87,8 @@ public static class DomainTests
         Assert.Equal(DomainResult.NotReady, DomainLogic.Trial(c, HeroId.Hold, Domain.Durability, 1, out _));
         h.Level = 20;
         h.DomainXp[Domain.Durability] = DomainConfig.XpToMaster(0);
+        Assert.Equal(DomainResult.StarsRequired, DomainLogic.Trial(c, HeroId.Hold, Domain.Durability, 1, out _), "沒有 5 金星不能挑戰");
+        h.Stars = 5;
         Assert.Equal(DomainResult.Ok, DomainLogic.Trial(c, HeroId.Hold, Domain.Durability, 1, out var r));
         Assert.True(r.Success, "Lv20 霍德過磐境試煉");
         Assert.Equal(Domain.Durability, h.Mastered[0], "記錄通達順序");
@@ -98,6 +101,7 @@ public static class DomainTests
         var c = CityState.CreateNew(T0);
         var h = c.Heroes[HeroId.Hold];
         h.DomainXp[Domain.Technique] = DomainConfig.XpToMaster(0);
+        h.Stars = 5;
         DomainLogic.Trial(c, HeroId.Hold, Domain.Technique, 1, out var r);
         Assert.True(!r.Success, "Lv1 會失敗");
         Assert.True(DomainLogic.ReadyForTrial(h, Domain.Technique), "失敗不扣修練值，可以再挑戰");

@@ -223,6 +223,13 @@ public sealed class WebSocketHandler
                     Fail(DomainLogic.UseScroll(city, scroll.Hero, scroll.Item, scroll.Count), DomainResult.Ok));
                 break;
 
+            case MessageTypes.HeroStarUp:
+                var star = Deserialize<HeroStarUpRequest>(data);
+                if (star == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "hero required"); break; }
+                await RunCityAction(conn, session, reqId, ErrorCodes.HeroRejected, ct, (city, now) =>
+                    Fail(StarLogic.StarUp(city, star.Hero), StarResult.Ok));
+                break;
+
             case MessageTypes.DomainTrial:
                 var trial = Deserialize<DomainTrialRequest>(data);
                 if (trial == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "hero and domain required"); break; }

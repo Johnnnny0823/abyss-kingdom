@@ -26,6 +26,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string ExpeditionClaimIdle = "expedition.claimIdle";
         public const string DomainUseScroll = "domain.useScroll";
         public const string DomainTrial = "domain.trial";
+        public const string HeroStarUp = "hero.starUp";
         public const string Ping = "ping";
 
         // 伺服器 → 客戶端
@@ -126,6 +127,11 @@ namespace AbyssKingdom.Shared.Protocol
         public HeroId Hero { get; set; }
         public ItemType Item { get; set; }
         public long Count { get; set; } = 1;
+    }
+
+    public class HeroStarUpRequest
+    {
+        public HeroId Hero { get; set; }
     }
 
     public class DomainTrialRequest

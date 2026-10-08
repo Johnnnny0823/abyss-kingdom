@@ -64,6 +64,9 @@ namespace AbyssKingdom.Shared.Heroes
         /// <summary>目前等級已累積的經驗（升級後歸零重算）。</summary>
         public long Exp { get; set; }
 
+        /// <summary>星數（0~20）：金、藍、紅、銀彩各 5 顆。</summary>
+        public int Stars { get; set; }
+
         /// <summary>四境修練值（未通達的境，最多累積到門檻）。</summary>
         public Dictionary<Domain, long> DomainXp { get; set; } = new Dictionary<Domain, long>();
 

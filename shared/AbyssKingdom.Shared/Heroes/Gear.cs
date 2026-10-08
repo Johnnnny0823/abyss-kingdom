@@ -145,6 +145,11 @@ namespace AbyssKingdom.Shared.Heroes
         {
             if (!HeroConfig.TryGet(id, out var def) || !city.Heroes.TryGetValue(id, out var hero)) return default;
             var s = HeroConfig.Stats(def, hero.Level);
+            long pct = StarConfig.StatPercent(hero.Stars);
+            s.Attack = s.Attack * pct / 100;
+            s.Defense = s.Defense * pct / 100;
+            s.Hp = s.Hp * pct / 100;
+            s.Leadership = s.Leadership * StarConfig.LeadershipPercent(hero.Stars) / 100;
             foreach (var g in city.Gear)
             {
                 if (g.EquippedBy != id || !GearConfig.TryGet(g.Def, out var gd)) continue;

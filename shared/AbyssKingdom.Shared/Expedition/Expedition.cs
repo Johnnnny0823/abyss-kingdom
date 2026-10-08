@@ -98,6 +98,9 @@ namespace AbyssKingdom.Shared.Expedition
                 if (s == 5) st.ItemRewards[ItemType.SpeedupGeneral30m] = 2;
                 // 境書：依關卡輪替四種
                 st.ItemRewards[ItemType.DomainScrollPower + (s - 1) % 4] = 2;
+                // 信物：每關輪替一位主將的專屬信物＋少量通用；守層者大量通用
+                st.ItemRewards[ItemType.HeroShardHold + (s - 1) % 3] = 6 + s;
+                st.ItemRewards[ItemType.HeroShardAny] = s == 10 ? 30 : 3;
 
                 if (s == 6)
                 {

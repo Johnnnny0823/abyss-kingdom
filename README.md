@@ -74,7 +74,8 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | → | `expedition.battle` | `{ stage: 1, teams: [["Hold","Vesper"],["Karst"]] }`（每條岔路一隊） |
 | → | `expedition.claimIdle` | —（領掛機收益） |
 | → | `domain.useScroll` | `{ hero, item: "DomainScrollPower", count }`（境書補修練值） |
-| → | `domain.trial` | `{ hero, domain: "Power" }`（修練值滿才能挑戰通達試煉） |
+| → | `domain.trial` | `{ hero, domain: "Power" }`（修練值滿、且對應星色升滿才能挑戰） |
+| → | `hero.starUp` | `{ hero }`（消耗信物＋響晶升一顆星） |
 | → | `ping` | — |
 | ← | `login.ok` | `{ playerId, displayName, serverTimeMs }` |
 | ← | `city.state` | `{ serverTimeMs, city }` |
