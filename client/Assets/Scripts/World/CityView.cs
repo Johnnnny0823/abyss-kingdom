@@ -155,8 +155,26 @@ namespace AbyssKingdom.Client.World
             var color = Colors[type];
             var buildingName = AbyssKingdom.Client.UI.DisplayNames.Buildings[type];
 
-            // 美術模型：依等級分三種外觀（1~3、4~6、7~10 級），未建造用空地基
+            // 美術：依等級分三種外觀（1~3、4~6、7~10 級），未建造用空地基。優先 2D 建築圖，其次 3D 模型
             int tier = level <= 3 ? 1 : level <= 6 ? 2 : 3;
+            string artName = level > 0 ? $"{type}_{tier}" : "Site";
+            var tex = AbyssKingdom.Client.UI.ArtLibrary.Building(artName);
+            if (tex != null)
+            {
+                var art = _w.Group("Art2D", t, new Vector3(0, 0, -f * .3f));
+                art.gameObject.AddComponent<SpriteRenderer>().sprite = AbyssKingdom.Client.UI.ArtLibrary.SpriteOfWidth(tex, f * 1.1f);
+                _w.AddBillboard(art);
+                float h = f * 1.1f * tex.height / tex.width;
+                if (upgrading)
+                {
+                    var glow = _w.Prim(PrimitiveType.Cube, Color.white, new Vector3(0, h + .2f, 0), new Vector3(0.14f, 0.14f, 0.14f), t);
+                    glow.GetComponent<Renderer>().sharedMaterial = _w.Glow;
+                    glow.transform.localRotation = Quaternion.Euler(45, 45, 0);
+                }
+                _w.Text(t, new Vector3(0, h + (upgrading ? 0.45f : 0.2f), 0), 0.034f, Color.white).text =
+                    level > 0 ? $"{buildingName} Lv.{level}" : $"{buildingName}（未建造）";
+                return t;
+            }
             var model = ModelLibrary.Spawn(level > 0 ? $"City/{type}_{tier}" : "City/Site", t, Vector3.zero, CellSize);
             if (model != null)
             {

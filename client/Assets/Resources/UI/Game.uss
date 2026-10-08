@@ -354,18 +354,18 @@
 
 .hero-detail { flex-direction: row; align-items: flex-start; }
 .paperdoll { flex-direction: row; align-items: center; padding: 14px; margin-right: 14px; background-color: rgba(18, 24, 35, 0.92); border-radius: 12px; border-width: 1px; border-color: rgb(48, 64, 75); }
-.slot-col { width: 104px; }
-.gear-slot { height: 74px; margin: 5px 0; padding: 6px 8px; border-radius: 8px; border-width: 1px; border-color: rgb(54, 67, 78); background-color: rgb(14, 19, 30); justify-content: center; }
+.slot-col { width: 92px; }
+.gear-slot { height: 96px; margin: 6px 0; padding: 6px 8px; border-radius: 8px; border-width: 1px; border-color: rgb(54, 67, 78); background-color: rgb(14, 19, 30); justify-content: center; }
 .gear-slot:hover { border-color: rgb(214, 170, 88); }
 .gear-slot.filled { background-color: rgb(26, 34, 45); }
 .slot-label { font-size: 11px; color: rgb(126, 144, 148); }
 .slot-name { font-size: 14px; -unity-font-style: bold; white-space: normal; }
 
-.portrait { width: 170px; height: 252px; margin: 0 12px; border-radius: 12px; border-width: 2px; background-color: rgb(12, 16, 27); align-items: center; overflow: hidden; }
+.portrait { width: 250px; height: 340px; margin: 0 12px; border-radius: 12px; border-width: 2px; background-color: rgb(12, 16, 27); align-items: center; overflow: hidden; }
 .silhouette { position: absolute; top: 30px; align-items: center; opacity: 0.55; }
 .sil-head { width: 64px; height: 64px; border-radius: 32px; background-color: rgb(54, 65, 76); }
 .sil-body { width: 130px; height: 150px; margin-top: 8px; border-top-left-radius: 60px; border-top-right-radius: 60px; background-color: rgb(42, 54, 65); }
-.portrait-glyph { position: absolute; top: 96px; font-size: 54px; -unity-font-style: bold; color: rgb(236, 200, 124); }
+.portrait-glyph { position: absolute; top: 130px; font-size: 54px; -unity-font-style: bold; color: rgb(236, 200, 124); }
 .portrait-troop { position: absolute; bottom: 10px; font-size: 12px; color: rgb(206, 216, 220); background-color: rgba(0, 0, 0, 0.5); border-radius: 8px; padding: 2px 10px; }
 
 .hero-info { flex-grow: 1; padding: 14px 16px; background-color: rgba(24, 33, 44, 0.92); border-radius: 12px; border-width: 1px; border-color: rgb(48, 64, 75); }

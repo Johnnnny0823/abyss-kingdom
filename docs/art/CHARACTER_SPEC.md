@@ -64,6 +64,50 @@ motif, slate blue and brass color palette, full body, transparent background, no
 
 > 不同 AI 工具的語法不同：Midjourney 可以在最後加 `--ar 2:3`（立繪）或 `--ar 1:1`（頭像、兵種）。
 
+## 4b. 城內建築（2D 圖，和角色同一種畫風）
+
+城內畫面也是**有圖就用圖**：放了建築圖，就取代目前的 3D 方塊模型。
+
+- **檔案**：`client/Assets/Resources/Art/Buildings/`，`<建築>_<外觀>.png`。
+  - 外觀 1 = Lv.1～3、2 = Lv.4～6、3 = Lv.7～10。等級越高，建築越大、越華麗。
+  - 建築名：`Keep`（主堡）、`Sawmill`（掘根場）、`Quarry`（層岩坑）、`Farm`（菌圃）、`CrystalMine`（響晶礦脈）、`Warehouse`（倉庫）、`Barracks`（兵營）、`Hospital`（醫館）。
+  - 未建造的空地基：`Site.png`。
+  - 共 25 張：8 種建築 × 3 個外觀，加上空地基。
+- **尺寸**：寬 1024 像素，高度不限（建議 1024～1280），透明背景。
+- **視角**：所有建築都是**同一個斜上方俯視角度**（約 45 度，四分之三視角，正面朝下方偏左）。建築底座貼齊圖片下緣，左右置中、左右留一點空白。
+- **建議做法**：GPT 很容易把多張塞成一張，那就順著它，**一次要一種建築的三個等級，由左到右排成一排**。之後交給 AI 助手用 `tools/art/slice_sheet.py` 的方式切開。
+- **代表色**：遠看要分得出是哪棟。
+  - 主堡：藍屋頂＋金
+  - 掘根場：木牆＋紅屋頂
+  - 層岩坑：赭石
+  - 菌圃：綠屋頂＋菇類
+  - 響晶礦脈：青綠晶簇
+  - 倉庫：暖紅屋頂
+  - 兵營：深紅旗幟
+  - 醫館：白牆＋青綠屋頂。**不可以畫紅十字**，那是受國際法保護的標誌，改用青綠菱形契印。
+
+共通前綴（建築用）：
+
+```
+isometric 3/4 top-down view mobile strategy game building, clean painterly style, chunky stylized
+proportions, soft warm light from upper left, ancient layered stone ruins with moss, teal glowing
+broken-diamond rune motif, slate blue stone and brass trim, transparent background, no text, no logo,
+three versions of the same building side by side from left to right: small level 1, medium level 2,
+large ornate level 3, same camera angle for all three
+```
+
+各建築的主體描述（接在前綴後面）：
+
+- **主堡**：`a fortified keep with blue roofs and gold banners, central tower, stepped ziggurat-like base, colonnade at higher levels`
+- **掘根場**：`a timber lumber mill with a red roof, stacked logs, a large saw wheel, wood chips`
+- **層岩坑**：`an open stone quarry with ochre rock strata, cut stone blocks, a wooden crane at higher levels`
+- **菌圃**：`a mushroom farm with green roofed shed, raised beds of glowing amber mushrooms, small canopy`
+- **響晶礦脈**：`a crystal mine entrance in dark stone with large teal glowing crystal clusters and minecart rails`
+- **倉庫**：`a storehouse with warm red tiled roof, plaster walls, crates and sacks stacked outside`
+- **兵營**：`a military barracks of grey stone with crimson banners, training dummies and a weapon rack`
+- **醫館**：`an infirmary with white plaster walls and a teal roof, herb garden beds, a teal diamond rune sign above the door, no red cross`
+- **空地基**（單張就好）：`an empty stone building foundation with wooden stakes and rope marking the plot, a few stacked stones`
+
 ## 5. 放進遊戲
 
 1. 去背、裁成規定尺寸，用規定的檔名存成 PNG。
