@@ -1,0 +1,293 @@
+/* 深淵王國：雛型介面樣式（深色深淵 + 金色點綴）。正式美術完成後替換。 */
+
+.root {
+    flex-grow: 1;
+    background-color: rgb(8, 11, 22);
+    background-size: 100% 100%;
+    color: rgb(226, 230, 242);
+    font-size: 15px;
+}
+
+/* ───── 共用 ───── */
+
+.panel {
+    background-color: rgba(22, 29, 54, 0.92);
+    border-width: 1px;
+    border-color: rgb(46, 59, 102);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+}
+
+.panel-title {
+    font-size: 17px;
+    -unity-font-style: bold;
+    color: rgb(232, 196, 118);
+    margin-bottom: 8px;
+}
+
+.section-title {
+    font-size: 19px;
+    -unity-font-style: bold;
+    color: rgb(232, 196, 118);
+    margin: 4px 0 10px 4px;
+}
+
+.muted { color: rgb(138, 147, 176); font-size: 13px; }
+.row { flex-direction: row; align-items: center; }
+.grow { flex-grow: 1; }
+.spacer { flex-grow: 1; }
+
+.btn {
+    background-color: rgb(42, 54, 92);
+    color: rgb(226, 230, 242);
+    border-width: 1px;
+    border-color: rgb(70, 86, 140);
+    border-radius: 7px;
+    padding: 6px 14px;
+    margin: 0 0 0 6px;
+    font-size: 14px;
+    -unity-font-style: bold;
+    transition-duration: 0.12s;
+}
+.btn:hover { background-color: rgb(58, 72, 120); border-color: rgb(110, 130, 196); }
+.btn:active { background-color: rgb(34, 44, 76); }
+.btn:disabled { opacity: 0.45; }
+
+.btn-primary {
+    background-color: rgb(196, 152, 72);
+    border-color: rgb(236, 198, 120);
+    color: rgb(24, 18, 8);
+}
+.btn-primary:hover { background-color: rgb(222, 176, 92); border-color: rgb(250, 220, 150); }
+.btn-primary:active { background-color: rgb(170, 128, 56); }
+
+.btn-free {
+    background-color: rgb(42, 132, 112);
+    border-color: rgb(92, 204, 176);
+    color: rgb(236, 255, 248);
+}
+.btn-free:hover { background-color: rgb(54, 160, 136); }
+
+.btn-danger { border-color: rgb(150, 70, 80); color: rgb(240, 170, 176); }
+.btn-danger:hover { background-color: rgb(90, 40, 50); }
+
+.btn-small { padding: 3px 10px; font-size: 13px; }
+
+/* 進度條 */
+.progress {
+    height: 10px;
+    border-radius: 5px;
+    background-color: rgb(14, 19, 38);
+    border-width: 1px;
+    border-color: rgb(40, 52, 90);
+    margin: 8px 0 6px 0;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    border-radius: 5px;
+    background-color: rgb(214, 170, 88);
+}
+.progress-fill.training { background-color: rgb(96, 168, 230); }
+
+/* 資源小圖示 */
+.res-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    -unity-text-align: middle-center;
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: rgb(255, 255, 255);
+    margin-right: 6px;
+    padding: 0;
+}
+.res-icon.small { width: 16px; height: 16px; border-radius: 8px; font-size: 9px; margin-right: 3px; }
+.res-Wood { background-color: rgb(150, 104, 58); }
+.res-Stone { background-color: rgb(118, 126, 142); }
+.res-Food { background-color: rgb(186, 150, 54); }
+.res-Crystal { background-color: rgb(128, 92, 214); }
+
+.cost { flex-direction: row; align-items: center; margin-right: 10px; }
+.cost-label { font-size: 13px; }
+.cost-label.short { color: rgb(240, 120, 120); }
+
+/* ───── 頂部列 ───── */
+
+.topbar {
+    flex-direction: row;
+    align-items: center;
+    height: 64px;
+    padding: 0 20px;
+    background-color: rgba(10, 14, 30, 0.95);
+    border-bottom-width: 1px;
+    border-color: rgb(60, 52, 36);
+}
+.brand { font-size: 24px; -unity-font-style: bold; color: rgb(236, 200, 124); letter-spacing: 3px; }
+.brand-sub { font-size: 12px; color: rgb(138, 147, 176); margin-left: 10px; margin-top: 8px; }
+
+.res-chip {
+    flex-direction: row;
+    align-items: center;
+    background-color: rgb(20, 27, 50);
+    border-width: 1px;
+    border-color: rgb(46, 59, 102);
+    border-radius: 16px;
+    padding: 4px 12px 4px 5px;
+    margin-left: 8px;
+}
+.res-amount { font-size: 15px; -unity-font-style: bold; }
+.res-cap { font-size: 12px; color: rgb(138, 147, 176); margin-left: 3px; }
+.res-amount.full { color: rgb(240, 150, 110); }
+
+.player-chip { margin-left: 18px; align-items: flex-end; }
+.player-name { font-size: 15px; -unity-font-style: bold; }
+
+/* ───── 主畫面 ───── */
+
+.main { flex-direction: row; flex-grow: 1; padding: 16px 20px; }
+.left { flex-grow: 1; flex-shrink: 1; margin-right: 16px; }
+.right { width: 400px; flex-shrink: 0; }
+
+.building-grid { flex-direction: row; flex-wrap: wrap; }
+
+.building-card {
+    width: 246px;
+    height: 162px;
+    margin: 0 12px 12px 0;
+    padding: 12px 14px;
+    background-color: rgba(22, 29, 54, 0.92);
+    border-width: 1px;
+    border-color: rgb(46, 59, 102);
+    border-radius: 10px;
+    transition-duration: 0.15s;
+}
+.building-card:hover { border-color: rgb(140, 120, 80); background-color: rgba(28, 36, 66, 0.95); }
+.building-card.upgrading { border-color: rgb(214, 170, 88); }
+
+.building-name { font-size: 17px; -unity-font-style: bold; }
+.level-badge {
+    background-color: rgb(52, 44, 26);
+    border-width: 1px;
+    border-color: rgb(150, 118, 60);
+    border-radius: 9px;
+    color: rgb(240, 206, 136);
+    font-size: 12px;
+    -unity-font-style: bold;
+    padding: 1px 8px;
+    margin-left: 8px;
+}
+.building-desc { font-size: 12px; color: rgb(138, 147, 176); white-space: normal; margin: 6px 0 4px 0; height: 32px; }
+.building-footer { flex-direction: row; align-items: center; }
+
+/* 隊列 */
+.queue-idle { color: rgb(138, 147, 176); font-size: 14px; }
+.queue-title { font-size: 15px; -unity-font-style: bold; }
+.queue-time { font-size: 13px; color: rgb(190, 198, 222); }
+
+/* 兵種選擇 */
+.troop-tabs { flex-direction: row; margin-bottom: 10px; }
+.troop-tab {
+    flex-grow: 1;
+    flex-basis: 0;
+    padding: 8px 6px;
+    margin-right: 6px;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgb(46, 59, 102);
+    background-color: rgb(18, 24, 46);
+    align-items: center;
+}
+.troop-tab:hover { border-color: rgb(110, 130, 196); }
+.troop-tab.selected { border-color: rgb(214, 170, 88); background-color: rgb(40, 36, 30); }
+.troop-tab-name { font-size: 15px; -unity-font-style: bold; }
+.troop-tab-count { font-size: 12px; color: rgb(138, 147, 176); }
+
+.count-slider .unity-base-slider__dragger { background-color: rgb(214, 170, 88); border-color: rgb(250, 220, 150); }
+.count-slider .unity-base-slider__tracker { background-color: rgb(30, 40, 72); border-color: rgb(46, 59, 102); }
+
+/* 道具列表 */
+.item-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom-width: 1px;
+    border-color: rgb(34, 44, 78);
+}
+.item-name { flex-grow: 1; font-size: 14px; }
+.item-count { font-size: 13px; color: rgb(232, 196, 118); width: 50px; -unity-text-align: middle-right; margin-right: 8px; }
+
+/* ───── 登入畫面 ───── */
+
+.overlay {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(4, 6, 14, 0.72);
+}
+.login-card {
+    width: 460px;
+    padding: 34px 38px 28px 38px;
+    background-color: rgba(18, 24, 46, 0.97);
+    border-width: 1px;
+    border-color: rgb(120, 98, 56);
+    border-radius: 14px;
+}
+.login-title { font-size: 40px; -unity-font-style: bold; color: rgb(236, 200, 124); -unity-text-align: middle-center; letter-spacing: 8px; }
+.login-sub { font-size: 14px; color: rgb(138, 147, 176); -unity-text-align: middle-center; margin-bottom: 24px; letter-spacing: 2px; }
+.field-label { font-size: 13px; color: rgb(170, 178, 204); margin: 10px 0 4px 2px; }
+
+.unity-text-field { margin: 0; }
+.unity-text-field > .unity-base-text-field__input {
+    background-color: rgb(10, 14, 30);
+    border-color: rgb(52, 66, 112);
+    border-radius: 6px;
+    color: rgb(226, 230, 242);
+    padding: 6px 8px;
+    font-size: 14px;
+}
+
+.login-btn { margin: 22px 0 0 0; height: 44px; font-size: 17px; }
+.login-dev { margin: 8px 0 0 0; }
+.login-status { margin-top: 12px; -unity-text-align: middle-center; }
+
+/* ───── 加速視窗 ───── */
+
+.dialog {
+    width: 440px;
+    padding: 20px 22px;
+    background-color: rgba(18, 24, 46, 0.98);
+    border-width: 1px;
+    border-color: rgb(120, 98, 56);
+    border-radius: 12px;
+}
+
+/* ───── 通知 ───── */
+
+.toasts {
+    position: absolute;
+    top: 76px;
+    right: 20px;
+    width: 340px;
+    align-items: flex-end;
+}
+.toast {
+    background-color: rgba(26, 40, 70, 0.96);
+    border-left-width: 4px;
+    border-color: rgb(96, 190, 160);
+    border-radius: 6px;
+    padding: 8px 14px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    white-space: normal;
+}
+.toast.error { border-color: rgb(220, 96, 96); background-color: rgba(60, 26, 34, 0.96); }
+
+/* 捲軸：細、深色，隱藏上下箭頭 */
+.unity-scroller--vertical { width: 8px; border-width: 0; background-color: rgba(0, 0, 0, 0); margin-left: 4px; }
+.unity-scroller__low-button, .unity-scroller__high-button { display: none; }
+.unity-scroller .unity-base-slider__tracker { background-color: rgba(20, 27, 50, 0.6); border-width: 0; border-radius: 4px; }
+.unity-scroller .unity-base-slider__dragger { background-color: rgb(64, 78, 126); border-width: 0; border-radius: 4px; }
+.unity-scroller .unity-base-slider__dragger:hover { background-color: rgb(96, 112, 170); }

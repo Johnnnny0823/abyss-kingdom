@@ -27,6 +27,9 @@ namespace AbyssKingdom.Shared.City
         /// <summary>背包道具數量（加速道具等）。</summary>
         public Dictionary<ItemType, long> Items { get; set; } = new Dictionary<ItemType, long>();
 
+        /// <summary>是否已發過新手道具（避免舊存檔重複補發）。</summary>
+        public bool StarterItemsGranted { get; set; }
+
         /// <summary>資源最後結算到的時間。</summary>
         public long LastSettledAtMs { get; set; }
 
@@ -62,8 +65,7 @@ namespace AbyssKingdom.Shared.City
                 s.Buildings[b] = CityConfig.StartingLevel(b);
             foreach (var t in CityConfig.AllTroops)
                 s.Troops[t] = 0;
-            foreach (var item in ItemConfig.StarterItems)
-                s.Items[item.Key] = item.Value;
+            CityLogic.GrantStarterItemsOnce(s);
             return s;
         }
     }

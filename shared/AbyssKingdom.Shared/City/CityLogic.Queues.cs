@@ -78,6 +78,16 @@ namespace AbyssKingdom.Shared.City
             return SpeedupResult.Ok;
         }
 
+        /// <summary>發放新手道具（每個城市只發一次）。回傳這次是否有發放。</summary>
+        public static bool GrantStarterItemsOnce(CityState state)
+        {
+            if (state.StarterItemsGranted) return false;
+            foreach (var item in ItemConfig.StarterItems)
+                state.Items[item.Key] = state.GetItemCount(item.Key) + item.Value;
+            state.StarterItemsGranted = true;
+            return true;
+        }
+
         static void Refund(CityState state, ResourceType r, long cost)
         {
             if (cost <= 0) return;

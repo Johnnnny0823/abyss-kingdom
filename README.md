@@ -25,7 +25,7 @@ server/AbyssKingdom.Server/   遊戲伺服器（模組化單體）
   Net/                        WebSocket 收發與訊息分派
   Persistence/                存檔（Memory / Supabase）
 tests/AbyssKingdom.Tests/     自動測試（不需任何套件）
-client/                       Unity 6 專案
+client/                       Unity 6 專案（Scripts/Game：連線與狀態；Scripts/UI：UI Toolkit 介面、DisplayNames 顯示名稱表）
 db/                           Supabase 資料表 SQL
 docs/                         安裝、帳號、開發流程說明
 ```
@@ -67,6 +67,8 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | → | `city.get` | — |
 | → | `city.upgrade` | `{ building: "Keep" }` |
 | → | `city.train` | `{ troop: "Shield", count: 50 }`（需兵營；單批上限 = 兵營等級 × 50） |
+| → | `city.cancel` | `{ queue: "Building" \| "Training" }`（退 50%；訓練已完成的士兵照算） |
+| → | `city.speedup` | `{ queue, item?, count? }`（不帶 item = 剩餘 5 分鐘內免費完成；帶 item = 使用加速道具） |
 | → | `ping` | — |
 | ← | `login.ok` | `{ playerId, displayName, serverTimeMs }` |
 | ← | `city.state` | `{ serverTimeMs, city }` |

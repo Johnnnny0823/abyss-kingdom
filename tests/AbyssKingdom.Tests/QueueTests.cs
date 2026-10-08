@@ -106,6 +106,19 @@ public static class QueueTests
     }
 
     [Test]
+    public static void OldSave_GetsStarterItemsExactlyOnce()
+    {
+        var c = CityState.CreateNew(T0);
+        c.Items.Clear();
+        c.StarterItemsGranted = false; // 模擬加入道具前的舊存檔
+        Assert.True(CityLogic.GrantStarterItemsOnce(c), "第一次補發");
+        Assert.Equal(10L, c.GetItemCount(ItemType.SpeedupGeneral1m));
+        c.Items[ItemType.SpeedupGeneral1m] = 0; // 用光了
+        Assert.True(!CityLogic.GrantStarterItemsOnce(c), "不會重複補發");
+        Assert.Equal(0L, c.GetItemCount(ItemType.SpeedupGeneral1m));
+    }
+
+    [Test]
     public static void ItemIds_EncodeCategoryAndMinutes()
     {
         Assert.True(ItemConfig.TryGetSpeedup(ItemType.SpeedupBuilding30m, out var cat, out var ms), "是加速道具");
