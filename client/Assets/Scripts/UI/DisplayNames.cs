@@ -48,19 +48,19 @@ namespace AbyssKingdom.Client.UI
             { BuildingType.Barracks, "訓練部隊。等級越高，單批可訓練越多。" },
         };
 
-        // 兵種名稱暫定，待深淵世界觀命名後替換
+        // 兵種名稱（2026-10-08 使用者定案）
         public static readonly Dictionary<TroopType, string> Troops = new Dictionary<TroopType, string>
         {
-            { TroopType.Shield, "盾衛" },
-            { TroopType.Crossbow, "弩手" },
-            { TroopType.Rider, "獵騎" },
+            { TroopType.Shield, "沉錨衛" },
+            { TroopType.Crossbow, "鳴弦手" },
+            { TroopType.Rider, "懸索騎" },
         };
 
         public static readonly Dictionary<TroopType, string> TroopRoles = new Dictionary<TroopType, string>
         {
-            { TroopType.Shield, "前排坦克 · 克制獵騎" },
-            { TroopType.Crossbow, "遠程輸出 · 克制盾衛" },
-            { TroopType.Rider, "機動突擊 · 克制弩手" },
+            { TroopType.Shield, "前排坦克 · 克制懸索騎" },
+            { TroopType.Crossbow, "遠程輸出 · 克制沉錨衛" },
+            { TroopType.Rider, "機動突擊 · 克制鳴弦手" },
         };
 
         public static readonly Dictionary<ItemCategory, string> ItemCategories = new Dictionary<ItemCategory, string>

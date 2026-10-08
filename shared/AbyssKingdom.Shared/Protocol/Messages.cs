@@ -1,4 +1,5 @@
 using AbyssKingdom.Shared.City;
+using AbyssKingdom.Shared.Heroes;
 
 namespace AbyssKingdom.Shared.Protocol
 {
@@ -16,6 +17,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string CityTrain = "city.train";
         public const string CityCancel = "city.cancel";
         public const string CitySpeedup = "city.speedup";
+        public const string HeroLevelUp = "hero.levelUp";
         public const string Ping = "ping";
 
         // 伺服器 → 客戶端
@@ -37,6 +39,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string TrainRejected = "train_rejected";
         public const string CancelRejected = "cancel_rejected";
         public const string SpeedupRejected = "speedup_rejected";
+        public const string HeroRejected = "hero_rejected";
     }
 
     public class LoginRequest
@@ -74,6 +77,14 @@ namespace AbyssKingdom.Shared.Protocol
     {
         public QueueType Queue { get; set; }
         public ItemType? Item { get; set; }
+        public long Count { get; set; } = 1;
+    }
+
+    /// <summary>對主將使用 Count 本經驗書。</summary>
+    public class HeroLevelUpRequest
+    {
+        public HeroId Hero { get; set; }
+        public ItemType Item { get; set; }
         public long Count { get; set; } = 1;
     }
 

@@ -33,14 +33,14 @@ namespace AbyssKingdom.Shared.City
     }
 
     /// <summary>
-    /// 兵種。名稱暫定，之後會依深淵世界觀改名——enum 名稱只是程式識別用，改名只需改顯示文字。
-    /// 克制（第 8–9 週戰鬥用）：盾衛 → 獵騎 → 弩手 → 盾衛。
+    /// 兵種。顯示名稱在客戶端 DisplayNames.cs（沉錨衛／鳴弦手／懸索騎）；enum 名稱只是程式識別用。
+    /// 克制：沉錨衛(Shield) → 懸索騎(Rider) → 鳴弦手(Crossbow) → 沉錨衛。
     /// </summary>
     public enum TroopType
     {
-        Shield = 0,    // 盾衛：前排坦克
-        Crossbow = 1,  // 弩手：遠程輸出
-        Rider = 2,     // 獵騎：機動突擊
+        Shield = 0,    // 沉錨衛：前排坦克
+        Crossbow = 1,  // 鳴弦手：遠程輸出
+        Rider = 2,     // 懸索騎：機動突擊
     }
 
     /// <summary>開始訓練的結果碼。</summary>

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using AbyssKingdom.Shared.Heroes;
 
 namespace AbyssKingdom.Shared.City
 {
@@ -26,6 +27,9 @@ namespace AbyssKingdom.Shared.City
 
         /// <summary>背包道具數量（加速道具等）。</summary>
         public Dictionary<ItemType, long> Items { get; set; } = new Dictionary<ItemType, long>();
+
+        /// <summary>擁有的主將（MVP 先跟城市存在一起）。</summary>
+        public Dictionary<HeroId, HeroState> Heroes { get; set; } = new Dictionary<HeroId, HeroState>();
 
         /// <summary>是否已發過新手道具（避免舊存檔重複補發）。</summary>
         public bool StarterItemsGranted { get; set; }
@@ -66,6 +70,7 @@ namespace AbyssKingdom.Shared.City
             foreach (var t in CityConfig.AllTroops)
                 s.Troops[t] = 0;
             CityLogic.GrantStarterItemsOnce(s);
+            HeroLogic.EnsureStarterHeroes(s);
             return s;
         }
     }

@@ -128,7 +128,7 @@ public static class QueueTests
         Assert.Equal(ItemCategory.Training, cat);
         Assert.Equal(60 * Min, ms);
         // 每個加速道具都要能解析，且分鐘數是 1/3/5/30/60
-        foreach (var item in ItemConfig.AllItems)
+        foreach (var item in ItemConfig.AllItems.Where(i => (int)i < 1000))
         {
             Assert.True(ItemConfig.TryGetSpeedup(item, out _, out var m), item.ToString());
             Assert.True(m == Min || m == 3 * Min || m == 5 * Min || m == 30 * Min || m == 60 * Min, item + " 分鐘數");

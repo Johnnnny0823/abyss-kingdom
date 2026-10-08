@@ -5,6 +5,7 @@ using AbyssKingdom.Server.Auth;
 using AbyssKingdom.Server.Game;
 using AbyssKingdom.Server.Infrastructure;
 using AbyssKingdom.Shared.City;
+using AbyssKingdom.Shared.Heroes;
 using AbyssKingdom.Shared.Protocol;
 
 namespace AbyssKingdom.Server.Net;
@@ -181,6 +182,13 @@ public sealed class WebSocketHandler
                 if (cancel == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "queue required"); break; }
                 await RunCityAction(conn, session, reqId, ErrorCodes.CancelRejected, ct, (city, now) =>
                     Fail(CityLogic.Cancel(city, cancel.Queue, now), CancelResult.Ok));
+                break;
+
+            case MessageTypes.HeroLevelUp:
+                var lv = Deserialize<HeroLevelUpRequest>(data);
+                if (lv == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "hero and item required"); break; }
+                await RunCityAction(conn, session, reqId, ErrorCodes.HeroRejected, ct, (city, now) =>
+                    Fail(HeroLogic.UseExpItem(city, lv.Hero, lv.Item, lv.Count), HeroResult.Ok));
                 break;
 
             case MessageTypes.CitySpeedup:

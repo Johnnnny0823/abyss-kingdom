@@ -50,6 +50,9 @@ namespace AbyssKingdom.Shared.City
         SpeedupResearch1m = 201, SpeedupResearch3m = 203, SpeedupResearch5m = 205, SpeedupResearch30m = 230, SpeedupResearch60m = 260,
         SpeedupMagic1m = 301, SpeedupMagic3m = 303, SpeedupMagic5m = 305, SpeedupMagic30m = 330, SpeedupMagic60m = 360,
         SpeedupTraining1m = 401, SpeedupTraining3m = 403, SpeedupTraining5m = 405, SpeedupTraining30m = 430, SpeedupTraining60m = 460,
+
+        // 主將經驗書（1000 以上：非加速道具）
+        HeroExpSmall = 1001, HeroExpMedium = 1002, HeroExpLarge = 1003,
     }
 
     public static class ItemConfig
@@ -65,6 +68,18 @@ namespace AbyssKingdom.Shared.City
             category = (ItemCategory)(id / 100);
             ms = (id % 100) * MsPerMinute;
             return Enum.IsDefined(typeof(ItemType), item) && id < 1000;
+        }
+
+        /// <summary>是否為主將經驗書；是的話回傳每本給多少經驗。</summary>
+        public static bool TryGetHeroExp(ItemType item, out long exp)
+        {
+            switch (item)
+            {
+                case ItemType.HeroExpSmall: exp = 100; return true;
+                case ItemType.HeroExpMedium: exp = 1_000; return true;
+                case ItemType.HeroExpLarge: exp = 10_000; return true;
+                default: exp = 0; return false;
+            }
         }
 
         /// <summary>某類加速道具能不能用在某條隊列。</summary>
