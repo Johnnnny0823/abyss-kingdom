@@ -2,6 +2,7 @@ using System;
 using AbyssKingdom.Client.Net;
 using AbyssKingdom.Client.UI;
 using AbyssKingdom.Shared.City;
+using AbyssKingdom.Shared.Heroes;
 using AbyssKingdom.Shared.Protocol;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -119,6 +120,9 @@ namespace AbyssKingdom.Client.Game
         public void Train(TroopType troop, long count) => _conn.Send(MessageTypes.CityTrain, new TrainRequest { Troop = troop, Count = count });
 
         public void Cancel(QueueType queue) => _conn.Send(MessageTypes.CityCancel, new CancelRequest { Queue = queue });
+
+        public void LevelUpHero(HeroId hero, ItemType item, long count = 1) =>
+            _conn.Send(MessageTypes.HeroLevelUp, new HeroLevelUpRequest { Hero = hero, Item = item, Count = count });
 
         /// <summary>item 為 null = 免費加速。</summary>
         public void Speedup(QueueType queue, ItemType? item, long count = 1) =>

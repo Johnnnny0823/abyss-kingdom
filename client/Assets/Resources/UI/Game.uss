@@ -106,8 +106,8 @@
 .res-icon.small { width: 16px; height: 16px; border-radius: 8px; font-size: 9px; margin-right: 3px; }
 .res-Wood { background-color: rgb(150, 104, 58); }
 .res-Stone { background-color: rgb(118, 126, 142); }
-.res-Food { background-color: rgb(186, 150, 54); }
-.res-Crystal { background-color: rgb(128, 92, 214); }
+.res-Food { background-color: rgb(92, 140, 52); }
+.res-Crystal { background-color: rgb(56, 120, 200); }
 
 .cost { flex-direction: row; align-items: center; margin-right: 10px; }
 .cost-label { font-size: 13px; }
@@ -291,3 +291,46 @@
 .unity-scroller .unity-base-slider__tracker { background-color: rgba(20, 27, 50, 0.6); border-width: 0; border-radius: 4px; }
 .unity-scroller .unity-base-slider__dragger { background-color: rgb(64, 78, 126); border-width: 0; border-radius: 4px; }
 .unity-scroller .unity-base-slider__dragger:hover { background-color: rgb(96, 112, 170); }
+/* ───── 頁籤 ───── */
+.tabs { flex-direction: row; margin: 0 0 10px 0; }
+.tab {
+    font-size: 17px;
+    -unity-font-style: bold;
+    color: rgb(138, 147, 176);
+    padding: 4px 14px 8px 4px;
+    margin-right: 14px;
+    border-bottom-width: 2px;
+    border-color: rgba(0, 0, 0, 0);
+    background-color: rgba(0, 0, 0, 0);
+}
+.tab:hover { color: rgb(226, 230, 242); }
+.tab.selected { color: rgb(232, 196, 118); border-color: rgb(214, 170, 88); }
+
+/* ───── 主將 ───── */
+.hero-grid { flex-direction: row; flex-wrap: wrap; }
+.hero-card {
+    width: 372px;
+    margin: 0 12px 12px 0;
+    padding: 14px 16px;
+    background-color: rgba(22, 29, 54, 0.92);
+    border-width: 1px;
+    border-left-width: 4px;
+    border-color: rgb(46, 59, 102);
+    border-radius: 10px;
+}
+.hero-name { font-size: 22px; -unity-font-style: bold; }
+.hero-title { font-size: 13px; color: rgb(170, 178, 204); margin-top: 2px; }
+.hero-bio { font-size: 12px; color: rgb(138, 147, 176); white-space: normal; margin: 6px 0 8px 0; -unity-font-style: italic; }
+.grade-badge { font-size: 12px; -unity-font-style: bold; border-radius: 9px; padding: 1px 8px; margin-left: 10px; border-width: 1px; }
+.stat { flex-grow: 1; flex-basis: 0; align-items: center; padding: 6px 0; margin-right: 6px; background-color: rgb(16, 22, 42); border-radius: 6px; }
+.stat-value { font-size: 16px; -unity-font-style: bold; }
+.stat-label { font-size: 11px; color: rgb(138, 147, 176); }
+.exp-row { flex-direction: row; align-items: center; margin-top: 8px; }
+.book-btn { flex-grow: 1; flex-basis: 0; margin: 8px 6px 0 0; }
+
+.grade-Common { border-color: rgb(150, 150, 160); color: rgb(210, 210, 220); }
+.grade-Uncommon { border-color: rgb(96, 170, 90); color: rgb(150, 220, 140); }
+.grade-Rare { border-color: rgb(70, 130, 220); color: rgb(130, 180, 250); }
+.grade-Epic { border-color: rgb(150, 90, 220); color: rgb(196, 150, 250); }
+.grade-Legendary { border-color: rgb(220, 170, 70); color: rgb(250, 210, 120); }
+.grade-Mythic { border-color: rgb(200, 50, 60); color: rgb(250, 120, 130); background-color: rgb(30, 8, 12); }

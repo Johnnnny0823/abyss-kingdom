@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using AbyssKingdom.Shared.City;
+using AbyssKingdom.Shared.Heroes;
 
 namespace AbyssKingdom.Client.UI
 {
@@ -11,28 +12,28 @@ namespace AbyssKingdom.Client.UI
     {
         public static readonly Dictionary<ResourceType, string> Resources = new Dictionary<ResourceType, string>
         {
-            { ResourceType.Wood, "木材" },
-            { ResourceType.Stone, "石材" },
-            { ResourceType.Food, "糧食" },
-            { ResourceType.Crystal, "晶礦" },
+            { ResourceType.Wood, "根材" },
+            { ResourceType.Stone, "層岩" },
+            { ResourceType.Food, "菌糧" },
+            { ResourceType.Crystal, "響晶" },
         };
 
         /// <summary>資源圖示上的單字。</summary>
         public static readonly Dictionary<ResourceType, string> ResourceGlyphs = new Dictionary<ResourceType, string>
         {
-            { ResourceType.Wood, "木" },
-            { ResourceType.Stone, "石" },
-            { ResourceType.Food, "糧" },
-            { ResourceType.Crystal, "晶" },
+            { ResourceType.Wood, "根" },
+            { ResourceType.Stone, "層" },
+            { ResourceType.Food, "菌" },
+            { ResourceType.Crystal, "響" },
         };
 
         public static readonly Dictionary<BuildingType, string> Buildings = new Dictionary<BuildingType, string>
         {
             { BuildingType.Keep, "主堡" },
-            { BuildingType.Sawmill, "伐木場" },
-            { BuildingType.Quarry, "採石場" },
-            { BuildingType.Farm, "農田" },
-            { BuildingType.CrystalMine, "晶礦場" },
+            { BuildingType.Sawmill, "掘根場" },
+            { BuildingType.Quarry, "層岩坑" },
+            { BuildingType.Farm, "菌圃" },
+            { BuildingType.CrystalMine, "響晶礦脈" },
             { BuildingType.Warehouse, "倉庫" },
             { BuildingType.Barracks, "兵營" },
         };
@@ -40,10 +41,10 @@ namespace AbyssKingdom.Client.UI
         public static readonly Dictionary<BuildingType, string> BuildingDescriptions = new Dictionary<BuildingType, string>
         {
             { BuildingType.Keep, "裂口邊的要塞核心。其他建築等級不可超過主堡。" },
-            { BuildingType.Sawmill, "砍伐裂口森林，生產木材。" },
-            { BuildingType.Quarry, "開採崖壁岩層，生產石材。" },
-            { BuildingType.Farm, "耕作邊境田地，生產糧食。" },
-            { BuildingType.CrystalMine, "挖掘深處滲出的晶礦。" },
+            { BuildingType.Sawmill, "挖掘貫穿地層的古樹根，生產根材。" },
+            { BuildingType.Quarry, "開採沉積的神話地層，生產層岩。" },
+            { BuildingType.Farm, "在崖洞培育發光菇，生產菌糧。" },
+            { BuildingType.CrystalMine, "採集凝固的回響，生產響晶。" },
             { BuildingType.Warehouse, "提高每種資源的存放上限。" },
             { BuildingType.Barracks, "訓練部隊。等級越高，單批可訓練越多。" },
         };
@@ -63,6 +64,40 @@ namespace AbyssKingdom.Client.UI
             { TroopType.Rider, "機動突擊 · 克制鳴弦手" },
         };
 
+        // ───── 主將 ─────
+
+        public static readonly Dictionary<HeroId, string> Heroes = new Dictionary<HeroId, string>
+        {
+            { HeroId.Hold, "霍德" },
+            { HeroId.Vesper, "薇絲珀" },
+            { HeroId.Karst, "卡斯特" },
+        };
+
+        public static readonly Dictionary<HeroId, string> HeroTitles = new Dictionary<HeroId, string>
+        {
+            { HeroId.Hold, "鐵錘同盟 · 老盾衛隊長" },
+            { HeroId.Vesper, "銀繩公會 · 探路射手" },
+            { HeroId.Karst, "自由探窟團 · 崖壁索騎" },
+        };
+
+        public static readonly Dictionary<HeroId, string> HeroBios = new Dictionary<HeroId, string>
+        {
+            { HeroId.Hold, "在裂口邊守了三十年的錨，說話不多，退後的次數更少。" },
+            { HeroId.Vesper, "聽得見弦上的回響，總是第一個發現往下的路。" },
+            { HeroId.Karst, "把繩索當成道路的人，崖壁對他來說只是另一片平原。" },
+        };
+
+        /// <summary>繩級顯示名稱（品質）。</summary>
+        public static readonly Dictionary<RopeGrade, string> Grades = new Dictionary<RopeGrade, string>
+        {
+            { RopeGrade.Common, "白繩 · 普通" },
+            { RopeGrade.Uncommon, "綠繩 · 罕見" },
+            { RopeGrade.Rare, "藍繩 · 稀有" },
+            { RopeGrade.Epic, "紫繩 · 史詩" },
+            { RopeGrade.Legendary, "金繩 · 傳說" },
+            { RopeGrade.Mythic, "黑繩 · 神秘" },
+        };
+
         public static readonly Dictionary<ItemCategory, string> ItemCategories = new Dictionary<ItemCategory, string>
         {
             { ItemCategory.General, "通用" },
@@ -80,6 +115,12 @@ namespace AbyssKingdom.Client.UI
 
         public static string Item(ItemType item)
         {
+            switch (item)
+            {
+                case ItemType.HeroExpSmall: return "主將經驗書（小）";
+                case ItemType.HeroExpMedium: return "主將經驗書（中）";
+                case ItemType.HeroExpLarge: return "主將經驗書（大）";
+            }
             ItemConfig.TryGetSpeedup(item, out var category, out var ms);
             long minutes = ms / ItemConfig.MsPerMinute;
             string time = minutes >= 60 ? $"{minutes / 60} 小時" : $"{minutes} 分鐘";
@@ -104,6 +145,8 @@ namespace AbyssKingdom.Client.UI
                 case "NothingInQueue":
                 case "NothingToCancel": return "隊列是空的";
                 case "invalid token": return "登入驗證失敗，請重新登入";
+                case "MaxLevel": return "主將已達等級上限";
+                case "HeroNotOwned": return "尚未擁有這位主將";
             }
             return $"{code}：{detail}";
         }

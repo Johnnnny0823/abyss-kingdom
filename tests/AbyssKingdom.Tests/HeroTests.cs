@@ -29,6 +29,12 @@ public static class HeroTests
     }
 
     [Test]
+    public static void StarterHeroes_AreUncommon()
+    {
+        foreach (var def in HeroConfig.All) Assert.Equal(RopeGrade.Uncommon, def.Grade, def.Id.ToString());
+    }
+
+    [Test]
     public static void EachTroopTypeHasASpecialist()
     {
         foreach (var t in CityConfig.AllTroops)
@@ -43,7 +49,7 @@ public static class HeroTests
         var lv10 = HeroConfig.Stats(vesper, 10);
         Assert.Equal(vesper.BaseAttack, lv1.Attack);
         Assert.Equal(vesper.BaseAttack + 9 * vesper.AttackGrowth, lv10.Attack);
-        Assert.Equal(200L + 50 * (int)RopeGrade.Purple, lv1.Leadership, "紫色統率");
+        Assert.Equal(200L + 50 * (int)RopeGrade.Uncommon, lv1.Leadership, "罕見統率");
         Assert.Equal(lv1.Leadership + 9 * 20, lv10.Leadership, "每級 +20 統率");
     }
 

@@ -12,14 +12,18 @@ namespace AbyssKingdom.Shared.Heroes
         Karst = 3,   // 自由探窟團的索騎（懸索騎專精）
     }
 
-    /// <summary>繩級：主將品質，綠 → 藍 → 紫 → 金 → 黑。</summary>
+    /// <summary>
+    /// 繩級：主將品質（2026-10-08 使用者定案 6 階）。初始主將都是罕見（綠繩）。
+    /// 白繩 普通 → 綠繩 罕見 → 藍繩 稀有 → 紫繩 史詩 → 金繩 傳說 → 黑繩 神秘。
+    /// </summary>
     public enum RopeGrade
     {
-        Green = 0,
-        Blue = 1,
-        Purple = 2,
-        Gold = 3,
-        Black = 4,
+        Common = 0,
+        Uncommon = 1,
+        Rare = 2,
+        Epic = 3,
+        Legendary = 4,
+        Mythic = 5,
     }
 
     public enum HeroResult
@@ -64,11 +68,11 @@ namespace AbyssKingdom.Shared.Heroes
 
         public static readonly HeroDef[] All =
         {
-            new HeroDef { Id = HeroId.Hold, Grade = RopeGrade.Blue, Specialty = TroopType.Shield,
+            new HeroDef { Id = HeroId.Hold, Grade = RopeGrade.Uncommon, Specialty = TroopType.Shield,
                 BaseAttack = 80, BaseDefense = 140, BaseHp = 1600, AttackGrowth = 8, DefenseGrowth = 14, HpGrowth = 160 },
-            new HeroDef { Id = HeroId.Vesper, Grade = RopeGrade.Purple, Specialty = TroopType.Crossbow,
+            new HeroDef { Id = HeroId.Vesper, Grade = RopeGrade.Uncommon, Specialty = TroopType.Crossbow,
                 BaseAttack = 150, BaseDefense = 70, BaseHp = 1100, AttackGrowth = 16, DefenseGrowth = 7, HpGrowth = 110 },
-            new HeroDef { Id = HeroId.Karst, Grade = RopeGrade.Blue, Specialty = TroopType.Rider,
+            new HeroDef { Id = HeroId.Karst, Grade = RopeGrade.Uncommon, Specialty = TroopType.Rider,
                 BaseAttack = 120, BaseDefense = 100, BaseHp = 1300, AttackGrowth = 12, DefenseGrowth = 10, HpGrowth = 130 },
         };
 
