@@ -53,6 +53,9 @@ namespace AbyssKingdom.Shared.City
 
         // 主將經驗書（1000 以上：非加速道具）
         HeroExpSmall = 1001, HeroExpMedium = 1002, HeroExpLarge = 1003,
+
+        // 境書：定向補四境修練值（材料為輔）
+        DomainScrollPower = 1101, DomainScrollTechnique = 1102, DomainScrollSpeed = 1103, DomainScrollDurability = 1104,
     }
 
     public static class ItemConfig
@@ -79,6 +82,20 @@ namespace AbyssKingdom.Shared.City
                 case ItemType.HeroExpMedium: exp = 1_000; return true;
                 case ItemType.HeroExpLarge: exp = 10_000; return true;
                 default: exp = 0; return false;
+            }
+        }
+
+        /// <summary>是否為境書；是的話回傳對應的境與每本修練值。</summary>
+        public static bool TryGetDomainScroll(ItemType item, out Heroes.Domain domain, out long xp)
+        {
+            xp = 100;
+            switch (item)
+            {
+                case ItemType.DomainScrollPower: domain = Heroes.Domain.Power; return true;
+                case ItemType.DomainScrollTechnique: domain = Heroes.Domain.Technique; return true;
+                case ItemType.DomainScrollSpeed: domain = Heroes.Domain.Speed; return true;
+                case ItemType.DomainScrollDurability: domain = Heroes.Domain.Durability; return true;
+                default: domain = default; xp = 0; return false;
             }
         }
 

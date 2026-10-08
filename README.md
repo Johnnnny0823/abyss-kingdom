@@ -73,6 +73,8 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | → | `gear.equip` / `gear.unequip` | `{ gear: <uid>, hero }` / `{ gear: <uid> }` |
 | → | `expedition.battle` | `{ stage: 1, teams: [["Hold","Vesper"],["Karst"]] }`（每條岔路一隊） |
 | → | `expedition.claimIdle` | —（領掛機收益） |
+| → | `domain.useScroll` | `{ hero, item: "DomainScrollPower", count }`（境書補修練值） |
+| → | `domain.trial` | `{ hero, domain: "Power" }`（修練值滿才能挑戰通達試煉） |
 | → | `ping` | — |
 | ← | `login.ok` | `{ playerId, displayName, serverTimeMs }` |
 | ← | `city.state` | `{ serverTimeMs, city }` |
@@ -80,4 +82,5 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | ← | `city.trainingCompleted` | `{ troop, count }`（伺服器主動推播，reqId = 0） |
 | ← | `expedition.result` | `{ stage, win, reports: [戰報…], rewards }`，之後再送一次 `city.state` |
 | ← | `expedition.idleClaimed` | `{ resources, items }` |
+| ← | `domain.trialResult` | `{ hero, domain, success, report }`，之後再送一次 `city.state` |
 | ← | `error` | `{ code, detail }` |

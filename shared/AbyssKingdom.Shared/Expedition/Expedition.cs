@@ -91,6 +91,8 @@ namespace AbyssKingdom.Shared.Expedition
                 st.ItemRewards[ItemType.HeroExpMedium] = 1 + s / 2;
                 if (s == 5 || s == 10) st.ItemRewards[ItemType.HeroExpLarge] = 1;
                 if (s == 5) st.ItemRewards[ItemType.SpeedupGeneral30m] = 2;
+                // 境書：依關卡輪替四種
+                st.ItemRewards[ItemType.DomainScrollPower + (s - 1) % 4] = 2;
 
                 if (s == 6)
                 {
@@ -151,19 +153,8 @@ namespace AbyssKingdom.Shared.Expedition
 
     public static class ExpeditionLogic
     {
-        /// <summary>主將帶「統率」數量的專精兵種出征。遠征不消耗兵營部隊、不會死兵。</summary>
-        public static SquadInput HeroSquad(CityState city, HeroId id)
-        {
-            HeroConfig.TryGet(id, out var def);
-            var s = PowerLogic.TotalStats(city, id);
-            return new SquadInput
-            {
-                Leader = id.ToString(),
-                LeaderAttack = s.Attack, LeaderDefense = s.Defense, LeaderHp = s.Hp,
-                Troop = def.Specialty,
-                Count = s.Leadership,
-            };
-        }
+        /// <summary>主將帶「統率」數量的專精兵種出征（含四境加成）。遠征不消耗兵營部隊、不會死兵。</summary>
+        public static SquadInput HeroSquad(CityState city, HeroId id) => DomainLogic.HeroSquad(city, id);
 
         public static SquadInput EnemySquadInput(EnemySquad e) => new SquadInput
         {
@@ -206,6 +197,7 @@ namespace AbyssKingdom.Shared.Expedition
                 foreach (var e in def.Branches[i]) theirs.Add(EnemySquadInput(e));
                 var report = BattleEngine.Run(ours, theirs, seed + (ulong)i);
                 result.Reports.Add(report);
+                DomainLogic.AwardFromBattle(city, teams[i], report); // 輸贏都會累積四境修練
                 if (report.Outcome != BattleOutcome.AttackerWins) result.Win = false;
             }
 

@@ -60,6 +60,12 @@ namespace AbyssKingdom.Shared.Heroes
         public int Level { get; set; } = 1;
         /// <summary>目前等級已累積的經驗（升級後歸零重算）。</summary>
         public long Exp { get; set; }
+
+        /// <summary>四境修練值（未通達的境，最多累積到門檻）。</summary>
+        public Dictionary<Domain, long> DomainXp { get; set; } = new Dictionary<Domain, long>();
+
+        /// <summary>已通達的境，依通達順序（之後「獨響之道」會用到順序）。</summary>
+        public List<Domain> Mastered { get; set; } = new List<Domain>();
     }
 
     public static class HeroConfig

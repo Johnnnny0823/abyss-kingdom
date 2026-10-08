@@ -43,6 +43,16 @@ namespace AbyssKingdom.Shared.Battle
         public long LeaderHp { get; set; }
         public TroopType Troop { get; set; }
         public long Count { get; set; }
+
+        // ───── 四境加成（預設值 = 無加成） ─────
+        /// <summary>震境：攻擊力百分比（100 = 無加成）。</summary>
+        public long AttackPercent { get; set; } = 100;
+        /// <summary>磐境：承受傷害百分比（100 = 無加成，85 = 少受 15%）。</summary>
+        public long DamageTakenPercent { get; set; } = 100;
+        /// <summary>迅境：出手速度加成。</summary>
+        public int SpeedBonus { get; set; }
+        /// <summary>巧境：克制倍率加成；被克制時也減少同樣的懲罰。</summary>
+        public int CounterBonus { get; set; }
     }
 
     /// <summary>每支小隊的戰後結果。DamageDealt / DamageTaken / FirstStrikes 之後用來發放「四境」修練值。</summary>
@@ -216,7 +226,7 @@ namespace AbyssKingdom.Shared.Battle
             // 穩定排序：速度高者先；同速攻方先；再依隊伍順序（List.Sort 不穩定，所以把順序寫進比較）
             all.Sort((x, y) =>
             {
-                int c = BattleConfig.TroopSpeed(y.In.Troop).CompareTo(BattleConfig.TroopSpeed(x.In.Troop));
+                int c = (BattleConfig.TroopSpeed(y.In.Troop) + y.In.SpeedBonus).CompareTo(BattleConfig.TroopSpeed(x.In.Troop) + x.In.SpeedBonus);
                 if (c != 0) return c;
                 c = ((int)x.Side).CompareTo((int)y.Side);
                 return c != 0 ? c : x.Index.CompareTo(y.Index);
@@ -238,11 +248,13 @@ namespace AbyssKingdom.Shared.Battle
 
         private static BattleAction Attack(Squad actor, Squad target, int round, DeterministicRandom rng)
         {
-            long power = actor.Troops * BattleConfig.TroopAttack(actor.In.Troop) + actor.In.LeaderAttack * 10;
+            long power = (actor.Troops * BattleConfig.TroopAttack(actor.In.Troop) + actor.In.LeaderAttack * 10) * actor.In.AttackPercent / 100;
             int counter = BattleConfig.CounterPercent(actor.In.Troop, target.In.Troop);
+            if (counter > 100) counter += actor.In.CounterBonus;
+            else if (counter < 100) counter = System.Math.Min(100, counter + actor.In.CounterBonus);
             long roll = rng.Range(BattleConfig.RandomMinPercent, BattleConfig.RandomMaxPercent);
             long defense = BattleConfig.TroopDefense(target.In.Troop) + target.In.LeaderDefense / 10;
-            long damage = power * counter / 100 * roll / 100 * 100 / (100 + defense);
+            long damage = power * counter / 100 * roll / 100 * 100 / (100 + defense) * target.In.DamageTakenPercent / 100;
             if (damage < 1) damage = 1;
 
             long before = target.Troops;

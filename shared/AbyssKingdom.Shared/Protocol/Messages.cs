@@ -24,6 +24,8 @@ namespace AbyssKingdom.Shared.Protocol
         public const string GearUnequip = "gear.unequip";
         public const string ExpeditionBattle = "expedition.battle";
         public const string ExpeditionClaimIdle = "expedition.claimIdle";
+        public const string DomainUseScroll = "domain.useScroll";
+        public const string DomainTrial = "domain.trial";
         public const string Ping = "ping";
 
         // 伺服器 → 客戶端
@@ -33,6 +35,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string TrainingCompleted = "city.trainingCompleted";
         public const string ExpeditionResultMessage = "expedition.result";
         public const string ExpeditionIdleClaimed = "expedition.idleClaimed";
+        public const string DomainTrialResultMessage = "domain.trialResult";
         public const string Error = "error";
         public const string Pong = "pong";
     }
@@ -50,6 +53,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string HeroRejected = "hero_rejected";
         public const string GearRejected = "gear_rejected";
         public const string ExpeditionRejected = "expedition_rejected";
+        public const string DomainRejected = "domain_rejected";
     }
 
     public class LoginRequest
@@ -115,6 +119,19 @@ namespace AbyssKingdom.Shared.Protocol
     {
         public int Stage { get; set; }
         public List<List<HeroId>> Teams { get; set; }
+    }
+
+    public class DomainScrollRequest
+    {
+        public HeroId Hero { get; set; }
+        public ItemType Item { get; set; }
+        public long Count { get; set; } = 1;
+    }
+
+    public class DomainTrialRequest
+    {
+        public HeroId Hero { get; set; }
+        public Domain Domain { get; set; }
     }
 
     public class TrainingCompletedMessage

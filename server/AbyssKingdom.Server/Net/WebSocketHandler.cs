@@ -216,6 +216,19 @@ public sealed class WebSocketHandler
                 await HandleClaimIdle(conn, session, reqId, ct);
                 break;
 
+            case MessageTypes.DomainUseScroll:
+                var scroll = Deserialize<DomainScrollRequest>(data);
+                if (scroll == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "hero and item required"); break; }
+                await RunCityAction(conn, session, reqId, ErrorCodes.DomainRejected, ct, (city, now) =>
+                    Fail(DomainLogic.UseScroll(city, scroll.Hero, scroll.Item, scroll.Count), DomainResult.Ok));
+                break;
+
+            case MessageTypes.DomainTrial:
+                var trial = Deserialize<DomainTrialRequest>(data);
+                if (trial == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "hero and domain required"); break; }
+                await HandleDomainTrial(conn, session, reqId, trial, ct);
+                break;
+
             case MessageTypes.CitySpeedup:
                 var speed = Deserialize<SpeedupRequest>(data);
                 if (speed == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "queue required"); break; }
@@ -320,6 +333,30 @@ public sealed class WebSocketHandler
             return;
         }
         await conn.SendAsync(MessageTypes.ExpeditionResultMessage, reqId, result);
+        await SendCity(conn, session, 0, ct);
+    }
+
+    private async Task HandleDomainTrial(WsConnection conn, PlayerSession session, int reqId, DomainTrialRequest req, CancellationToken ct)
+    {
+        DomainResult code;
+        DomainTrialResult? result;
+        ulong seed = BitConverter.ToUInt64(System.Security.Cryptography.RandomNumberGenerator.GetBytes(8));
+        await session.Gate.WaitAsync(ct);
+        try
+        {
+            code = DomainLogic.Trial(session.Record.City, req.Hero, req.Domain, seed, out result);
+            if (code == DomainResult.Ok) session.Dirty = true;
+        }
+        finally
+        {
+            session.Gate.Release();
+        }
+        if (code != DomainResult.Ok || result == null)
+        {
+            await SendError(conn, reqId, ErrorCodes.DomainRejected, code.ToString());
+            return;
+        }
+        await conn.SendAsync(MessageTypes.DomainTrialResultMessage, reqId, result);
         await SendCity(conn, session, 0, ct);
     }
 
