@@ -357,7 +357,8 @@ namespace AbyssKingdom.Client.World
                 var troop = Troop(i);
                 troop.gameObject.SetActive(true);
                 troop.localPosition = here;
-                ApplyTroopArt(troop, m);
+                var moveDir = m.Stationed || seg >= m.Path.Count - 1 ? Vector3.zero : P(seg + 1) - P(seg);
+                ApplyTroopArt(troop, m, moveDir);
                 troop.Find("Flag").GetComponent<Renderer>().sharedMaterial =
                     _w.Mat(m.Returning ? new Color32(70, 130, 220, 255) : new Color32(220, 170, 70, 255));
             }
@@ -369,7 +370,7 @@ namespace AbyssKingdom.Client.World
         /// 2D 部隊：主力兵種的圖（面向鏡頭）＋頭上的主將頭像。沒有兵種圖就維持 3D 模型。
         /// 主力兵種 = 這支部隊人數最多的兵種。
         /// </summary>
-        private void ApplyTroopArt(Transform troop, March m)
+        private void ApplyTroopArt(Transform troop, March m, Vector3 moveDir)
         {
             TroopType main = TroopType.Shield;
             long most = -1;
@@ -385,20 +386,30 @@ namespace AbyssKingdom.Client.World
             if (art == null)
             {
                 art = _w.Group("Art2D", troop, Vector3.zero);
-                art.gameObject.AddComponent<SpriteRenderer>();
+                var body = _w.Group("Body", art, Vector3.zero);
+                body.gameObject.AddComponent<SpriteRenderer>();
+                body.gameObject.AddComponent<MarchAnimator>();
                 var iconGo = _w.Group("HeroIcon", art, new Vector3(0, .9f, 0));
                 iconGo.gameObject.AddComponent<SpriteRenderer>();
                 _w.AddBillboard(art);
+                var shadow = _w.Prim(PrimitiveType.Cylinder, new Color32(30, 34, 30, 255), new Vector3(0, .004f, 0), new Vector3(.5f, .002f, .28f), troop);
+                shadow.name = "Shadow";
             }
             art.gameObject.SetActive(true);
-            art.GetComponent<SpriteRenderer>().sprite = AbyssKingdom.Client.UI.ArtLibrary.SpriteOf(tex, .85f);
+            var bodyT = art.Find("Body");
+            bodyT.GetComponent<SpriteRenderer>().sprite = AbyssKingdom.Client.UI.ArtLibrary.SpriteOf(tex, .85f);
+            var anim = bodyT.GetComponent<MarchAnimator>();
+            anim.Moving = moveDir.sqrMagnitude > 1e-6f;
+            if (anim.Moving) anim.FacingLeft = moveDir.x < -1e-3f; // 鏡頭朝北：畫面左右 = 世界 X
             var heroIcon = AbyssKingdom.Client.UI.ArtLibrary.HeroIcon(m.Hero);
             var iconRenderer = art.Find("HeroIcon").GetComponent<SpriteRenderer>();
             iconRenderer.sprite = AbyssKingdom.Client.UI.ArtLibrary.SpriteOf(heroIcon, .32f);
             iconRenderer.enabled = heroIcon != null;
-            // 有 2D 圖時把 3D 小兵藏起來（旗子保留，用來表示出征或返回）
+            // 有 2D 圖時把 3D 小兵與旗子藏起來；改用腳下影子的顏色表示出征（暖金）或返回（藍）
+            troop.Find("Shadow").GetComponent<Renderer>().sharedMaterial =
+                _w.Mat(m.Returning ? new Color32(60, 100, 160, 255) : new Color32(150, 116, 52, 255));
             foreach (Transform child in troop)
-                if (child != art && child.name != "Flag") child.gameObject.SetActive(false);
+                if (child != art && child.name != "Shadow") child.gameObject.SetActive(false);
         }
 
         private GameObject Dot(int i)
