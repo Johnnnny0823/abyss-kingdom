@@ -35,9 +35,23 @@ namespace AbyssKingdom.Client.World
 
         private static Color C(int r, int g, int b) => new Color32((byte)r, (byte)g, (byte)b, 255);
 
+        /// <summary>打包時預先烤好的貼圖放這裡（Resources 路徑）；找不到才在執行期現算。</summary>
+        public const string BakedFolder = "Ground";
+
         public static Texture2D Get(Style s)
         {
             if (Cache.TryGetValue(s, out var tex)) return tex;
+            // 現算一張要 0.3 秒（四種地面加起來讓登入卡 1.3 秒），所以打包時先烤成圖檔
+            tex = Resources.Load<Texture2D>($"{BakedFolder}/Ground_{s}");
+            if (tex == null) tex = Generate(s);
+            Cache[s] = tex;
+            return tex;
+        }
+
+        /// <summary>用雜訊產生一張地面貼圖（確定性：同一個 Style 每次都一樣）。編輯器的烤圖工具也用它。</summary>
+        public static Texture2D Generate(Style s)
+        {
+            Texture2D tex;
             var p = Of(s);
             int seed = (int)s * 101 + 7;
             var pixels = new Color32[Size * Size];
@@ -69,8 +83,7 @@ namespace AbyssKingdom.Client.World
                 name = "Ground_" + s,
             };
             tex.SetPixels32(pixels);
-            tex.Apply(true, true);
-            Cache[s] = tex;
+            tex.Apply(true, false);
             return tex;
         }
 

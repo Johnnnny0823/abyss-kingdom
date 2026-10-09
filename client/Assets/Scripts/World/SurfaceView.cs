@@ -39,6 +39,7 @@ namespace AbyssKingdom.Client.World
         public SurfaceView(WorldScene w)
         {
             _w = w;
+            var watch = System.Diagnostics.Stopwatch.StartNew();
             Root = w.Group("Surface", w.transform, Vector3.zero);
             for (int cy = 0; cy < Chunks; cy++)
                 for (int cx = 0; cx < Chunks; cx++)
@@ -46,11 +47,17 @@ namespace AbyssKingdom.Client.World
             BuildGround();
             BuildWalls();
             BuildOuterValley();
-            foreach (var f in SurfaceLogic.Features()) BuildFeature(f);
+            foreach (var f in SurfaceLogic.Features())
+            {
+                var feature = f;
+                Defer(f.X, f.Y, () => BuildFeature(feature));
+            }
             BuildTrees();
             _select = w.Prim(PrimitiveType.Cube, Color.white, Vector3.zero, Vector3.one, Root);
             _select.GetComponent<Renderer>().sharedMaterial = w.Glow;
             _select.SetActive(false);
+            // 效能量測：建大地圖花多久、多少物件（看 Player.log）
+            Debug.Log($"[SurfaceView] built {Root.GetComponentsInChildren<Transform>(true).Length} objects in {watch.ElapsedMilliseconds} ms");
         }
 
         /// <summary>格子 (x, y) 的中心點（世界座標）。</summary>
@@ -65,6 +72,15 @@ namespace AbyssKingdom.Client.World
 
         private Transform ChunkOf(int x, int y) =>
             _chunks[Mathf.Clamp(x / ChunkTiles, 0, Chunks - 1), Mathf.Clamp(y / ChunkTiles, 0, Chunks - 1)];
+
+        /// <summary>每個區塊還沒建的東西：區塊第一次進到鏡頭附近時才建（登入時不必一次建好上萬個物件）。</summary>
+        private readonly List<Action>[,] _pending = new List<Action>[Chunks, Chunks];
+
+        private void Defer(int x, int y, Action build)
+        {
+            int cx = Mathf.Clamp(x / ChunkTiles, 0, Chunks - 1), cy = Mathf.Clamp(y / ChunkTiles, 0, Chunks - 1);
+            (_pending[cx, cy] ??= new List<Action>()).Add(build);
+        }
 
         // ───── 建構 ─────
 
@@ -107,9 +123,13 @@ namespace AbyssKingdom.Client.World
                     float h = 0.5f + Hash(i, b * 7 + 2) % 6 * 0.12f;
                     float wdt = 0.9f + Hash(i, b * 7 + 3) % 4 * 0.15f;
                     var p = TilePos(x, y);
-                    if (ModelLibrary.Spawn("World/Mountain", ChunkOf(x, y), p, S, Hash(i, b * 7 + 4), Hash(i, b * 7 + 5) % 360) != null) continue;
-                    _w.Prim(PrimitiveType.Sphere, new Color32(118, 108, 96, 255), p + Vector3.up * h * 0.35f, new Vector3(wdt, h, wdt), ChunkOf(x, y));
-                    if (h > 0.9f) _w.Prim(PrimitiveType.Sphere, new Color32(220, 224, 228, 255), p + Vector3.up * h * 0.72f, new Vector3(wdt * 0.4f, h * 0.25f, wdt * 0.4f), ChunkOf(x, y));
+                    int seed = Hash(i, b * 7 + 4), yaw = Hash(i, b * 7 + 5) % 360;
+                    Defer(x, y, () =>
+                    {
+                        if (ModelLibrary.Spawn("World/Mountain", ChunkOf(x, y), p, S, seed, yaw) != null) return;
+                        _w.Prim(PrimitiveType.Sphere, new Color32(118, 108, 96, 255), p + Vector3.up * h * 0.35f, new Vector3(wdt, h, wdt), ChunkOf(x, y));
+                        if (h > 0.9f) _w.Prim(PrimitiveType.Sphere, new Color32(220, 224, 228, 255), p + Vector3.up * h * 0.72f, new Vector3(wdt * 0.4f, h * 0.25f, wdt * 0.4f), ChunkOf(x, y));
+                    });
                 }
                 for (int i = 0; i < SurfaceConfig.PassesPerBoundary; i++)
                 {
@@ -140,14 +160,18 @@ namespace AbyssKingdom.Client.World
                 int n = Mathf.RoundToInt(2 * Mathf.PI * r / 4.5f);
                 for (int i = 0; i < n; i++)
                 {
+                    int ii = i, rw = row; // 延後建造：迴圈變數要先複製一份
                     float a = (i + row * .5f) * Mathf.PI * 2 / n;
                     float jitter = (Hash(i, 40 + row) % 5 - 2) * .8f;
                     int x = SurfaceConfig.Center + Mathf.RoundToInt(Mathf.Cos(a) * (r + jitter));
                     int y = SurfaceConfig.Center + Mathf.RoundToInt(Mathf.Sin(a) * (r + jitter));
                     var p = TilePos(x, y);
                     float k = 1.3f + row * .35f + Hash(i, 50 + row) % 4 * .12f;
-                    if (ModelLibrary.Spawn("World/Mountain", ChunkOf(x, y), p, S * k, Hash(i, 60 + row), Hash(i, 70 + row) % 360) != null) continue;
-                    _w.Prim(PrimitiveType.Sphere, new Color32(110, 100, 90, 255), p + Vector3.up * .4f * k, new Vector3(1.2f * k, 1.1f * k, 1.2f * k), ChunkOf(x, y));
+                    Defer(x, y, () =>
+                    {
+                        if (ModelLibrary.Spawn("World/Mountain", ChunkOf(x, y), p, S * k, Hash(ii, 60 + rw), Hash(ii, 70 + rw) % 360) != null) return;
+                        _w.Prim(PrimitiveType.Sphere, new Color32(110, 100, 90, 255), p + Vector3.up * .4f * k, new Vector3(1.2f * k, 1.1f * k, 1.2f * k), ChunkOf(x, y));
+                    });
                 }
             }
         }
@@ -254,12 +278,16 @@ namespace AbyssKingdom.Client.World
                     if (!SurfaceLogic.Walkable(x, y) || SurfaceLogic.NearPass(x, y, 2)) continue;
                     var t = ChunkOf(x, y);
                     var p = TilePos(x, y);
-                    for (int i = 0; i < 3; i++)
+                    int gx = cx, gy = cy;
+                    Defer(x, y, () =>
                     {
-                        var tp = p + new Vector3((i - 1) * 0.18f, 0, (i % 2) * 0.16f);
-                        if (ModelLibrary.Spawn("World/Tree", t, tp, S * TreeScale, Hash(cx * 3 + i, cy), Hash(cy, cx * 3 + i) % 360) == null)
-                            TreeAt(t, tp, 2.2f + i % 2 * 0.5f);
-                    }
+                        for (int i = 0; i < 3; i++)
+                        {
+                            var tp = p + new Vector3((i - 1) * 0.18f, 0, (i % 2) * 0.16f);
+                            if (ModelLibrary.Spawn("World/Tree", t, tp, S * TreeScale, Hash(gx * 3 + i, gy), Hash(gy, gx * 3 + i) % 360) == null)
+                                TreeAt(t, tp, 2.2f + i % 2 * 0.5f);
+                        }
+                    });
                 }
         }
 
@@ -477,7 +505,14 @@ namespace AbyssKingdom.Client.World
                 {
                     var c = TilePos(cx * ChunkTiles + ChunkTiles / 2, cy * ChunkTiles + ChunkTiles / 2);
                     float dx = c.x - focus.x, dz = c.z - focus.z;
-                    _chunks[cx, cy].gameObject.SetActive(dx * dx + dz * dz < radius * radius);
+                    bool on = dx * dx + dz * dz < radius * radius;
+                    if (on && _pending[cx, cy] != null)
+                    {
+                        var list = _pending[cx, cy];
+                        _pending[cx, cy] = null;
+                        foreach (var build in list) build();
+                    }
+                    _chunks[cx, cy].gameObject.SetActive(on);
                 }
         }
 

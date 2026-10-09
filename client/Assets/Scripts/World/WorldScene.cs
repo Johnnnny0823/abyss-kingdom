@@ -258,7 +258,9 @@ namespace AbyssKingdom.Client.World
 
             var rot = _cam.transform.rotation;
             _billboards.RemoveAll(t => t == null);
-            foreach (var t in _billboards) t.rotation = rot;
+            // 被區塊剔除（未啟用）的不用轉：大地圖上大部分名牌與部隊圖都在畫面外
+            foreach (var t in _billboards)
+                if (t.gameObject.activeInHierarchy) t.rotation = rot;
         }
     }
 }

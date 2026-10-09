@@ -24,6 +24,7 @@ public static class BuildScript
     {
         EnsureScene();
         AbyssMaterials.Generate();
+        GroundTextureBaker.Bake();
 
         PlayerSettings.companyName = "AbyssKingdom";
         PlayerSettings.productName = "深淵王國";

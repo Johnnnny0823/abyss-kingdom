@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    新手旅程模擬：用共用規則模擬一位「很勤勞的新玩家」前 30 分鐘的操作，輸出節奏報告（artifacts/newbie-sim.md）。
+    執行：在專案根目錄執行 dotnet run 並指定 tools/NewbieSim 專案
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\AbyssKingdom.Shared\AbyssKingdom.Shared.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+</Project>

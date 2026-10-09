@@ -29,6 +29,8 @@ namespace AbyssKingdom.Client.UI
         private string _heroSig;
         private int _x, _y;
         private CityState _last;
+        private (int, int, int, int)? _pathKey;
+        private List<(int x, int y)> _path;
 
         public MarchPanel()
         {
@@ -117,8 +119,15 @@ namespace AbyssKingdom.Client.UI
             List<(int x, int y)> path = null;
             if (state.Placed)
             {
+                // 起點、終點沒變就沿用上次的路線（面板每次刷新都重跑 Dijkstra 太浪費）
                 var home = SurfaceLogic.CityCenter(state);
-                path = MarchLogic.FindPath(home.x, home.y, _x, _y);
+                var key = (home.x, home.y, _x, _y);
+                if (!_pathKey.HasValue || _pathKey.Value != key)
+                {
+                    _pathKey = key;
+                    _path = MarchLogic.FindPath(home.x, home.y, _x, _y);
+                }
+                path = _path;
             }
             string reason = null;
             if (!state.Placed) reason = "還沒有主城位置";

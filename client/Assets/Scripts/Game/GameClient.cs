@@ -179,10 +179,28 @@ namespace AbyssKingdom.Client.Game
         public CityState Predicted()
         {
             if (City == null) return null;
-            var copy = JsonConvert.DeserializeObject<CityState>(JsonConvert.SerializeObject(City, GameConnection.Settings), GameConnection.Settings);
-            CityLogic.Advance(copy, ServerNowMs);
+            // 伺服器狀態沒變就不重新序列化（每次刷新都把整個城市轉成 JSON 再轉回來很浪費）；
+            // 同一個畫面幀裡多次呼叫回傳同一份；複本和伺服器狀態分開，呼叫端改它不會影響伺服器狀態。
+            if (!ReferenceEquals(_predictSource, City))
+            {
+                _predictSource = City;
+                _predictJson = JsonConvert.SerializeObject(City, GameConnection.Settings);
+                _predictFrame = -1;
+            }
+            long now = ServerNowMs;
+            if (_predictFrame == Time.frameCount && _predicted != null && _predictAt == now) return _predicted;
+            var copy = JsonConvert.DeserializeObject<CityState>(_predictJson, GameConnection.Settings);
+            CityLogic.Advance(copy, now);
+            _predicted = copy;
+            _predictFrame = Time.frameCount;
+            _predictAt = now;
             return copy;
         }
+
+        private CityState _predictSource, _predicted;
+        private string _predictJson;
+        private int _predictFrame = -1;
+        private long _predictAt;
 
         // ───── 伺服器訊息 ─────
 
