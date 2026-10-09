@@ -89,6 +89,16 @@
 - **限制**：面數 2,000 以內，材質 8 個以內。
 - **目前的第一版**由 `tools/blender/generate_city.py` 產生，共 25 個。它沿用 `generate_world.py` 的造型工具和配色。
 
+## 5b. 新版 3D 建築（`client/Assets/Resources/Models/City3D/`，2026-10-09 起優先使用）
+
+- 使用者決定「先用 3D，大地圖上的建築也是，要換回 2D 隨時可以」。照 2D 建築圖（`Resources/Art/Buildings/<Type>_<tier>.png`）在 Blender 建模，第一棟是 `Keep_1`（Codex 用 `tools/blender/keep_1_trial.py` 製作，說明見 `tools/blender/KEEP_1_TRIAL.md`）。
+- **規格**：FBX，底面 1×1、原點在底部中心、Y 朝上、正面朝 -Z；4,000～5,000 三角形以內、1 個材質、1 張 1024 albedo（不含光照與高光）；檔名同 2D 圖（`Keep_1.fbx`、`Site.fbx`…）。
+- **遊戲裡的順序**：City3D 模型 → 2D 建築圖 → 舊灰盒（`City/`）。有哪棟就換哪棟，其他自動維持 2D。
+- 材質在遊戲裡一律換成霧面（`Resources/Abyss/Rock`，保留貼圖）：專案是 Gamma 色彩空間，Standard 的高光會讓整棟發灰。
+- 大地圖的主城也用 `City3D/Keep_1`（顯示倍率同舊主城）。
+- **換回 2D**：`client/Assets/Scripts/World/ArtSettings.cs` 的 `City3D` 改成 false，或啟動參數加 `-city2d`。
+- 2D 建築圖與 2.5D 動態（符文光、炊煙、旗幟擺動）保留不刪；3D 版目前沒有這些動態。
+
 ## 6. 程式這邊的對應（給 AI 助手看）
 
 - 載入：`client/Assets/Scripts/World/ModelLibrary.cs`，從 `Resources/Models/<路徑>` 讀檔，找不到就回傳 null，由呼叫端改用灰盒。

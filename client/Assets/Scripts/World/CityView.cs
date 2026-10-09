@@ -13,6 +13,20 @@ namespace AbyssKingdom.Client.World
     {
         public const float CellSize = 0.5f;
 
+        /// <summary>3D 模型改用霧面材質（保留貼圖）：Gamma 色彩空間下 Standard 的高光會讓整棟發灰。</summary>
+        public static void MakeMatte(GameObject model)
+        {
+            var rock = Resources.Load<Material>("Abyss/Rock");
+            if (rock == null) return;
+            foreach (var r in model.GetComponentsInChildren<Renderer>())
+            {
+                var mats = r.sharedMaterials;
+                for (int k = 0; k < mats.Length; k++)
+                    mats[k] = new Material(rock) { color = Color.white, mainTexture = mats[k] != null ? mats[k].mainTexture : null };
+                r.sharedMaterials = mats;
+            }
+        }
+
         public readonly Transform Root;
         public event Action<BuildingType> BuildingClicked;
         public event Action<BuildingType, int, int> MoveRequested;
@@ -163,9 +177,30 @@ namespace AbyssKingdom.Client.World
             var color = Colors[type];
             var buildingName = AbyssKingdom.Client.UI.DisplayNames.Buildings[type];
 
-            // 美術：依等級分三種外觀（1~3、4~6、7~10 級），未建造用空地基。優先 2D 建築圖，其次 3D 模型
+            // 美術：依等級分三種外觀（1~3、4~6、7~10 級），未建造用空地基。
+            // 順序：新版 3D 模型（Models/City3D，ArtSettings.City3D 開著時）→ 2D 建築圖 → 舊灰盒
             int tier = level <= 3 ? 1 : level <= 6 ? 2 : 3;
             string artName = level > 0 ? $"{type}_{tier}" : "Site";
+            if (ArtSettings.City3D)
+            {
+                // 新規格：底面 1×1、原點在底部中心、正面朝 -Z（tools/blender/KEEP_1_TRIAL.md），放大到建築佔地
+                var m3 = ModelLibrary.Spawn("City3D/" + artName, t, Vector3.zero, f);
+                if (m3 != null)
+                {
+                    MakeMatte(m3);
+                    float top3 = 0;
+                    foreach (var r in m3.GetComponentsInChildren<Renderer>()) top3 = Mathf.Max(top3, r.bounds.max.y - t.position.y);
+                    if (upgrading)
+                    {
+                        var glow = _w.Prim(PrimitiveType.Cube, Color.white, new Vector3(0, top3 + .2f, 0), new Vector3(0.14f, 0.14f, 0.14f), t);
+                        glow.GetComponent<Renderer>().sharedMaterial = _w.Glow;
+                        glow.transform.localRotation = Quaternion.Euler(45, 45, 0);
+                    }
+                    _w.Text(t, new Vector3(0, top3 + (upgrading ? 0.45f : 0.2f), 0), 0.034f, Color.white).text =
+                        level > 0 ? $"{buildingName} Lv.{level}" : $"{buildingName}（未建造）";
+                    return t;
+                }
+            }
             var tex = AbyssKingdom.Client.UI.ArtLibrary.Building(artName);
             if (tex != null)
             {
