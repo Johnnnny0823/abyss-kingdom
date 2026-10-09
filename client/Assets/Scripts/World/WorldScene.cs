@@ -196,7 +196,8 @@ namespace AbyssKingdom.Client.World
                 if (l != _sun && l.type == LightType.Directional) l.cullingMask &= ~(1 << Layer);
             RenderSettings.fog = false;
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.56f, 0.57f, 0.6f);        }
+            RenderSettings.ambientLight = new Color(0.56f, 0.57f, 0.6f);
+        }
 
         private void ClampFocus(View v)
         {
