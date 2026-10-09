@@ -10,17 +10,30 @@ namespace AbyssKingdom.Client.World
     /// </summary>
     public static class AbyssPit
     {
+        /// <summary>
+        /// 坑口輪廓：角度 a（弧度）上的半徑倍率，約 0.86～1.14。幾個不同頻率的起伏疊在一起，
+        /// 讓坑口像被撕開的裂口，而不是圓規畫的圓。地面的洞與坑壁都用同一條輪廓，接縫才對得上。
+        /// </summary>
+        public static float RimProfile(float a) =>
+            1f + .07f * Mathf.Sin(3 * a + 1.3f) + .045f * Mathf.Sin(5 * a + .4f) + .028f * Mathf.Sin(9 * a + 2.1f);
+
         /// <summary>地面環：內半徑到外半徑的平面圓環（朝上），UV 依世界座標每 10 單位重複一次。</summary>
-        public static Mesh Annulus(float rIn, float rOut, int segments)
+        public static Mesh Annulus(float rIn, float rOut, int segments) => Band(rIn, rOut, segments, 0, Mathf.PI * 2, null);
+
+        /// <summary>同上，內緣沿著深淵的坑口輪廓（給崖緣的地面用）。</summary>
+        public static Mesh AnnulusAroundPit(float rIn, float rOut, int segments) => Band(rIn, rOut, segments, 0, Mathf.PI * 2, RimProfile);
+
+        /// <summary>從角度 a0 到 a1 的一段圓環；innerProfile 不為 null 時內緣半徑乘上它。</summary>
+        private static Mesh Band(float rIn, float rOut, int segments, float a0, float a1, System.Func<float, float> innerProfile)
         {
             var verts = new List<Vector3>();
             var uvs = new List<Vector2>();
             var tris = new List<int>();
             for (int i = 0; i <= segments; i++)
             {
-                float a = i * Mathf.PI * 2 / segments;
+                float a = a0 + i * (a1 - a0) / segments;
                 var dir = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a));
-                foreach (var r in new[] { rIn, rOut })
+                foreach (var r in new[] { innerProfile != null ? rIn * innerProfile(a) : rIn, rOut })
                 {
                     var v = dir * r;
                     verts.Add(v);
@@ -43,15 +56,18 @@ namespace AbyssKingdom.Client.World
         /// 一段朝內的坑壁（截頭圓錐，法線朝中心），邊緣用雜湊擾動成不規則的岩面；
         /// 每個四邊形各自頂點，形成低多邊形的稜角。
         /// </summary>
-        private static Mesh Wall(float rTop, float rBottom, float yTop, float yBottom, int segments, int seed)
+        private static Mesh Wall(float rTop, float rBottom, float yTop, float yBottom, int segments, int seed,
+            float fadeTop = 0, float fadeBottom = 0)
         {
             var verts = new List<Vector3>();
             var tris = new List<int>();
             Vector3 P(int i, bool top)
             {
                 float a = i * Mathf.PI * 2 / segments;
-                float jitter = 1f + (Hash(i % segments, seed + (top ? 0 : 7)) % 100 - 50) / 900f;
-                float r = (top ? rTop : rBottom) * jitter;
+                // 坑口輪廓越往下越淡（深處趨近圓形）；岩面雜湊只往外凸，不會在地面邊緣露出縫
+                float shape = Mathf.Lerp(1f, RimProfile(a), top ? fadeTop : fadeBottom);
+                float jitter = 1f + Hash(i % segments, seed + (top ? 0 : 7)) % 100 / 2800f;
+                float r = (top ? rTop : rBottom) * shape * jitter;
                 return new Vector3(Mathf.Cos(a) * r, top ? yTop : yBottom, Mathf.Sin(a) * r);
             }
             for (int i = 0; i < segments; i++)
@@ -97,6 +113,34 @@ namespace AbyssKingdom.Client.World
             return _spike;
         }
 
+        /// <summary>每一層坑壁（頂深、底深、頂半徑、底半徑、頂／底的輪廓強度），給放在壁上的東西對齊用。</summary>
+        private static readonly List<(float y0, float y1, float r0, float r1, float f0, float f1)> _layers =
+            new List<(float, float, float, float, float, float)>();
+
+        /// <summary>角度 a、深度 d（正數往下）處坑壁的半徑。</summary>
+        private static float WallRadius(float a, float d)
+        {
+            foreach (var L in _layers)
+            {
+                if (d > L.y1) continue;
+                float t = Mathf.InverseLerp(L.y0, L.y1, d);
+                return Mathf.Lerp(L.r0, L.r1, t) * Mathf.Lerp(1f, RimProfile(a), Mathf.Lerp(L.f0, L.f1, t));
+            }
+            var last = _layers[_layers.Count - 1];
+            return last.r1;
+        }
+
+        /// <summary>把平面網格的每個頂點依它的角度乘上坑口輪廓（強度 fade），讓岩棚貼著坑壁。</summary>
+        private static Mesh ProfiledCopy(Mesh m, float fade)
+        {
+            var v = m.vertices;
+            for (int i = 0; i < v.Length; i++)
+                v[i] *= Mathf.Lerp(1f, RimProfile(Mathf.Atan2(v[i].z, v[i].x)), fade);
+            m.vertices = v;
+            m.RecalculateBounds();
+            return m;
+        }
+
         private static GameObject MeshObject(string name, Mesh mesh, Material mat, Transform parent)
         {
             var go = new GameObject(name) { layer = WorldScene.Layer };
@@ -110,43 +154,56 @@ namespace AbyssKingdom.Client.World
         public static void Build(WorldScene w, Transform parent, float radius)
         {
             var root = w.Group("AbyssPit", parent, Vector3.zero);
-            const int Seg = 40;
+            const int Seg = 80;
             const int Layers = 9;
             float depth = 0;
             float r = radius;
+            _layers.Clear();
             for (int k = 0; k < Layers; k++)
             {
-                // 越往下越窄、每層越高，顏色從土褐一路暗到純黑
-                float h = 1.6f + k * .9f;
-                float r2 = r * (k < 2 ? .9f : .93f);
+                // 越往下越窄、每層越高，但高度與內縮量各層不同（地層有厚有薄），顏色從土褐一路暗到純黑
+                float h = (1.6f + k * .9f) * (.7f + Hash(k, 40) % 60 / 100f);
+                float r2 = r * ((k < 2 ? .9f : .93f) - Hash(k, 41) % 4 / 100f);
+                float fadeTop = 1f - .8f * k / Layers, fadeBottom = 1f - .8f * (k + 1) / Layers;
                 float dark = Mathf.Pow(1f - (float)k / Layers, 3.2f);
-                var c = Color.Lerp(new Color(.008f, .006f, .012f), new Color(.07f, .06f, .065f), dark);
-                MeshObject("PitWall" + k, Wall(r, r2, -depth, -depth - h, Seg, k * 13), w.Mat(c), root);
+                var c = Color.Lerp(new Color(.008f, .006f, .012f), new Color(.09f, .078f, .082f), dark);
+                MeshObject("PitWall" + k, Wall(r, r2, -depth, -depth - h, Seg, k * 13, fadeTop, fadeBottom), Matte(w, c), root);
+                _layers.Add((depth, depth + h, r, r2, fadeTop, fadeBottom));
 
-                // 地層岩棚：每層交界一圈往內突出的薄岩
+                // 地層岩棚：不是整圈，而是幾段斷斷續續、寬窄不一的突岩
                 if (k < Layers - 2)
                 {
-                    var ledge = Color.Lerp(c, new Color(.3f, .22f, .2f), .2f);
-                    MeshObject("Strata" + k, Annulus(r2 * .94f, r2 * 1.01f, Seg), w.Mat(ledge), root)
-                        .transform.localPosition = new Vector3(0, -depth - h + .02f, 0);
+                    var ledge = Color.Lerp(c, new Color(.3f, .22f, .2f), .25f);
+                    int arcs = 2 + Hash(k, 42) % 3;
+                    for (int j = 0; j < arcs; j++)
+                    {
+                        float a0 = (j + Hash(k * 5 + j, 43) % 40 / 100f) * Mathf.PI * 2 / arcs;
+                        float span = (.35f + Hash(k * 5 + j, 44) % 45 / 100f) * Mathf.PI * 2 / arcs;
+                        float inner = .9f + Hash(k * 5 + j, 45) % 6 / 100f;
+                        var arc = Band(r2 * inner, r2 * 1.01f, 24, a0, a0 + span, null);
+                        var go = MeshObject("Strata" + k + "_" + j, ProfiledCopy(arc, fadeBottom), Matte(w, ledge), root);
+                        go.transform.localPosition = new Vector3(0, -depth - h + .02f, 0);
+                    }
                 }
                 depth += h;
                 r = r2;
             }
             // 看不到底：最下面一片純黑，再往下延伸一段黑色的井
-            MeshObject("Void", Wall(r, r * .9f, -depth, -depth - 30f, Seg, 99), w.Mat(new Color(0, 0, 0)), root);
+            MeshObject("Void", Wall(r, r * .9f, -depth, -depth - 30f, Seg, 99), Matte(w, new Color(0, 0, 0)), root);
             var bottom = w.Prim(PrimitiveType.Cylinder, new Color32(0, 0, 0, 255), new Vector3(0, -depth - 30f, 0), new Vector3(r * 2, .01f, r * 2), root);
             bottom.name = "Bottomless";
 
-            // 坑口的碎石唇緣
-            int lip = 56;
+            // 坑口的碎石唇緣：沿著輪廓，大小不一，有的地方堆得多
+            int lip = 70;
             for (int i = 0; i < lip; i++)
             {
-                float a = i * Mathf.PI * 2 / lip;
-                float s = .25f + Hash(i, 3) % 30 / 100f;
-                var rock = w.Prim(PrimitiveType.Cube, new Color32(78, 72, 66, 255),
-                    new Vector3(Mathf.Cos(a) * radius * 1.03f, .04f, Mathf.Sin(a) * radius * 1.03f), new Vector3(s * 1.6f, s * .35f, s), root);
+                float a = (i + Hash(i, 2) % 60 / 100f) * Mathf.PI * 2 / lip;
+                float s = (.2f + Hash(i, 3) % 30 / 100f) * (Hash(i, 4) % 5 == 0 ? 1.8f : 1f);
+                float rr = radius * RimProfile(a) * (1.02f + Hash(i, 8) % 5 / 100f);
+                var rock = w.Prim(PrimitiveType.Cube, new Color32(40, 36, 34, 255),
+                    new Vector3(Mathf.Cos(a) * rr, .04f, Mathf.Sin(a) * rr), new Vector3(s * 1.6f, s * .35f, s), root);
                 rock.transform.localRotation = Quaternion.Euler(Hash(i, 6) % 20 - 10, Hash(i, 5) % 360, Hash(i, 7) % 20 - 10);
+                rock.GetComponent<Renderer>().sharedMaterial = Matte(w, Hash(i, 9) % 3 == 0 ? new Color32(70, 62, 58, 255) : new Color32(48, 42, 40, 255));
             }
 
             // 探險者的木棧與繩索：沿著上半部的坑壁，往下錯落
@@ -156,7 +213,7 @@ namespace AbyssKingdom.Client.World
             {
                 float a = (i * 51 + 20) * Mathf.Deg2Rad;
                 float y = -.8f - i * 1.4f;
-                float rr = radius * (1f - i * .035f) - .6f;
+                float rr = WallRadius(a, -y) - .6f;
                 var pos = new Vector3(Mathf.Cos(a) * rr, y, Mathf.Sin(a) * rr);
                 var plank = w.Prim(PrimitiveType.Cube, wood, pos, new Vector3(1.6f, .08f, .9f), root);
                 plank.transform.localRotation = Quaternion.Euler(0, -a * Mathf.Rad2Deg + 90, 0);
@@ -181,7 +238,7 @@ namespace AbyssKingdom.Client.World
             {
                 float a = Hash(i, 11) % 360 * Mathf.Deg2Rad;
                 float y = -1f - Hash(i, 12) % 120 / 10f;
-                float rr = radius * (1f + y * .012f) - .15f;
+                float rr = WallRadius(a, -y) - .15f;
                 var g = w.Prim(PrimitiveType.Cube, Color.white, new Vector3(Mathf.Cos(a) * rr, y, Mathf.Sin(a) * rr), new Vector3(.18f, .18f, .04f), root);
                 g.GetComponent<Renderer>().sharedMaterial = glowMat;
                 g.transform.localRotation = Quaternion.Euler(0, -a * Mathf.Rad2Deg + 90, 45);
@@ -210,8 +267,7 @@ namespace AbyssKingdom.Client.World
                 var tint = Color.Lerp(new Color(.2f, .18f, .24f), new Color(.05f, .03f, .08f), i / 3f);
                 m.color = new Color(tint.r, tint.g, tint.b, alpha[i]);
                 m.SetColor("_EmissionColor", Color.black);
-                var go = MeshObject("Mist" + i, Disc(radius * (1f - depth[i] * .022f), 48), m, root);
-                go.transform.localPosition = new Vector3(0, -depth[i], 0);
+                var go = MeshObject("Mist" + i, Disc(radius * (1f - depth[i] * .022f), 48), m, root);                go.transform.localPosition = new Vector3(0, -depth[i], 0);
                 go.transform.localRotation = Quaternion.Euler(0, i * 47, 0);
                 go.AddComponent<SlowSpin>().DegreesPerSecond = (i % 2 == 0 ? 1 : -1) * (1.5f + i * .6f);
             }
@@ -221,7 +277,7 @@ namespace AbyssKingdom.Client.World
             var glow = new Material(glowBase) { mainTexture = glowTex };
             glow.color = new Color(.4f, .95f, .85f, .14f);
             glow.SetColor("_EmissionColor", new Color(.08f, .35f, .3f));
-            var ring = MeshObject("RimGlow", Disc(radius * 1.18f, 64), glow, root);
+            var ring = MeshObject("RimGlow", ProfiledCopy(Disc(radius * 1.18f, 96), 1f), glow, root); // 光暈沿著坑口輪廓
             ring.transform.localPosition = new Vector3(0, .03f, 0);
         }
 
@@ -291,6 +347,23 @@ namespace AbyssKingdom.Client.World
 
         // ───── 驚悚感 ─────
 
+        private static readonly Dictionary<Color32, Material> _matte = new Dictionary<Color32, Material>();
+
+        /// <summary>
+        /// 霧面岩石材質（Resources/Abyss/Rock：沒有太陽高光、沒有環境反射）。一般灰盒材質的高光在 Gamma 色彩空間下
+        /// 會把整片岩面打亮約 +50 灰階，再暗的顏色也黑不下去；深淵的岩石一律用這個。
+        /// </summary>
+        private static Material Matte(WorldScene w, Color32 c)
+        {
+            if (!_matte.TryGetValue(c, out var m))
+            {
+                var rock = Resources.Load<Material>("Abyss/Rock");
+                m = rock != null ? new Material(rock) { color = c } : w.Mat(c);
+                _matte[c] = m;
+            }
+            return m;
+        }
+
         private static Material Emissive(WorldScene w, Color baseColor, Color emission)
         {
             var m = new Material(w.Glow) { color = baseColor };
@@ -304,56 +377,74 @@ namespace AbyssKingdom.Client.World
         /// </summary>
         private static void BuildDread(WorldScene w, Transform root, float radius)
         {
-            // 岩牙：坑口一圈，往坑內傾斜，像一張嘴
-            int teeth = 34;
-            for (int i = 0; i < teeth; i++)
+            // 岩牙：沿坑口輪廓成簇長出（有的地方密、有的地方禿），大小不一、有的斷了半截，往坑內傾斜
+            var fangMat = Matte(w, new Color32(30, 24, 28, 255));
+            int clusters = 13;
+            for (int cI = 0; cI < clusters; cI++)
             {
-                float a = (i + (Hash(i, 80) % 40) / 100f) * Mathf.PI * 2 / teeth;
-                var dir = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a));
-                float h = .9f + Hash(i, 81) % 10 * .12f;
-                var tooth = MeshObject("Fang", Spike(), w.Mat(new Color32(34, 28, 32, 255)), root);
-                tooth.transform.localPosition = dir * radius * 1.03f;
-                tooth.transform.localScale = new Vector3(.38f, h * 1.3f, .38f);
-                // 尖端朝上再往坑內倒 35~50 度，像一圈獠牙
-                tooth.transform.localRotation = Quaternion.LookRotation(dir) * Quaternion.Euler(-(28 + Hash(i, 82) % 14), 0, 0);
+                float ca = (cI + Hash(cI, 79) % 60 / 100f) * Mathf.PI * 2 / clusters;
+                int n = 1 + Hash(cI, 78) % 4;
+                for (int j = 0; j < n; j++)
+                {
+                    int id = cI * 8 + j;
+                    float a = ca + (j - (n - 1) / 2f) * (.05f + Hash(id, 77) % 4 / 100f);
+                    var dir = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a));
+                    bool broken = Hash(id, 83) % 4 == 0;
+                    float h = (.7f + Hash(id, 81) % 12 * .12f) * (broken ? .45f : 1f) * (j == n / 2 ? 1.25f : .85f);
+                    float wdt = .26f + Hash(id, 84) % 20 / 100f;
+                    var tooth = MeshObject("Fang", Spike(), fangMat, root);
+                    tooth.transform.localPosition = dir * radius * RimProfile(a) * 1.025f;
+                    tooth.transform.localScale = new Vector3(wdt, h * 1.3f, wdt * (.8f + Hash(id, 85) % 40 / 100f));
+                    // 往坑內倒 25~45 度，再隨機扭一點，不像一排整齊的柱子
+                    tooth.transform.localRotation = Quaternion.LookRotation(dir) * Quaternion.Euler(-(25 + Hash(id, 82) % 20), Hash(id, 86) % 30 - 15, Hash(id, 87) % 16 - 8);
+                }
             }
 
-            // 地裂：從坑口往外放射，裂縫底部透出暗紅光
-            var crackMat = w.Mat(new Color32(18, 14, 16, 255));
+            // 地裂：從坑口往外放射，主裂縫曲折、越往外越細，中途分岔出更細的支裂；裂縫底部透出暗紅光
+            var crackMat = Matte(w, new Color32(14, 11, 13, 255));
             var emberMat = Emissive(w, new Color(.12f, .02f, .02f), new Color(.45f, .05f, .04f));
-            int cracks = 14;
-            for (int i = 0; i < cracks; i++)
+            void CrackLine(Vector3 from, float ang, float len, int segs, float width, int seed, int depthLeft)
             {
-                float a = (i + Hash(i, 90) % 50 / 100f) * Mathf.PI * 2 / cracks;
-                float len = radius * (.14f + Hash(i, 91) % 18 / 100f);
-                var pts = new List<Vector3> { new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * radius * 1.01f };
-                float ang = a;
-                for (int s = 0; s < 4; s++)
+                var p = from;
+                for (int s = 0; s < segs; s++)
                 {
-                    ang += (Hash(i * 7 + s, 93) % 50 - 25) * Mathf.Deg2Rad; // 每段隨機拐彎
-                    pts.Add(pts[pts.Count - 1] + new Vector3(Mathf.Cos(ang), 0, Mathf.Sin(ang)) * len / 4f);
-                }
-                for (int s = 0; s + 1 < pts.Count; s++)
-                {
-                    float wdt = .13f * (1f - s * .22f); // 越往外越細
-                    var mid = (pts[s] + pts[s + 1]) / 2f;
-                    var dir = pts[s + 1] - pts[s];
-                    var crack = w.Prim(PrimitiveType.Cube, Color.black, mid + Vector3.up * .006f, new Vector3(wdt, .01f, dir.magnitude * 1.05f), root);
+                    ang += (Hash(seed * 7 + s, 93) % 50 - 25) * Mathf.Deg2Rad; // 每段隨機拐彎
+                    float segLen = len / segs * (.7f + Hash(seed * 7 + s, 94) % 60 / 100f);
+                    var q = p + new Vector3(Mathf.Cos(ang), 0, Mathf.Sin(ang)) * segLen;
+                    float wdt = width * (1f - s * .7f / segs) * (.8f + Hash(seed * 7 + s, 95) % 40 / 100f);
+                    var mid = (p + q) / 2f;
+                    var dir = q - p;
+                    var crack = w.Prim(PrimitiveType.Cube, Color.black, mid + Vector3.up * .006f, new Vector3(wdt, .01f, dir.magnitude * 1.08f), root);
                     crack.GetComponent<Renderer>().sharedMaterial = crackMat;
                     crack.transform.localRotation = Quaternion.LookRotation(dir);
                     var ember = w.Prim(PrimitiveType.Cube, Color.black, mid + Vector3.up * .012f, new Vector3(wdt * .3f, .01f, dir.magnitude), root);
                     ember.GetComponent<Renderer>().sharedMaterial = emberMat;
                     ember.transform.localRotation = Quaternion.LookRotation(dir);
+                    // 分岔：往一側岔出一條更短更細的支裂
+                    if (depthLeft > 0 && s >= 1 && Hash(seed * 7 + s, 96) % 3 == 0)
+                    {
+                        float side = Hash(seed * 7 + s, 97) % 2 == 0 ? 1 : -1;
+                        CrackLine(q, ang + side * (35 + Hash(seed, 98) % 25) * Mathf.Deg2Rad, len * .45f, 3, wdt * .6f, seed * 31 + s, depthLeft - 1);
+                    }
+                    p = q;
                 }
             }
-
-            // 黑暗裡的眼睛：成對、偶爾眨眼，位置錯開
-            var eyeMat = Emissive(w, new Color(1f, .25f, .15f), new Color(2.4f, .22f, .08f));
-            for (int i = 0; i < 4; i++)
+            int cracks = 12;
+            for (int i = 0; i < cracks; i++)
             {
-                float a = (i * 97 + 30) * Mathf.Deg2Rad;
-                float depth = 4.5f + i * 1.8f;
-                float rr = radius * (.62f - i * .07f);
+                float a = (i + Hash(i, 90) % 60 / 100f) * Mathf.PI * 2 / cracks;
+                float len = radius * (.12f + Hash(i, 91) % 22 / 100f);
+                var start = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * radius * RimProfile(a) * 1.01f;
+                CrackLine(start, a, len, 4 + Hash(i, 92) % 2, .1f + Hash(i, 99) % 8 / 100f, i + 1, 2);
+            }
+
+            // 黑暗裡的眼睛：只有三對，縮在岩壁凹處、半藏在岩棚下，偶爾才睜開
+            var eyeMat = Emissive(w, new Color(1f, .25f, .15f), new Color(2.4f, .22f, .08f));
+            for (int i = 0; i < 3; i++)
+            {
+                float a = (i * 131 + 40) * Mathf.Deg2Rad;
+                float depth = 5.5f + i * 2.6f;
+                float rr = WallRadius(a, depth) * .9f;
                 var center = new Vector3(Mathf.Cos(a) * rr, -depth, Mathf.Sin(a) * rr);
                 var pair = new GameObject("Eyes" + i) { layer = WorldScene.Layer }.transform;
                 pair.SetParent(root, false);

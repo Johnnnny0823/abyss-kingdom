@@ -150,7 +150,7 @@ namespace AbyssKingdom.Client.UI
                     float a = (i + Hash(i, 90) % 50 / 100f) * Mathf.PI * 2 / 14;
                     float len = pr * (.5f + Hash(i, 91) % 40 / 100f);
                     float a2 = a + (Hash(i, 92) % 30 - 15) * Mathf.Deg2Rad;
-                    var p0 = c + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * pr * .95f;
+                    var p0 = c + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * pr * .95f * AbyssPit.RimProfile(-a);
                     var p1 = p0 + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * len * .55f;
                     var p2 = p1 + new Vector2(Mathf.Cos(a2), Mathf.Sin(a2)) * len * .45f;
                     p.BeginPath(); p.MoveTo(p0); p.LineTo(p1); p.LineTo(p2);
@@ -161,9 +161,18 @@ namespace AbyssKingdom.Client.UI
                 // 一圈圈往下變黑
                 for (int k = 0; k < 7; k++)
                 {
+                    // 和大地圖的 3D 深淵用同一條坑口輪廓（畫面 y 朝下，所以角度取負），越深越接近圓形
                     float t = k / 6f;
+                    float rr = pr * (1f - t * .85f);
                     p.BeginPath();
-                    p.Arc(c, pr * (1f - t * .85f), Angle.Degrees(0), Angle.Degrees(360));
+                    for (int s = 0; s <= 72; s++)
+                    {
+                        float ang = s * Mathf.PI * 2 / 72;
+                        float m = Mathf.Lerp(1f, AbyssPit.RimProfile(-ang), 1f - t * .8f);
+                        var pt = c + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * rr * m;
+                        if (s == 0) p.MoveTo(pt); else p.LineTo(pt);
+                    }
+                    p.ClosePath();
                     p.fillColor = Color.Lerp(C(46, 34, 40), C(2, 1, 4), Mathf.Pow(t, .7f));
                     p.Fill();
                 }

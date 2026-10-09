@@ -74,17 +74,19 @@ namespace AbyssKingdom.Client.World
             Ring(SurfaceConfig.OuterRadius, 900, GroundTextures.Style.Wasteland);                 // 地圖邊緣的荒地
             Ring(SurfaceConfig.MiddleOuter, SurfaceConfig.OuterRadius, GroundTextures.Style.LushGrass); // 外環（新手區）：青草
             Ring(SurfaceConfig.RimOuter, SurfaceConfig.MiddleOuter, GroundTextures.Style.DryGrass);     // 中環：乾草
-            Ring(SurfaceConfig.PitRadius, SurfaceConfig.RimOuter, GroundTextures.Style.RockyDirt);     // 崖緣：碎石泥地
+            Ring(SurfaceConfig.PitRadius, SurfaceConfig.RimOuter, GroundTextures.Style.RockyDirt, aroundPit: true); // 崖緣：碎石泥地（內緣沿坑口輪廓）
             AbyssPit.Build(_w, Root, SurfaceConfig.PitRadius * S);                                     // 永暗之喉：往下的深淵
         }
 
         /// <summary>貼地面貼圖的圓環（半徑以格為單位）；UV 依世界座標，貼圖每 10 個世界單位重複一次。</summary>
-        private void Ring(float innerTiles, float outerTiles, GroundTextures.Style style)
+        private void Ring(float innerTiles, float outerTiles, GroundTextures.Style style, bool aroundPit = false)
         {
             var go = new GameObject("Ground_" + style) { layer = WorldScene.Layer };
             go.transform.SetParent(Root, false);
             go.transform.localPosition = new Vector3(0, -0.002f, 0);
-            go.AddComponent<MeshFilter>().sharedMesh = AbyssPit.Annulus(innerTiles * S, outerTiles * S, 160);
+            go.AddComponent<MeshFilter>().sharedMesh = aroundPit
+                ? AbyssPit.AnnulusAroundPit(innerTiles * S, outerTiles * S, 160)
+                : AbyssPit.Annulus(innerTiles * S, outerTiles * S, 160);
             go.AddComponent<MeshRenderer>().sharedMaterial = GroundTextures.Material(_w.BaseMaterial, style, 1f);
         }
 

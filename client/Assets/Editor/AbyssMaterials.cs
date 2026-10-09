@@ -31,6 +31,15 @@ public static class AbyssMaterials
         smoke.mainTexture = AssetDatabase.GetBuiltinExtraResource<Texture2D>("Default-Particle.psd");
         smoke.SetColor("_TintColor", new Color(0.5f, 0.5f, 0.5f, 0.5f));
         EditorUtility.SetDirty(smoke);
+        // 深淵的岩石：完全霧面（關掉太陽高光與環境反射）。Gamma 色彩空間下 Standard 的高光會把粗糙表面整片打亮，
+        // 再暗的顏色都黑不下去；關鍵字變體要有材質檔用到才會被打包，所以做成材質檔。
+        Make(standard, "Rock", new Color(0.1f, 0.1f, 0.1f), smooth: 0f);
+        var rock = Load(standard, "Rock");
+        rock.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
+        rock.SetFloat("_SpecularHighlights", 0f);
+        rock.EnableKeyword("_GLOSSYREFLECTIONS_OFF");
+        rock.SetFloat("_GlossyReflections", 0f);
+        EditorUtility.SetDirty(rock);
         // 深淵的霧（半透明、微微發光）與坑口光暈（青綠）
         MakeFade(standard, "Mist", new Color(0.72f, 0.78f, 0.84f, 1f), new Color(0.08f, 0.1f, 0.12f));
         MakeFade(standard, "RimGlow", new Color(0.4f, 0.95f, 0.85f, 1f), new Color(0.2f, 0.9f, 0.75f));
