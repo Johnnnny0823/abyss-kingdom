@@ -23,8 +23,8 @@ public static class CityLogicTests
     {
         var c = CityState.CreateNew(T0);
         CityLogic.Advance(c, T0 + Hour);
-        Assert.Equal(CityConfig.StartingResource + 100, c.GetResource(ResourceType.Wood), "根材");
-        Assert.Equal(CityConfig.StartingResource + 100, c.GetResource(ResourceType.Crystal), "響晶");
+        Assert.Equal(CityConfig.StartingResource + CityConfig.ProductionPerHour(1), c.GetResource(ResourceType.Wood), "根材");
+        Assert.Equal(CityConfig.StartingResource + CityConfig.ProductionPerHour(1), c.GetResource(ResourceType.Crystal), "響晶");
     }
 
     [Test]
@@ -33,7 +33,23 @@ public static class CityLogicTests
         // 每秒結算一次、共 3600 次，結果必須等於一次結算一小時（餘數機制）
         var c = CityState.CreateNew(T0);
         for (int i = 1; i <= 3600; i++) CityLogic.Advance(c, T0 + i * 1000L);
-        Assert.Equal(CityConfig.StartingResource + 100, c.GetResource(ResourceType.Food), "菌糧");
+        Assert.Equal(CityConfig.StartingResource + CityConfig.ProductionPerHour(1), c.GetResource(ResourceType.Food), "菌糧");
+    }
+
+    [Test]
+    public static void NewbiePacing_StartFitsWarehouse_AndMidLevelsAreNotFreeInstant()
+    {
+        // 2026-10-09 正式節奏：起始資源放得進 0 級倉庫；3 級以內可以免費秒完成（新手前幾分鐘很忙），
+        // 4 級起工期超過免費門檻，開始要等或用加速道具
+        Assert.True(CityConfig.StartingResource <= CityConfig.Capacity(0), "起始資源不超過倉庫上限");
+        foreach (var t in CityConfig.AllBuildings)
+        {
+            if (t == BuildingType.Keep) continue;
+            Assert.True(CityConfig.UpgradeDurationMs(t, 3) <= CityConfig.FreeSpeedupMs, $"{t} 3 級可以免費完成");
+            Assert.True(CityConfig.UpgradeDurationMs(t, 4) > CityConfig.FreeSpeedupMs, $"{t} 4 級要等");
+        }
+        Assert.True(CityConfig.UpgradeDurationMs(BuildingType.Keep, 4) > CityConfig.FreeSpeedupMs, "主堡 4 級要等");
+        Assert.True(CityConfig.ProductionPerHour(1) * 4 >= CityConfig.UpgradeCost(BuildingType.Sawmill, 2, ResourceType.Stone), "1 級產量 15 分鐘內夠升一次 2 級");
     }
 
     [Test]
@@ -123,7 +139,8 @@ public static class CityLogicTests
         var c = CityState.CreateNew(T0);
         c.Buildings[BuildingType.Keep] = 2;
         Assert.Equal(UpgradeResult.Ok, CityLogic.StartUpgrade(c, BuildingType.Farm, T0));
-        long foodAfterCost = c.GetResource(ResourceType.Food);
+        c.Resources[ResourceType.Food] = 0; // 從 0 開始算，才不會碰到倉庫上限
+        long foodAfterCost = 0;
         long duration = CityConfig.UpgradeDurationMs(BuildingType.Farm, 2);
 
         Assert.True(CityLogic.Advance(c, T0 + duration - 1) == null, "完成前不應完成");
@@ -132,8 +149,8 @@ public static class CityLogicTests
         Assert.Equal(2, c.GetLevel(BuildingType.Farm));
 
         // 完成前以 1 級產量、完成後以 2 級產量（整數＋餘數計算）
-        long beforeUnits = 100 * duration;
-        long afterUnits = 200 * (Hour - duration) + beforeUnits % Hour;
+        long beforeUnits = CityConfig.ProductionPerHour(1) * duration;
+        long afterUnits = CityConfig.ProductionPerHour(2) * (Hour - duration) + beforeUnits % Hour;
         long expected = foodAfterCost + beforeUnits / Hour + afterUnits / Hour;
         Assert.Equal(expected, c.GetResource(ResourceType.Food), "分段產量");
     }

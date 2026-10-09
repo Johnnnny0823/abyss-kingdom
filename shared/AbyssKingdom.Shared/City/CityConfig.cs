@@ -12,14 +12,14 @@ namespace AbyssKingdom.Shared.City
         public const int MaxLevel = 10;
 
         /// <summary>新帳號的初始資源。</summary>
-        public const long StartingResource = 2000;
+        public const long StartingResource = 8000;
 
         /// <summary>倉庫 0 級時的每種資源上限，以及每級增加量。</summary>
-        public const long BaseCapacity = 5000;
+        public const long BaseCapacity = 10000;
         public const long CapacityPerWarehouseLevel = 5000;
 
         /// <summary>生產建築每級每小時產量。</summary>
-        public const long ProductionPerLevelPerHour = 100;
+        public const long ProductionPerLevelPerHour = 1200;
 
         public const long MsPerHour = 3_600_000;
 
@@ -79,10 +79,10 @@ namespace AbyssKingdom.Shared.City
             return cost;
         }
 
-        /// <summary>升到 targetLevel 所需時間（毫秒）。基礎秒數 × 1.4^(目標等級-1)。</summary>
+        /// <summary>升到 targetLevel 所需時間（毫秒）。基礎秒數（主堡 240、其他 120）× 1.4^(目標等級-1)。2026-10-09 使用者定案的正式節奏（見 tools/NewbieSim）。</summary>
         public static long UpgradeDurationMs(BuildingType type, int targetLevel)
         {
-            long seconds = type == BuildingType.Keep ? 60 : 30;
+            long seconds = type == BuildingType.Keep ? 240 : 120;
             for (int i = 1; i < targetLevel; i++) seconds = seconds * 7 / 5;
             return seconds * 1000;
         }
