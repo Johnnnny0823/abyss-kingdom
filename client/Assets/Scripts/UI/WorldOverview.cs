@@ -78,6 +78,97 @@ namespace AbyssKingdom.Client.UI
             private static float R(float tiles) => tiles / SurfaceConfig.Size * Px;
             private static Color C(int r, int g, int b, int a = 255) => new Color32((byte)r, (byte)g, (byte)b, (byte)a);
 
+            private static int Hash(int i, int salt)
+            {
+                unchecked
+                {
+                    uint h = (uint)(i * 73856093) ^ (uint)(salt * 19349663);
+                    h ^= h >> 13; h *= 0x5bd1e995; h ^= h >> 15;
+                    return (int)(h & 0x7fffffff);
+                }
+            }
+
+            /// <summary>一座山峰：圓心角 deg、半徑 r（格）處的三角形，左右兩面明暗不同，高的有雪頂。</summary>
+            private void Peak(Painter2D p, float r, float deg, float size, bool snow)
+            {
+                var basePt = P(SurfaceConfig.Center + Mathf.Cos(deg * Mathf.Deg2Rad) * r, SurfaceConfig.Center + Mathf.Sin(deg * Mathf.Deg2Rad) * r);
+                var top = basePt + new Vector2(0, -size * 1.15f);
+                var l = basePt + new Vector2(-size * .8f, size * .35f);
+                var rt = basePt + new Vector2(size * .8f, size * .35f);
+                var mid = basePt + new Vector2(size * .1f, size * .35f);
+                p.BeginPath(); p.MoveTo(top); p.LineTo(l); p.LineTo(mid); p.ClosePath();
+                p.fillColor = C(150, 140, 128); p.Fill();
+                p.BeginPath(); p.MoveTo(top); p.LineTo(mid); p.LineTo(rt); p.ClosePath();
+                p.fillColor = C(98, 90, 84); p.Fill();
+                if (snow && size > 10.5f)
+                {
+                    var s1 = Vector2.Lerp(top, l, .32f);
+                    var s2 = Vector2.Lerp(top, rt, .32f);
+                    p.BeginPath(); p.MoveTo(top); p.LineTo(s1); p.LineTo(Vector2.Lerp(s1, s2, .5f) + new Vector2(0, size * .08f)); p.LineTo(s2); p.ClosePath();
+                    p.fillColor = C(232, 236, 240); p.Fill();
+                }
+            }
+
+            /// <summary>深淵：往外裂開的暗紅地裂、一圈圈往下的黑、漩渦紋、深處暗紅光，以及一對眼睛。</summary>
+            private void DrawAbyss(Painter2D p)
+            {
+                var c = P(SurfaceConfig.Center, SurfaceConfig.Center);
+                float pr = R(SurfaceConfig.PitRadius);
+                // 地裂
+                for (int i = 0; i < 14; i++)
+                {
+                    float a = (i + Hash(i, 90) % 50 / 100f) * Mathf.PI * 2 / 14;
+                    float len = pr * (.5f + Hash(i, 91) % 40 / 100f);
+                    float a2 = a + (Hash(i, 92) % 30 - 15) * Mathf.Deg2Rad;
+                    var p0 = c + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * pr * .95f;
+                    var p1 = p0 + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * len * .55f;
+                    var p2 = p1 + new Vector2(Mathf.Cos(a2), Mathf.Sin(a2)) * len * .45f;
+                    p.BeginPath(); p.MoveTo(p0); p.LineTo(p1); p.LineTo(p2);
+                    p.lineWidth = 3.2f; p.strokeColor = C(20, 14, 16); p.Stroke();
+                    p.BeginPath(); p.MoveTo(p0); p.LineTo(p1); p.LineTo(p2);
+                    p.lineWidth = 1.2f; p.strokeColor = C(200, 40, 34); p.Stroke();
+                }
+                // 一圈圈往下變黑
+                for (int k = 0; k < 7; k++)
+                {
+                    float t = k / 6f;
+                    p.BeginPath();
+                    p.Arc(c, pr * (1f - t * .85f), Angle.Degrees(0), Angle.Degrees(360));
+                    p.fillColor = Color.Lerp(C(46, 34, 40), C(2, 1, 4), Mathf.Pow(t, .7f));
+                    p.Fill();
+                }
+                // 漩渦紋：幾條往中心捲進去的暗紫線
+                for (int arm = 0; arm < 5; arm++)
+                {
+                    p.BeginPath();
+                    for (int s = 0; s <= 40; s++)
+                    {
+                        float f = s / 40f;
+                        float ang = arm * Mathf.PI * 2 / 5 + f * 4.2f;
+                        var pt = c + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * pr * (.92f - f * .8f);
+                        if (s == 0) p.MoveTo(pt); else p.LineTo(pt);
+                    }
+                    p.lineWidth = 1.6f; p.strokeColor = C(90, 40, 90, 150); p.Stroke();
+                }
+                // 深處暗紅光（隨時間脈動）
+                float beat = .5f + .5f * Mathf.Pow(Mathf.Max(0, Mathf.Sin(Time.unscaledTime * 1.1f)), 4);
+                p.BeginPath();
+                p.Arc(c, pr * .3f, Angle.Degrees(0), Angle.Degrees(360));
+                p.lineWidth = pr * .12f; p.strokeColor = C(150, 14, 24, (int)(90 + 120 * beat)); p.Stroke();
+                // 眼睛
+                foreach (var dx in new[] { -1f, 1f })
+                {
+                    var e = c + new Vector2(dx * pr * .13f, -pr * .05f);
+                    p.BeginPath();
+                    p.MoveTo(e + new Vector2(-pr * .07f, 0));
+                    p.LineTo(e + new Vector2(0, -pr * .028f));
+                    p.LineTo(e + new Vector2(pr * .07f, 0));
+                    p.LineTo(e + new Vector2(0, pr * .028f));
+                    p.ClosePath();
+                    p.fillColor = C(255, 214, 120); p.Fill();
+                }
+            }
+
             private void Disc(Painter2D p, float r, Color c)
             {
                 p.BeginPath();
@@ -94,37 +185,34 @@ namespace AbyssKingdom.Client.UI
                 p.fillColor = C(52, 46, 42);
                 p.Fill();
 
-                // 外圍山谷（環繞整張地圖）、三個分區、深淵
-                Disc(p, SurfaceConfig.OuterRadius + 14, C(96, 88, 80));
-                Disc(p, SurfaceConfig.OuterRadius, C(86, 124, 68));
+                // 三個分區
+                Disc(p, SurfaceConfig.OuterRadius + 4, C(86, 124, 68));
                 Disc(p, SurfaceConfig.MiddleOuter, C(126, 128, 80));
                 Disc(p, SurfaceConfig.RimOuter, C(132, 106, 82));
-                Disc(p, SurfaceConfig.PitRadius, C(14, 12, 18));
-                Disc(p, SurfaceConfig.PitRadius * .6f, C(4, 4, 8));
 
-                // 分區之間的山脈（關隘處留缺口）
+                // 外圍山谷：兩排錯開的山峰（灰岩＋雪頂），整圈沒有缺口
+                for (int row = 1; row >= 0; row--)
+                {
+                    float r = SurfaceConfig.OuterRadius + 6 + row * 9;
+                    int n = 150 - row * 10;
+                    for (int i = 0; i < n; i++)
+                        Peak(p, r, (i + row * .5f) * 360f / n, 9.5f + row * 2f + Hash(i, row) % 4, true);
+                }
+                // 分區之間的山脈：較矮的山峰，關隘處留缺口
                 foreach (var r in SurfaceConfig.Boundaries)
                 {
-                    int n = 360;
-                    bool open = false;
-                    for (int i = 0; i <= n; i++)
+                    int n = r / 2;
+                    for (int i = 0; i < n; i++)
                     {
-                        float a = i * Mathf.PI * 2 / n;
-                        int x = SurfaceConfig.Center + Mathf.RoundToInt(Mathf.Cos(a) * r);
-                        int y = SurfaceConfig.Center + Mathf.RoundToInt(Mathf.Sin(a) * r);
-                        bool wall = !SurfaceLogic.NearPass(x, y);
-                        if (wall && !open) { p.BeginPath(); p.MoveTo(P(x, y)); open = true; }
-                        else if (wall) p.LineTo(P(x, y));
-                        else if (open) { p.lineWidth = 4; p.strokeColor = C(170, 158, 140); p.Stroke(); open = false; }
+                        float deg = i * 360f / n;
+                        int x = SurfaceConfig.Center + Mathf.RoundToInt(Mathf.Cos(deg * Mathf.Deg2Rad) * r);
+                        int y = SurfaceConfig.Center + Mathf.RoundToInt(Mathf.Sin(deg * Mathf.Deg2Rad) * r);
+                        if (SurfaceLogic.NearPass(x, y, 2)) continue;
+                        Peak(p, r, deg, 5.5f + Hash(i, r) % 3, false);
                     }
-                    if (open) { p.lineWidth = 4; p.strokeColor = C(170, 158, 140); p.Stroke(); }
                 }
-                // 外圍山谷的山脊線
-                p.BeginPath();
-                p.Arc(P(SurfaceConfig.Center, SurfaceConfig.Center), R(SurfaceConfig.OuterRadius + 6), Angle.Degrees(0), Angle.Degrees(360));
-                p.lineWidth = 6;
-                p.strokeColor = C(150, 140, 128);
-                p.Stroke();
+
+                DrawAbyss(p);
 
                 // 深淵入口
                 foreach (var f in SurfaceLogic.Features())
