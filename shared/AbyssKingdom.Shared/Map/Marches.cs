@@ -66,6 +66,7 @@ namespace AbyssKingdom.Shared.Map
         NotStationed = 10,
         AlreadyThere = 11,
         NoCity = 12,
+        Sieging = 13,        // 攻城結算中，結算完才能召回
     }
 
     /// <summary>行軍的事件（給伺服器推播用）。</summary>
@@ -328,10 +329,28 @@ namespace AbyssKingdom.Shared.Map
             var march = state.Marches.Find(m => m.Id == marchId);
             if (march == null) return MarchResult.UnknownMarch;
             if (march.Returning) return MarchResult.Ok;
+            // 守方可能已經扣兵：攻方的結果還沒套用前不能撤，否則攻方就免除了戰損
+            if (march.Sieging) return MarchResult.Sieging;
             if (march.Gathering) StopGathering(march, nowMs, fields, owner);
-            march.Sieging = false;
             TurnBack(city, march, nowMs);
             return MarchResult.Ok;
+        }
+
+        /// <summary>
+        /// 中斷攻城（伺服器在結算途中當機、重開後的復原用）：不開打，部隊原封不動撤回。
+        /// excluded 裡的行軍正在結算中，不處理。回傳撤回了幾支。
+        /// </summary>
+        public static int AbortSieges(CityState city, long nowMs, Func<long, bool> excluded = null)
+        {
+            int n = 0;
+            foreach (var m in city.Surface.Marches)
+            {
+                if (!m.Sieging || (excluded != null && excluded(m.Id))) continue;
+                m.Sieging = false;
+                TurnBack(city, m, nowMs);
+                n++;
+            }
+            return n;
         }
 
         internal static void TurnBack(CityState city, March march, long nowMs)

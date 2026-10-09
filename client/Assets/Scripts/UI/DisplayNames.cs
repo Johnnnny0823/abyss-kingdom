@@ -342,6 +342,7 @@ namespace AbyssKingdom.Client.UI
                 case "ExceedsLeadership": return "超過主將的統率";
                 case "TooManyMarches": return "同時最多 3 支行軍";
                 case "AlreadyThere": return "已經在這裡了";
+                case "Sieging": return "正在攻城，戰鬥結算完才能召回";
                 case "NotReady": return "修練值還沒滿，還不能挑戰印證試煉";
                 case "AlreadyMastered": return "這道印已經刻成";
                 case "StarsRequired": return "要先把對應的星色升滿，才能挑戰下一道印";

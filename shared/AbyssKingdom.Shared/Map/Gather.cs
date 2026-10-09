@@ -36,8 +36,11 @@ namespace AbyssKingdom.Shared.Map
         /// <summary>怪物營地此刻是否存在（被打掉後要等重生）。</summary>
         bool CampAvailable(int tile, long nowMs);
 
-        /// <summary>營地被擊敗：開始重生倒數。</summary>
-        void CampDefeated(int tile, long nowMs);
+        /// <summary>
+        /// 營地被擊敗：營地還在就標記為打掉並開始重生倒數，回傳 true；
+        /// 已經被別人先打掉就回傳 false（檢查與標記是同一個原子動作，同一座營地只會被擊敗一次）。
+        /// </summary>
+        bool TryDefeatCamp(int tile, long nowMs);
 
         /// <summary>戰鬥用的亂數種子（由伺服器決定，客戶端無法預知）。</summary>
         ulong NextSeed();
@@ -63,7 +66,12 @@ namespace AbyssKingdom.Shared.Map
         public SimpleFieldRegistry(ulong seed = 1) { _seed = seed; }
 
         public bool CampAvailable(int tile, long nowMs) => !_campBack.TryGetValue(tile, out var back) || nowMs >= back;
-        public void CampDefeated(int tile, long nowMs) => _campBack[tile] = nowMs + CampConfig.RespawnMs;
+        public bool TryDefeatCamp(int tile, long nowMs)
+        {
+            if (!CampAvailable(tile, nowMs)) return false;
+            _campBack[tile] = nowMs + CampConfig.RespawnMs;
+            return true;
+        }
         public ulong NextSeed() => _seed++;
 
         private readonly Dictionary<int, string> _cities = new Dictionary<int, string>();

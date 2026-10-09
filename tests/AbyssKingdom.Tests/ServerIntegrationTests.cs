@@ -6,6 +6,7 @@ using System.Text.Json;
 using AbyssKingdom.Server;
 using AbyssKingdom.Server.Game;
 using AbyssKingdom.Server.Infrastructure;
+using AbyssKingdom.Server.Persistence;
 using AbyssKingdom.Shared.City;
 using AbyssKingdom.Shared.Map;
 using AbyssKingdom.Shared.Heroes;
@@ -28,12 +29,20 @@ public static class ServerIntegrationTests
         public Uri WsUri { get; }
         public Uri HttpUri { get; }
 
-        public TestServer(params string[] extraArgs)
+        public TestServer(params string[] extraArgs) : this(null, extraArgs) { }
+
+        public TestServer(Action<IServiceCollection>? extraServices, params string[] extraArgs)
         {
             int port = FreePort();
+            // 固定測試設定，不繼承開發者電腦的環境變數（命令列優先於環境變數；extraArgs 在後面，可以再覆寫）
             App = GameServer.Build(
-                new[] { "--Logging:LogLevel:Default=Warning" }.Concat(extraArgs).ToArray(),
-                services => services.Replace(ServiceDescriptor.Singleton<IClock>(Clock)),
+                new[] { "--Logging:LogLevel:Default=Warning", "--Auth:Mode=Dev", "--Storage:Mode=Memory", "--Admin:Token=" }
+                    .Concat(extraArgs).ToArray(),
+                services =>
+                {
+                    services.Replace(ServiceDescriptor.Singleton<IClock>(Clock));
+                    extraServices?.Invoke(services);
+                },
                 $"http://127.0.0.1:{port}");
             WsUri = new Uri($"ws://127.0.0.1:{port}/ws");
             HttpUri = new Uri($"http://127.0.0.1:{port}");
@@ -592,6 +601,85 @@ public static class ServerIntegrationTests
         await def.SendAsync(MessageTypes.CityGet, null);
         var defAfter = City(await def.ExpectAsync(MessageTypes.CityState));
         Assert.True(defAfter.GetResource(ResourceType.Wood) < 5000, "守方資源被掠奪");
+    }
+
+    [Test]
+    public static async Task Pvp_SiegeReachedDuringAnotherCommand_IsStillResolved()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        await using var atk = new TestClient();
+        await atk.ConnectAsync(server.WsUri);
+        await atk.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:sneak", DisplayName = "偷襲者" });
+        await atk.ExpectAsync(MessageTypes.CityState);
+        await using var def = new TestClient();
+        await def.ConnectAsync(server.WsUri);
+        await def.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:watch", DisplayName = "守望者" });
+        var defCity = City(await def.ExpectAsync(MessageTypes.CityState));
+        await server.Sessions.ModifyCityAsync("dev-watch", c => c.ShieldUntilMs = 0, CancellationToken.None);
+        await def.ExpectAsync(MessageTypes.CityState);
+        await server.Sessions.ModifyCityAsync("dev-sneak", c => c.Troops[TroopType.Shield] = 250, CancellationToken.None);
+        await atk.ExpectAsync(MessageTypes.CityState);
+
+        await atk.SendAsync(MessageTypes.MapMarch, new MapMarchRequest { Hero = HeroId.Hold, Troops = new() { [TroopType.Shield] = 250 }, X = defCity.Surface.X, Y = defCity.Surface.Y });
+        var m = City(await atk.ExpectAsync(MessageTypes.CityState)).Surface.Marches[0];
+
+        // 抵達的那一刻，背景 tick 還沒跑，玩家先送了另一個行軍指令（這裡是召回一支不存在的行軍）
+        server.Clock.Advance(m.ArriveAt - server.Clock.NowMs);
+        await atk.SendAsync(MessageTypes.MapRecall, new MapRecallRequest { March = 999 });
+        await atk.ExpectAsync(MessageTypes.Error);
+
+        // 攻城事件沒有被指令吞掉：照樣結算、通知雙方
+        var attacked = (await def.ExpectAsync(MessageTypes.CityAttacked)).GetProperty("data");
+        Assert.Equal("偷襲者", attacked.GetProperty("attackerName").GetString(), "守方收到通知");
+        var result = (await atk.ExpectAsync(MessageTypes.MarchArrived)).GetProperty("data");
+        Assert.True(result.GetProperty("battleWon").GetBoolean(), "攻方收到戰果");
+        var back = City(await atk.ExpectAsync(MessageTypes.CityState)).Surface.Marches[0];
+        Assert.True(back.Returning && !back.Sieging, "沒有卡在城下");
+    }
+
+    /// <summary>可以模擬存檔失敗的記憶體存檔。</summary>
+    sealed class FlakyStore : IPlayerStore
+    {
+        readonly InMemoryPlayerStore _inner = new(Json.Options);
+        public volatile bool FailSaves;
+        public Task<PlayerRecord?> LoadAsync(string playerId, CancellationToken ct) => _inner.LoadAsync(playerId, ct);
+        public Task SaveAsync(PlayerRecord record, CancellationToken ct) =>
+            FailSaves ? throw new IOException("simulated outage") : _inner.SaveAsync(record, ct);
+        public Task<List<PlayerRecord>> ListAllAsync(CancellationToken ct) => _inner.ListAllAsync(ct);
+    }
+
+    [Test]
+    public static async Task Logout_SaveFails_KeptOnlineAndRetried_NoProgressLost()
+    {
+        var store = new FlakyStore();
+        await using var server = new TestServer(s => s.Replace(ServiceDescriptor.Singleton<IPlayerStore>(store)));
+        await server.StartAsync();
+
+        await using (var c = new TestClient())
+        {
+            await c.ConnectAsync(server.WsUri);
+            await c.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:unlucky" });
+            await c.ExpectAsync(MessageTypes.CityState);
+            await server.Sessions.ModifyCityAsync("dev-unlucky", city => city.Troops[TroopType.Rider] = 77, CancellationToken.None);
+            await c.ExpectAsync(MessageTypes.CityState);
+            store.FailSaves = true;
+        }
+
+        // 下線存檔失敗：不移出線上名單（否則進度只剩記憶體裡、而且沒人會再存）
+        await Task.Delay(300);
+        Assert.Equal(1, server.Sessions.OnlineCount, "存檔失敗時保留在線上等重試");
+
+        // 資料庫恢復，自動存檔重試成功才下線
+        store.FailSaves = false;
+        await server.Sessions.SaveAllAsync(false, CancellationToken.None);
+        Assert.Equal(0, server.Sessions.OnlineCount, "重試成功後下線");
+
+        await using var again = new TestClient();
+        await again.ConnectAsync(server.WsUri);
+        await again.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:unlucky" });
+        var city = City(await again.ExpectAsync(MessageTypes.CityState));
+        Assert.Equal(77L, city.GetTroops(TroopType.Rider), "進度沒有遺失");
     }
 
     [Test]

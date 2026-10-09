@@ -139,14 +139,41 @@ public static class PvpTests
     }
 
     [Test]
-    public static void RecalledBeforeResolution_IsIgnored()
+    public static void RecallDuringResolution_IsRejected_AttackerStillTakesLosses()
     {
         var (atk, def, w) = Setup();
+        def.Troops[TroopType.Crossbow] = 600;
         MarchLogic.Start(atk, HeroId.Hold, new() { [TroopType.Shield] = 50 }, def.Surface.X, def.Surface.Y, T0, w, "atk");
         var m = atk.Surface.Marches[0];
         var arrive = MarchLogic.Advance(atk, m.ArriveAt, w, "atk").Single();
-        MarchLogic.Recall(atk, m.Id, m.ArriveAt, w, "atk");
-        var o = PvpLogic.ResolveOnDefender(def, arrive.AttackSquads, 1, m.ArriveAt);
-        Assert.True(PvpLogic.FinishAttack(atk, m.Id, o, m.ArriveAt) == null, "已經召回就不套用");
+        var o = PvpLogic.ResolveOnDefender(def, arrive.AttackSquads, 1, m.ArriveAt); // 守方已經結算、扣兵
+        Assert.True(!o.Shielded, "守方那邊已經開打");
+
+        // 攻方套用前想召回：不行，否則攻方免除戰損
+        Assert.Equal(MarchResult.Sieging, MarchLogic.Recall(atk, m.Id, m.ArriveAt, w, "atk"), "結算中不能召回");
+        Assert.True(m.Sieging && !m.Returning, "仍在城下");
+
+        var done = PvpLogic.FinishAttack(atk, m.Id, o, m.ArriveAt);
+        Assert.NotNull(done, "攻方結果照樣套用");
+        Assert.True(done!.BattleLost && m.Troops[TroopType.Shield] < 50, "攻方戰損也算數");
+        Assert.True(m.Returning, "套用後撤回");
+    }
+
+    [Test]
+    public static void AbortSieges_TurnsBackWithoutFight_SkipsInFlight()
+    {
+        var (atk, def, w) = Setup();
+        MarchLogic.Start(atk, HeroId.Hold, new() { [TroopType.Shield] = 50 }, def.Surface.X, def.Surface.Y, T0, w, "atk");
+        MarchLogic.Start(atk, HeroId.Vesper, new() { [TroopType.Shield] = 10 }, def.Surface.X, def.Surface.Y, T0, w, "atk");
+        long t = atk.Surface.Marches.Max(x => x.ArriveAt);
+        Assert.Equal(2, MarchLogic.Advance(atk, t, w, "atk").Count(e => e.AttackTarget != null), "兩支都抵達城下");
+        var first = atk.Surface.Marches[0];
+        var second = atk.Surface.Marches[1];
+
+        // 模擬伺服器重開：第一支還在結算中（不能動），第二支卡在城下
+        Assert.Equal(1, MarchLogic.AbortSieges(atk, t, id => id == first.Id), "只撤回卡住的那支");
+        Assert.True(first.Sieging, "結算中的不動");
+        Assert.True(!second.Sieging && second.Returning, "卡住的撤回");
+        Assert.Equal(10L, second.Troops[TroopType.Shield], "沒有開打、部隊原封不動");
     }
 }

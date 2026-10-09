@@ -50,7 +50,7 @@ dotnet run --project server/AbyssKingdom.Server
 | `Supabase__Url` | 例如 `https://xxxx.supabase.co` | |
 | `Supabase__ServiceKey` | Supabase 的 service_role key，**只放在伺服器環境變數** | |
 
-正式環境務必設定 `Auth__Mode=Firebase`，否則任何人都能用名字登入別人的帳號。
+正式環境務必設定 `Auth__Mode=Firebase`，否則任何人都能用名字登入別人的帳號。`Auth__Mode`、`Storage__Mode` 填了不認得的值（例如拼錯）伺服器會拒絕啟動，不會默默退回 Dev 或記憶體存檔。
 
 ## 連線協定（MVP）
 

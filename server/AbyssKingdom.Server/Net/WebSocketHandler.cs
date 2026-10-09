@@ -25,18 +25,30 @@ public sealed class WsConnection : IClientConnection
         _json = json;
     }
 
+    /// <summary>單則訊息（含排隊等前一則送完）最多等這麼久；對方一直不收就斷線，避免拖住全服推進與存檔。</summary>
+    public static readonly TimeSpan SendTimeout = TimeSpan.FromSeconds(5);
+
     public async Task SendAsync(string type, int reqId, object? data)
     {
         if (_socket.State != WebSocketState.Open) return;
         var bytes = JsonSerializer.SerializeToUtf8Bytes(new { type, reqId, data }, _json);
-        await _sendLock.WaitAsync();
+        using var timeout = new CancellationTokenSource(SendTimeout);
         try
         {
-            await _socket.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None);
+            await _sendLock.WaitAsync(timeout.Token);
+            try
+            {
+                await _socket.SendAsync(bytes, WebSocketMessageType.Text, true, timeout.Token);
+            }
+            finally
+            {
+                _sendLock.Release();
+            }
         }
-        finally
+        catch (OperationCanceledException) when (timeout.IsCancellationRequested)
         {
-            _sendLock.Release();
+            _socket.Abort(); // 接收迴圈會跟著結束、走正常的下線存檔
+            throw new TimeoutException("WebSocket send timed out");
         }
     }
 
@@ -253,15 +265,26 @@ public sealed class WebSocketHandler
             case MessageTypes.MapMarch:
                 var march = Deserialize<MapMarchRequest>(data);
                 if (march == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "hero, troops and destination required"); break; }
+                var startEvents = new List<MarchEvent>();
                 await RunCityAction(conn, session, reqId, ErrorCodes.MapRejected, ct, (city, now) =>
-                    Fail(MarchLogic.Start(city, march.Hero, march.Troops, march.X, march.Y, now, _world, session.PlayerId), MarchResult.Ok));
+                {
+                    // 先推進並收下事件（其他行軍剛好抵達敵城等），Start 內部的推進就不會把它們吞掉
+                    startEvents = _sessions.AdvanceMarches(session, now);
+                    return Fail(MarchLogic.Start(city, march.Hero, march.Troops, march.X, march.Y, now, _world, session.PlayerId), MarchResult.Ok);
+                });
+                await _sessions.DispatchMarchEventsAsync(session, startEvents, ct);
                 break;
 
             case MessageTypes.MapRecall:
                 var recall = Deserialize<MapRecallRequest>(data);
                 if (recall == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "march required"); break; }
+                var recallEvents = new List<MarchEvent>();
                 await RunCityAction(conn, session, reqId, ErrorCodes.MapRejected, ct, (city, now) =>
-                    Fail(MarchLogic.Recall(city, recall.March, now, _world, session.PlayerId), MarchResult.Ok));
+                {
+                    recallEvents = _sessions.AdvanceMarches(session, now);
+                    return Fail(MarchLogic.Recall(city, recall.March, now, _world, session.PlayerId), MarchResult.Ok);
+                });
+                await _sessions.DispatchMarchEventsAsync(session, recallEvents, ct);
                 break;
 
             case MessageTypes.HeroStarUp:
@@ -339,21 +362,22 @@ public sealed class WebSocketHandler
     {
         UpgradeJob? done;
         TrainingJob? trained;
+        HealingJob? healed;
         string? error;
         await session.Gate.WaitAsync(ct);
         try
         {
             var now = _clock.NowMs;
-            done = CityLogic.Advance(session.Record.City, now, out trained);
+            done = CityLogic.Advance(session.Record.City, now, out trained, out healed);
             error = action(session.Record.City, now);
-            if (done != null || trained != null || error == null) session.Dirty = true;
+            if (done != null || trained != null || healed != null || error == null) session.Dirty = true;
         }
         finally
         {
             session.Gate.Release();
         }
 
-        await NotifyCompleted(conn, done, trained);
+        await NotifyCompleted(conn, done, trained, healed);
         if (error != null) await SendError(conn, reqId, errorCode, error);
         else await SendCity(conn, session, reqId, ct);
     }
@@ -437,12 +461,13 @@ public sealed class WebSocketHandler
         byte[] snapshot;
         UpgradeJob? done;
         TrainingJob? trained;
+        HealingJob? healed;
         var now = _clock.NowMs;
         await session.Gate.WaitAsync(ct);
         try
         {
-            done = CityLogic.Advance(session.Record.City, now, out trained);
-            if (done != null || trained != null) session.Dirty = true;
+            done = CityLogic.Advance(session.Record.City, now, out trained, out healed);
+            if (done != null || trained != null || healed != null) session.Dirty = true;
             // 在鎖內序列化成快照，避免送出途中狀態被其他操作修改
             snapshot = JsonSerializer.SerializeToUtf8Bytes(session.Record.City, _json);
         }
@@ -450,17 +475,19 @@ public sealed class WebSocketHandler
         {
             session.Gate.Release();
         }
-        await NotifyCompleted(conn, done, trained);
+        await NotifyCompleted(conn, done, trained, healed);
         var city = JsonSerializer.Deserialize<CityState>(snapshot, _json);
         await conn.SendAsync(MessageTypes.CityState, reqId, new CityStateMessage { ServerTimeMs = now, City = city });
     }
 
-    private static async Task NotifyCompleted(WsConnection conn, UpgradeJob? done, TrainingJob? trained)
+    private static async Task NotifyCompleted(WsConnection conn, UpgradeJob? done, TrainingJob? trained, HealingJob? healed)
     {
         if (done != null)
             await conn.SendAsync(MessageTypes.UpgradeCompleted, 0, new UpgradeCompletedMessage { Building = done.Building, Level = done.TargetLevel });
         if (trained != null)
             await conn.SendAsync(MessageTypes.TrainingCompleted, 0, new TrainingCompletedMessage { Troop = trained.Troop, Count = trained.Count });
+        if (healed != null)
+            await conn.SendAsync(MessageTypes.HealingCompleted, 0, new HealingCompletedMessage { Troops = healed.Troops });
     }
 
     private T? Deserialize<T>(JsonElement data) where T : class

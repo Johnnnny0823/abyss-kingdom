@@ -82,6 +82,15 @@ namespace AbyssKingdom.Shared.Map
             var theirs = new List<SquadInput>();
             foreach (var e in CampConfig.Lineup(camp.Level, m.Destination)) theirs.Add(ExpeditionLogic.EnemySquadInput(e));
             var report = BattleEngine.Run(inputs, theirs, world.NextSeed());
+
+            // 打贏要先搶到「擊敗權」：兩支部隊同時抵達時只有一方算數，另一方當作營地已經不在
+            bool won = report.Outcome == BattleOutcome.AttackerWins;
+            if (won && !world.TryDefeatCamp(m.Destination, m.ArriveAt))
+            {
+                ev.CampGone = true;
+                m.Stationed = true;
+                return ev;
+            }
             DomainLogic.AwardFromBattle(city, new List<HeroId> { m.Hero }, report);
 
             var losses = new Dictionary<TroopType, long>();
@@ -96,10 +105,9 @@ namespace AbyssKingdom.Shared.Map
             ev.Wounded = wounded;
             ev.Dead = dead;
 
-            if (report.Outcome == BattleOutcome.AttackerWins)
+            if (won)
             {
                 ev.BattleWon = true;
-                world.CampDefeated(m.Destination, m.ArriveAt);
                 foreach (var kv in CampConfig.ResourceLoot(camp.Level)) Add(m.Carry, kv.Key, kv.Value);
                 foreach (var kv in CampConfig.ItemLoot(camp.Level, m.Destination)) Add(m.LootItems, kv.Key, kv.Value);
                 ev.Carry = new Dictionary<ResourceType, long>(m.Carry);

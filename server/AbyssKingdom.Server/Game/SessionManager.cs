@@ -32,6 +32,12 @@ public sealed class PlayerSession
     public SemaphoreSlim Gate { get; } = new(1, 1);
     public bool Dirty { get; set; }
     public string PlayerId => Record.Id;
+
+    /// <summary>已下線且存檔完成、移出線上名單（持有 Gate 時設定）。之後對它的修改都不算數，要改走離線讀檔。</summary>
+    public bool Closed { get; set; }
+
+    /// <summary>連線已斷，但下線存檔失敗：留在線上名單，等自動存檔重試成功再移除。</summary>
+    public bool Disconnected { get; set; }
 }
 
 /// <summary>
@@ -63,6 +69,23 @@ public sealed class SessionManager : BackgroundService
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, SemaphoreSlim> _loadLocks = new();
     private SemaphoreSlim LoadLock(string playerId) => _loadLocks.GetOrAdd(playerId, _ => new SemaphoreSlim(1, 1));
 
+    /// <summary>正在結算中的攻城（玩家 ID, 行軍 ID）：從產生攻城事件起、到攻方套用完結果為止。</summary>
+    private readonly ConcurrentDictionary<(string, long), byte> _sieging = new();
+
+    /// <summary>
+    /// 推進玩家的行軍並收下事件（呼叫者要持有該玩家的 Gate）。產生的攻城事件會登記為「結算中」，
+    /// 呼叫者放開鎖後要交給 DispatchMarchEventsAsync / ResolveAttacksAsync 處理，否則行軍會卡在城下。
+    /// </summary>
+    public List<MarchEvent> AdvanceMarches(PlayerSession session, long nowMs) => AdvanceMarches(session.Record.City, session.PlayerId, nowMs);
+
+    private List<MarchEvent> AdvanceMarches(CityState city, string playerId, long nowMs)
+    {
+        var events = MarchLogic.Advance(city, nowMs, _world, playerId);
+        foreach (var ev in events)
+            if (ev.AttackTarget != null) _sieging[(playerId, ev.MarchId)] = 0;
+        return events;
+    }
+
     public async Task<PlayerSession> LoginAsync(string playerId, string displayName, IClientConnection connection, CancellationToken ct)
     {
         var loadLock = LoadLock(playerId);
@@ -77,7 +100,7 @@ public sealed class SessionManager : BackgroundService
         {
             loadLock.Release();
         }
-        foreach (var ev in loginAttacks) await ResolveAttackAsync(result, ev, ct); // 離線期間抵達敵城的行軍
+        await ResolveAttacksAsync(result, loginAttacks, ct); // 離線期間抵達敵城的行軍
         return result;
     }
 
@@ -92,6 +115,7 @@ public sealed class SessionManager : BackgroundService
             {
                 var old = existing.Connection;
                 existing.Connection = connection;
+                existing.Disconnected = false; // 下線存檔失敗、還留在線上的狀態：直接接回
                 _ = old.CloseAsync("logged_in_elsewhere");
             }
             finally
@@ -125,12 +149,15 @@ public sealed class SessionManager : BackgroundService
         if (LegacyMigration.Run(record.City)) session.Dirty = true; // 舊深淵行軍的部隊還給兵營
         if (PvpLogic.GrantNewbieShieldOnce(record.City, _clock.NowMs)) session.Dirty = true; // 功能上線前的舊帳號也有一次新手護盾
         if (await _world.EnsureSiteAsync(record, ct)) session.Dirty = true; // 地表主城位置
-        var loginEvents = MarchLogic.Advance(record.City, _clock.NowMs, _world, playerId);
+        // 上次攻城結算到一半伺服器就停了（存檔裡卡在城下、又沒有在結算）：不開打、原封撤回
+        if (MarchLogic.AbortSieges(record.City, _clock.NowMs, id => _sieging.ContainsKey((playerId, id))) > 0) session.Dirty = true;
+        var loginEvents = AdvanceMarches(record.City, playerId, _clock.NowMs);
         if (loginEvents.Count > 0) session.Dirty = true; // 離線期間抵達、採集的行軍
         var added = _online.GetOrAdd(playerId, session);
         if (!ReferenceEquals(added, session))
         {
-            // 極少見：兩個連線同時登入同一帳號，以先到的為準
+            // 極少見：兩個連線同時登入同一帳號，以先到的為準（這份讀出來的存檔作廢）
+            foreach (var ev in loginEvents) _sieging.TryRemove((playerId, ev.MarchId), out _);
             added.Connection = connection;
             return (added, noAttacks);
         }
@@ -140,10 +167,46 @@ public sealed class SessionManager : BackgroundService
 
     public async Task LogoutAsync(PlayerSession session, IClientConnection connection)
     {
-        if (!ReferenceEquals(session.Connection, connection)) return; // 已被新連線取代
-        if (!_online.TryRemove(new KeyValuePair<string, PlayerSession>(session.PlayerId, session))) return;
-        await SaveSessionAsync(session, force: true, CancellationToken.None);
-        _log.LogInformation("Player {Id} logged out. Online={Count}", session.PlayerId, _online.Count);
+        // 和登入、離線修改用同一把鎖：存檔完成前，不會有人讀到舊存檔
+        var loadLock = LoadLock(session.PlayerId);
+        await loadLock.WaitAsync();
+        try
+        {
+            if (!ReferenceEquals(session.Connection, connection)) return; // 已被新連線取代
+            await CloseLockedAsync(session);
+        }
+        finally
+        {
+            loadLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// 下線（呼叫者要持有該玩家的 LoadLock）：存檔成功才移出線上名單；
+    /// 存檔失敗就留在線上、標記斷線，由自動存檔重試，不會因此遺失進度。
+    /// </summary>
+    private async Task CloseLockedAsync(PlayerSession session)
+    {
+        bool saved;
+        await session.Gate.WaitAsync();
+        try
+        {
+            if (session.Closed) return;
+            saved = await SaveLockedAsync(session, force: true, CancellationToken.None);
+            if (saved)
+            {
+                session.Closed = true;
+                session.Disconnected = false;
+                _online.TryRemove(new KeyValuePair<string, PlayerSession>(session.PlayerId, session));
+            }
+            else session.Disconnected = true;
+        }
+        finally
+        {
+            session.Gate.Release();
+        }
+        if (saved) _log.LogInformation("Player {Id} logged out. Online={Count}", session.PlayerId, _online.Count);
+        else _log.LogWarning("Player {Id} disconnected but save failed; kept online for retry", session.PlayerId);
     }
 
     /// <summary>每秒推進所有上線玩家的城市；有升級或訓練完成就推播。</summary>
@@ -160,8 +223,9 @@ public sealed class SessionManager : BackgroundService
             await session.Gate.WaitAsync(ct);
             try
             {
+                if (session.Closed) continue;
                 completed = CityLogic.Advance(session.Record.City, now, out trained, out healed);
-                marchEvents = MarchLogic.Advance(session.Record.City, now, _world, session.PlayerId);
+                marchEvents = AdvanceMarches(session, now);
                 if (completed != null || trained != null || healed != null || marchEvents.Count > 0)
                 {
                     session.Dirty = true;
@@ -189,75 +253,111 @@ public sealed class SessionManager : BackgroundService
                     });
                 if (healed != null)
                     await SafeSend(session, MessageTypes.HealingCompleted, new HealingCompletedMessage { Troops = healed.Troops });
-                foreach (var ev in marchEvents.Where(e => e.AttackTarget == null))
-                    await SafeSend(session, MessageTypes.MarchArrived, new MarchArrivedMessage
-                    {
-                        March = ev.MarchId, Hero = ev.Hero, Tile = ev.Tile, Disbanded = ev.Disbanded,
-                        Gathering = ev.Gathering, Occupied = ev.Occupied, GatherDone = ev.GatherDone, Carry = ev.Carry,
-                        LootItems = ev.LootItems, BattleWon = ev.BattleWon, BattleLost = ev.BattleLost, CampGone = ev.CampGone,
-                        Wounded = ev.Wounded, Dead = ev.Dead,
-                    });
+                await SendMarchArrivalsAsync(session, marchEvents);
                 await SafeSend(session, MessageTypes.CityState, new CityStateMessage { ServerTimeMs = now, City = JsonSerializer.Deserialize<CityState>(snapshot, _json) });
-                foreach (var ev in marchEvents.Where(e => e.AttackTarget != null))
-                    await ResolveAttackAsync(session, ev, ct);
+                await ResolveAttacksAsync(session, marchEvents, ct);
             }
         }
+    }
+
+    /// <summary>處理 AdvanceMarches 收下的事件：推播一般抵達通知，並結算攻城。</summary>
+    public async Task DispatchMarchEventsAsync(PlayerSession session, List<MarchEvent> events, CancellationToken ct)
+    {
+        await SendMarchArrivalsAsync(session, events);
+        await ResolveAttacksAsync(session, events, ct);
+    }
+
+    private async Task SendMarchArrivalsAsync(PlayerSession session, List<MarchEvent> events)
+    {
+        foreach (var ev in events.Where(e => e.AttackTarget == null))
+            await SafeSend(session, MessageTypes.MarchArrived, new MarchArrivedMessage
+            {
+                March = ev.MarchId, Hero = ev.Hero, Tile = ev.Tile, Disbanded = ev.Disbanded,
+                Gathering = ev.Gathering, Occupied = ev.Occupied, GatherDone = ev.GatherDone, Carry = ev.Carry,
+                LootItems = ev.LootItems, BattleWon = ev.BattleWon, BattleLost = ev.BattleLost, CampGone = ev.CampGone,
+                Wounded = ev.Wounded, Dead = ev.Dead,
+            });
+    }
+
+    private async Task ResolveAttacksAsync(PlayerSession attacker, List<MarchEvent> events, CancellationToken ct)
+    {
+        foreach (var ev in events.Where(e => e.AttackTarget != null))
+            await ResolveAttackAsync(attacker.PlayerId, attacker.Record.DisplayName, ev, ct);
     }
 
     /// <summary>
     /// 攻城結算（兩段，不同時持有兩位玩家的鎖）：
     /// 1. 在守方身上開打、扣兵、掠奪（守方在線就鎖 Gate，離線就讀檔改完存回）；
-    /// 2. 回到攻方的鎖內，套用倖存部隊與掠奪品，行軍回城。
+    /// 2. 回到攻方身上（同樣在線或離線都可以），套用倖存部隊與掠奪品，行軍回城。
+    /// 結算期間行軍維持「攻城中」，不能被召回；兩段都完成（或失敗）才解除登記。
     /// </summary>
-    private async Task ResolveAttackAsync(PlayerSession attacker, MarchEvent ev, CancellationToken ct)
+    private async Task ResolveAttackAsync(string attackerId, string attackerName, MarchEvent ev, CancellationToken ct)
     {
-        var now = _clock.NowMs;
-        ulong seed = _world.NextSeed();
-        PvpOutcome? outcome = null;
-        bool found = await ModifyCityAsync(ev.AttackTarget, def => outcome = PvpLogic.ResolveOnDefender(def, ev.AttackSquads, seed, now), ct);
-        if (!found || outcome == null)
-        {
-            outcome = new PvpOutcome { Shielded = true };
-            foreach (var a in ev.AttackSquads) outcome.AttackerSurvivors[a.troop] = a.squad.Count;
-        }
-        string targetName = _world.NameOf(ev.AttackTarget);
-
-        if (!outcome.Shielded && _online.TryGetValue(ev.AttackTarget, out var defender))
-            await SafeSend(defender, MessageTypes.CityAttacked, new CityAttackedMessage
-            {
-                AttackerName = attacker.Record.DisplayName, DefenderWon = !outcome.AttackerWon,
-                Wounded = outcome.DefenderWounded, Dead = outcome.DefenderDead, Plundered = outcome.Plunder,
-            });
-
-        MarchEvent? done;
-        byte[]? snapshot = null;
-        await attacker.Gate.WaitAsync(ct);
         try
         {
-            done = PvpLogic.FinishAttack(attacker.Record.City, ev.MarchId, outcome, now);
-            if (done != null)
+            var now = _clock.NowMs;
+            ulong seed = _world.NextSeed();
+            PvpOutcome? outcome = null;
+            bool found = false;
+            try
             {
-                attacker.Dirty = true;
-                snapshot = JsonSerializer.SerializeToUtf8Bytes(attacker.Record.City, _json);
+                found = await ModifyCityAsync(ev.AttackTarget!, def => outcome = PvpLogic.ResolveOnDefender(def, ev.AttackSquads, seed, now), ct);
             }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // 守方沒有存成功：當作沒開打，攻方原封撤回
+                _log.LogError(ex, "Siege resolution on defender {Def} failed", ev.AttackTarget);
+                outcome = null;
+            }
+            if (!found || outcome == null)
+            {
+                outcome = new PvpOutcome { Shielded = true };
+                foreach (var a in ev.AttackSquads) outcome.AttackerSurvivors[a.troop] = a.squad.Count;
+            }
+            string targetName = _world.NameOf(ev.AttackTarget!);
+
+            if (!outcome.Shielded && _online.TryGetValue(ev.AttackTarget!, out var defender))
+                await SafeSend(defender, MessageTypes.CityAttacked, new CityAttackedMessage
+                {
+                    AttackerName = attackerName, DefenderWon = !outcome.AttackerWon,
+                    Wounded = outcome.DefenderWounded, Dead = outcome.DefenderDead, Plundered = outcome.Plunder,
+                });
+
+            MarchEvent? done = null;
+            await ModifyCityAsync(attackerId, city => done = PvpLogic.FinishAttack(city, ev.MarchId, outcome, now), ct,
+                beforePush: s => done == null ? Task.CompletedTask : SafeSend(s, MessageTypes.MarchArrived, new MarchArrivedMessage
+                {
+                    March = done.MarchId, Hero = done.Hero, Tile = done.Tile, BattleWon = done.BattleWon, BattleLost = done.BattleLost,
+                    Shielded = done.Shielded, Carry = done.Carry, Wounded = done.Wounded, Dead = done.Dead, TargetName = targetName,
+                }));
         }
         finally
         {
-            attacker.Gate.Release();
+            _sieging.TryRemove((attackerId, ev.MarchId), out _);
         }
-        if (done == null || snapshot == null) return;
-        await SafeSend(attacker, MessageTypes.MarchArrived, new MarchArrivedMessage
-        {
-            March = done.MarchId, Hero = done.Hero, Tile = done.Tile, BattleWon = done.BattleWon, BattleLost = done.BattleLost,
-            Shielded = done.Shielded, Carry = done.Carry, Wounded = done.Wounded, Dead = done.Dead, TargetName = targetName,
-        });
-        await SafeSend(attacker, MessageTypes.CityState, new CityStateMessage { ServerTimeMs = now, City = JsonSerializer.Deserialize<CityState>(snapshot, _json) });
     }
 
     public async Task SaveAllAsync(bool force, CancellationToken ct)
     {
         foreach (var session in _online.Values)
-            await SaveSessionAsync(session, force, ct);
+        {
+            if (session.Disconnected) await RetryCloseAsync(session, ct);
+            else await SaveSessionAsync(session, force, ct);
+        }
+    }
+
+    private async Task RetryCloseAsync(PlayerSession session, CancellationToken ct)
+    {
+        var loadLock = LoadLock(session.PlayerId);
+        await loadLock.WaitAsync(ct);
+        try
+        {
+            if (session.Disconnected) await CloseLockedAsync(session);
+        }
+        finally
+        {
+            loadLock.Release();
+        }
     }
 
     private async Task SaveSessionAsync(PlayerSession session, bool force, CancellationToken ct)
@@ -265,15 +365,7 @@ public sealed class SessionManager : BackgroundService
         await session.Gate.WaitAsync(ct);
         try
         {
-            if (!force && !session.Dirty) return;
-            CityLogic.Advance(session.Record.City, _clock.NowMs);
-            await _store.SaveAsync(session.Record, ct);
-            session.Dirty = false;
-            _world.Update(session.Record);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            _log.LogError(ex, "Save failed for {Id}", session.PlayerId);
+            if (!session.Closed) await SaveLockedAsync(session, force, ct);
         }
         finally
         {
@@ -281,30 +373,59 @@ public sealed class SessionManager : BackgroundService
         }
     }
 
+    /// <summary>存檔（呼叫者要持有 Gate）。成功回傳 true；失敗會記錄錯誤並保留 Dirty，下次再試。</summary>
+    private async Task<bool> SaveLockedAsync(PlayerSession session, bool force, CancellationToken ct)
+    {
+        try
+        {
+            if (!force && !session.Dirty) return true;
+            CityLogic.Advance(session.Record.City, _clock.NowMs);
+            await _store.SaveAsync(session.Record, ct);
+            session.Dirty = false;
+            _world.Update(session.Record);
+            return true;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogError(ex, "Save failed for {Id}", session.PlayerId);
+            return false;
+        }
+    }
+
     /// <summary>
-    /// GM 工具：修改某位玩家的城市。在線上就在鎖內改並推播最新狀態；離線就讀檔、修改、存檔。
-    /// （離線修改與該玩家同時登入有極小的競態，GM 工具可接受。）回傳 false 表示找不到玩家。
+    /// 修改某位玩家的城市（GM 工具、攻城結算共用）。在線上就在鎖內改並推播最新狀態；離線就讀檔、修改、存檔。
+    /// 和登入、下線共用 LoadLock，所以離線修改不會和登入讀檔交錯。回傳 false 表示找不到玩家。
+    /// beforePush：線上時，在推播城市狀態之前先送的通知。
     /// </summary>
-    public async Task<bool> ModifyCityAsync(string playerId, Action<CityState> apply, CancellationToken ct)
+    public async Task<bool> ModifyCityAsync(string playerId, Action<CityState> apply, CancellationToken ct,
+        Func<PlayerSession, Task>? beforePush = null)
     {
         var now = _clock.NowMs;
         if (_online.TryGetValue(playerId, out var session))
         {
-            byte[] snapshot;
+            byte[]? snapshot = null;
             await session.Gate.WaitAsync(ct);
             try
             {
-                CityLogic.Advance(session.Record.City, now);
-                apply(session.Record.City);
-                session.Dirty = true;
-                snapshot = JsonSerializer.SerializeToUtf8Bytes(session.Record.City, _json);
+                if (!session.Closed)
+                {
+                    CityLogic.Advance(session.Record.City, now);
+                    apply(session.Record.City);
+                    session.Dirty = true;
+                    snapshot = JsonSerializer.SerializeToUtf8Bytes(session.Record.City, _json);
+                }
             }
             finally
             {
                 session.Gate.Release();
             }
-            await SafeSend(session, MessageTypes.CityState, new CityStateMessage { ServerTimeMs = now, City = JsonSerializer.Deserialize<CityState>(snapshot, _json) });
-            return true;
+            if (snapshot != null)
+            {
+                if (beforePush != null) await beforePush(session);
+                await SafeSend(session, MessageTypes.CityState, new CityStateMessage { ServerTimeMs = now, City = JsonSerializer.Deserialize<CityState>(snapshot, _json) });
+                return true;
+            }
+            // 剛好下線並存完檔：改走離線的路，讀到的就是剛存好的檔
         }
 
         var loadLock = LoadLock(playerId);
@@ -316,7 +437,7 @@ public sealed class SessionManager : BackgroundService
             {
                 loadLock.Release();
                 loadLock = null;
-                return await ModifyCityAsync(playerId, apply, ct);
+                return await ModifyCityAsync(playerId, apply, ct, beforePush);
             }
             var record = await _store.LoadAsync(playerId, ct);
             if (record == null) return false;

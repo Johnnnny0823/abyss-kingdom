@@ -103,6 +103,39 @@ public static class CampTests
         Assert.True(w.CampAvailable(SurfaceLogic.Tile(camp.X, camp.Y), m1.ArriveAt + CampConfig.RespawnMs), "時間到就重生");
     }
 
+    /// <summary>模擬交錯：我方檢查「營地還在」之後、結算之前，另一位玩家先把營地打掉了。</summary>
+    sealed class RivalWinsFirst : IFieldRegistry
+    {
+        readonly SimpleFieldRegistry _inner = new();
+        public bool CampAvailable(int tile, long nowMs)
+        {
+            bool ok = _inner.CampAvailable(tile, nowMs);
+            _inner.TryDefeatCamp(tile, nowMs); // 對手搶先擊敗
+            return ok;
+        }
+        public bool TryDefeatCamp(int tile, long nowMs) => _inner.TryDefeatCamp(tile, nowMs);
+        public ulong NextSeed() => _inner.NextSeed();
+        public string CityOwnerAt(int tile) => _inner.CityOwnerAt(tile);
+        public long Occupy(int tile, string owner, long marchId, long nowMs) => _inner.Occupy(tile, owner, marchId, nowMs);
+        public void Release(int tile, string owner, long marchId, long gathered, long nowMs) => _inner.Release(tile, owner, marchId, gathered, nowMs);
+    }
+
+    [Test]
+    public static void TwoPlayersSameCamp_OnlyOneGetsTheReward()
+    {
+        var (c, camp) = Setup(1);
+        var w = new RivalWinsFirst();
+        long books = c.GetItemCount(ItemType.HeroExpSmall);
+        Assert.Equal(MarchResult.Ok, MarchLogic.Start(c, HeroId.Hold, new() { [TroopType.Shield] = 250 }, camp.X, camp.Y, T0, w, "me"));
+        var m = c.Surface.Marches.Single();
+        var ev = MarchLogic.Advance(c, m.ArriveAt, w, "me").Single();
+        Assert.True(ev.CampGone && !ev.BattleWon, "被搶先擊敗：當作營地已經不在");
+        Assert.Equal(250L, m.Troops[TroopType.Shield], "沒有算這場戰鬥的損失");
+        Assert.True(m.Carry.Count == 0 && m.LootItems.Count == 0, "沒有戰利品");
+        Assert.Equal(books, c.GetItemCount(ItemType.HeroExpSmall), "道具沒有增加");
+        Assert.True(m.Stationed, "駐紮在原地");
+    }
+
     [Test]
     public static void Hospital_Capacity_LimitsWounded()
     {

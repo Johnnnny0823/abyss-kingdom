@@ -51,14 +51,15 @@ public sealed class WorldService : IFieldRegistry
     {
         if (_loaded) return;
         var all = await _store.ListAllAsync(ct);
-        foreach (var r in all)
-        {
-            var s = r.City.Surface;
-            if (!s.Placed) continue;
-            int site = SurfaceLogic.Tile(s.X, s.Y);
-            if (_sites.ContainsKey(site)) continue;
-            Register(site, r);
-        }
+        lock (_sites)
+            foreach (var r in all)
+            {
+                var s = r.City.Surface;
+                if (!s.Placed) continue;
+                int site = SurfaceLogic.Tile(s.X, s.Y);
+                if (_sites.ContainsKey(site)) continue;
+                Register(site, r);
+            }
         lock (_fields)
             foreach (var r in all)
                 foreach (var m in r.City.Surface.Marches)
@@ -67,6 +68,7 @@ public sealed class WorldService : IFieldRegistry
         _log.LogInformation("World loaded: {Count} cities on the surface", _sites.Count);
     }
 
+    /// <summary>登記主城位置（呼叫者要持有 _sites 鎖）。</summary>
     private void Register(int site, PlayerRecord r)
     {
         if (_byPlayer.TryGetValue(r.Id, out var old) && old != site) _sites.Remove(old);
@@ -81,28 +83,32 @@ public sealed class WorldService : IFieldRegistry
         try
         {
             await EnsureLoadedAsync(ct);
-            var s = record.City.Surface;
-            if (s.Placed)
+            // _lock 只負責「讀存檔、分配」不重入；城市索引本身的讀寫一律用 _sites 鎖（查詢端也用它）
+            lock (_sites)
             {
-                int site = SurfaceLogic.Tile(s.X, s.Y);
-                if (!_sites.TryGetValue(site, out var owner) || owner.PlayerId == record.Id)
+                var s = record.City.Surface;
+                if (s.Placed)
                 {
-                    Register(site, record);
+                    int site = SurfaceLogic.Tile(s.X, s.Y);
+                    if (!_sites.TryGetValue(site, out var owner) || owner.PlayerId == record.Id)
+                    {
+                        Register(site, record);
+                        return false;
+                    }
+                }
+
+                var picked = SurfaceLogic.PickSite(_sites.Keys, n => _rng.Next(n));
+                if (picked == null)
+                {
+                    _log.LogWarning("No free city site for {Id}", record.Id);
                     return false;
                 }
+                s.X = picked.Value.x;
+                s.Y = picked.Value.y;
+                Register(SurfaceLogic.Tile(s.X, s.Y), record);
+                _log.LogInformation("Assigned city ({X},{Y}) to {Id}", s.X, s.Y, record.Id);
+                return true;
             }
-
-            var picked = SurfaceLogic.PickSite(_sites.Keys, n => _rng.Next(n));
-            if (picked == null)
-            {
-                _log.LogWarning("No free city site for {Id}", record.Id);
-                return false;
-            }
-            s.X = picked.Value.x;
-            s.Y = picked.Value.y;
-            Register(SurfaceLogic.Tile(s.X, s.Y), record);
-            _log.LogInformation("Assigned city ({X},{Y}) to {Id}", s.X, s.Y, record.Id);
-            return true;
         }
         finally
         {
@@ -176,9 +182,14 @@ public sealed class WorldService : IFieldRegistry
         lock (_campBack) return !_campBack.TryGetValue(tile, out var back) || nowMs >= back;
     }
 
-    public void CampDefeated(int tile, long nowMs)
+    public bool TryDefeatCamp(int tile, long nowMs)
     {
-        lock (_campBack) _campBack[tile] = nowMs + CampConfig.RespawnMs;
+        lock (_campBack)
+        {
+            if (_campBack.TryGetValue(tile, out var back) && nowMs < back) return false;
+            _campBack[tile] = nowMs + CampConfig.RespawnMs;
+            return true;
+        }
     }
 
     public ulong NextSeed() => BitConverter.ToUInt64(System.Security.Cryptography.RandomNumberGenerator.GetBytes(8));

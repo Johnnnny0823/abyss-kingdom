@@ -26,18 +26,23 @@ public static class GameServer
         services.AddHttpClient();
 
         // 登入驗證：Dev（本機開發）或 Firebase（正式）
+        // 只接受明確列出的值：拼錯就拒絕啟動，不會默默退回可偽造身分的 Dev 或關機就清空的記憶體存檔
         var authMode = config["Auth:Mode"] ?? "Dev";
         if (authMode.Equals("Firebase", StringComparison.OrdinalIgnoreCase))
             services.AddSingleton<IAuthVerifier, FirebaseAuthVerifier>();
-        else
+        else if (authMode.Equals("Dev", StringComparison.OrdinalIgnoreCase))
             services.AddSingleton<IAuthVerifier, DevAuthVerifier>();
+        else
+            throw new InvalidOperationException($"Unknown Auth:Mode '{authMode}' (expected Firebase or Dev)");
 
-        // 存檔：Memory（本機開發，關掉就沒了）或 Supabase（正式）
+        // 存檔：Memory / InMemory（本機開發，關掉就沒了）或 Supabase（正式）
         var storeMode = config["Storage:Mode"] ?? "Memory";
         if (storeMode.Equals("Supabase", StringComparison.OrdinalIgnoreCase))
             services.AddSingleton<IPlayerStore, SupabasePlayerStore>();
-        else
+        else if (storeMode.Equals("Memory", StringComparison.OrdinalIgnoreCase) || storeMode.Equals("InMemory", StringComparison.OrdinalIgnoreCase))
             services.AddSingleton<IPlayerStore, InMemoryPlayerStore>();
+        else
+            throw new InvalidOperationException($"Unknown Storage:Mode '{storeMode}' (expected Supabase or Memory)");
 
         services.AddSingleton<WorldService>();
         services.AddSingleton<SessionManager>();
