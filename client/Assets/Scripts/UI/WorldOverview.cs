@@ -36,11 +36,19 @@ namespace AbyssKingdom.Client.UI
             legend.Add(Lbl("● 你的主城", "ov-mine"));
             legend.Add(Lbl("● 其他領主", "ov-other"));
             legend.Add(Lbl("◆ 深淵入口", "ov-gate"));
+            legend.Add(Lbl("◎ 關隘", "ov-pass"));
             legend.Add(Lbl("— 行軍", "ov-march"));
+            legend.Add(Lbl("┅ 到選取點的路線", "ov-route"));
+            legend.Add(Lbl("□ 目前視野", "ov-view"));
             Root.Add(legend);
         }
 
-        public void Refresh(CityState city, List<CityPin> pins, long now) => _canvas.Set(city, pins, now);
+        /// <summary>
+        /// 更新畫面。selected：大地圖上目前選取的格子（畫出從主城過去的路線）；
+        /// view：大地圖鏡頭看到的範圍（四個角的格子座標，順時針），不在大地圖時為 null。
+        /// </summary>
+        public void Refresh(CityState city, List<CityPin> pins, long now, (int x, int y)? selected = null, Vector2[] view = null) =>
+            _canvas.Set(city, pins, now, selected, view);
 
         private sealed class Canvas : VisualElement
         {
@@ -49,6 +57,10 @@ namespace AbyssKingdom.Client.UI
             private List<CityPin> _pins = new List<CityPin>();
             private long _now;
             private float _nextRepaint;
+            private (int x, int y)? _selected;
+            private Vector2[] _view;
+            private string _routeKey;
+            private List<(int x, int y)> _route;
 
             public Canvas()
             {
@@ -56,6 +68,10 @@ namespace AbyssKingdom.Client.UI
                 style.width = Px;
                 style.height = Px;
                 generateVisualContent += Draw;
+                // 分區名稱：放在每一圈的正北方
+                ZoneLabel(SurfaceZone.Outer, (SurfaceConfig.MiddleOuter + SurfaceConfig.OuterRadius) / 2);
+                ZoneLabel(SurfaceZone.Middle, (SurfaceConfig.RimOuter + SurfaceConfig.MiddleOuter) / 2);
+                ZoneLabel(SurfaceZone.Rim, (SurfaceConfig.PitRadius + SurfaceConfig.RimOuter) / 2);
                 RegisterCallback<PointerDownEvent>(e =>
                 {
                     int x = Mathf.Clamp(Mathf.RoundToInt(e.localPosition.x / Px * SurfaceConfig.Size), 0, SurfaceConfig.Size - 1);
@@ -64,11 +80,25 @@ namespace AbyssKingdom.Client.UI
                 });
             }
 
-            public void Set(CityState city, List<CityPin> pins, long now)
+            private void ZoneLabel(SurfaceZone zone, int radius)
+            {
+                var l = Lbl(DisplayNames.Zones[zone], "ov-zone");
+                l.pickingMode = PickingMode.Ignore;
+                l.style.position = Position.Absolute;
+                var at = P(SurfaceConfig.Center, SurfaceConfig.Center - radius);
+                l.style.left = at.x - 40;
+                l.style.top = at.y - 10;
+                l.style.width = 80;
+                Add(l);
+            }
+
+            public void Set(CityState city, List<CityPin> pins, long now, (int x, int y)? selected, Vector2[] view)
             {
                 _city = city;
                 _pins = pins ?? new List<CityPin>();
                 _now = now;
+                _selected = selected;
+                _view = view;
                 if (Time.unscaledTime < _nextRepaint) return;
                 _nextRepaint = Time.unscaledTime + .5f;
                 MarkDirtyRepaint();
@@ -212,6 +242,20 @@ namespace AbyssKingdom.Client.UI
                     }
                 }
 
+                // 關隘：山脈上唯一能通過的缺口，用金色圓圈標出來
+                for (int b = 0; b < 2; b++)
+                    for (int i = 0; i < SurfaceConfig.PassesPerBoundary; i++)
+                    {
+                        var (qx, qy) = SurfaceLogic.Pass(b, i);
+                        p.BeginPath();
+                        p.Arc(P(qx, qy), 5.5f, Angle.Degrees(0), Angle.Degrees(360));
+                        p.fillColor = C(40, 34, 30, 200);
+                        p.Fill();
+                        p.lineWidth = 2;
+                        p.strokeColor = C(255, 205, 110);
+                        p.Stroke();
+                    }
+
                 DrawAbyss(p);
 
                 // 深淵入口
@@ -261,6 +305,59 @@ namespace AbyssKingdom.Client.UI
                         p.fillColor = Color.white;
                         p.Fill();
                     }
+
+                DrawRoute(p);
+                DrawView(p);
+            }
+
+            /// <summary>從自己的主城到選取點的出征路線（虛線，經過哪些關隘一目了然）＋目標圈。</summary>
+            private void DrawRoute(Painter2D p)
+            {
+                if (_city == null || !_selected.HasValue || !_city.Surface.Placed) return;
+                var (sx, sy) = _selected.Value;
+                var home = SurfaceLogic.CityCenter(_city.Surface);
+                string key = $"{home.x},{home.y}>{sx},{sy}";
+                if (key != _routeKey)
+                {
+                    _routeKey = key;
+                    _route = SurfaceLogic.Walkable(sx, sy) ? MarchLogic.FindPath(home.x, home.y, sx, sy) : null;
+                }
+                if (_route != null)
+                    for (int k = 0; k + 1 < _route.Count; k++)
+                    {
+                        var a = P(_route[k].x, _route[k].y);
+                        var b = P(_route[k + 1].x, _route[k + 1].y);
+                        float len = Vector2.Distance(a, b);
+                        for (float d = 0; d < len; d += 9f)
+                        {
+                            p.BeginPath();
+                            p.MoveTo(Vector2.Lerp(a, b, d / len));
+                            p.LineTo(Vector2.Lerp(a, b, Mathf.Min(d + 5f, len) / len));
+                            p.lineWidth = 2.2f;
+                            p.strokeColor = C(255, 255, 255, 230);
+                            p.Stroke();
+                        }
+                    }
+                p.BeginPath();
+                p.Arc(P(sx, sy), 7f, Angle.Degrees(0), Angle.Degrees(360));
+                p.lineWidth = 2.2f;
+                p.strokeColor = Color.white;
+                p.Stroke();
+            }
+
+            /// <summary>大地圖鏡頭目前看到的範圍。</summary>
+            private void DrawView(Painter2D p)
+            {
+                if (_view == null || _view.Length != 4) return;
+                p.BeginPath();
+                p.MoveTo(P(_view[0].x, _view[0].y));
+                for (int k = 1; k < 4; k++) p.LineTo(P(_view[k].x, _view[k].y));
+                p.ClosePath();
+                p.fillColor = C(255, 255, 255, 28);
+                p.Fill();
+                p.lineWidth = 1.6f;
+                p.strokeColor = C(255, 255, 255, 200);
+                p.Stroke();
             }
         }
     }

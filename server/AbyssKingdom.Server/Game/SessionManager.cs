@@ -337,6 +337,37 @@ public sealed class SessionManager : BackgroundService
         }
     }
 
+    /// <summary>
+    /// 替離線玩家結算到期的採集（採滿就放開資源田、部隊回城），不必等他重新登入。
+    /// 只處理「佔著田、而且到了採滿時間」的離線玩家；離線期間抵達敵城的行軍也一併結算。
+    /// </summary>
+    public async Task SweepOfflineGatherersAsync(CancellationToken ct)
+    {
+        var now = _clock.NowMs;
+        foreach (var owner in _world.OfflineOccupantsDue(now, id => _online.ContainsKey(id)))
+        {
+            List<MarchEvent> events = new();
+            Dictionary<int, long>? still = null;
+            bool found;
+            try
+            {
+                found = await ModifyCityAsync(owner, city =>
+                {
+                    events = AdvanceMarches(city, owner, now);
+                    still = city.Surface.Marches.Where(m => m.Gathering).ToDictionary(m => m.Destination, m => m.GatherEndMs);
+                }, ct);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _log.LogError(ex, "Offline gather settlement failed for {Id}", owner);
+                continue; // 下次掃描再試
+            }
+            _world.AfterOfflineCheck(owner, found ? still : null);
+            foreach (var ev in events.Where(e => e.AttackTarget != null))
+                await ResolveAttackAsync(owner, _world.NameOf(owner), ev, ct);
+        }
+    }
+
     public async Task SaveAllAsync(bool force, CancellationToken ct)
     {
         foreach (var session in _online.Values)
@@ -474,6 +505,7 @@ public sealed class SessionManager : BackgroundService
                     {
                         lastSave = DateTime.UtcNow;
                         await SaveAllAsync(force: false, stoppingToken);
+                        await SweepOfflineGatherersAsync(stoppingToken);
                     }
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)

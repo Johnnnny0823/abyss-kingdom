@@ -415,8 +415,22 @@ namespace AbyssKingdom.Client.UI
             box.Add(_overview.Root);
             _overviewModal = OpenModal(box);
             var city = G.Predicted();
-            if (city != null) _overview.Refresh(city, G.Cities, G.ServerNowMs);
+            if (city != null) _overview.Refresh(city, G.Cities, G.ServerNowMs, _continent.Selected, SurfaceViewQuad());
             G.RequestCities();
+        }
+
+        /// <summary>大地圖鏡頭看到的地面範圍（畫面四角打到地面的格子座標）；不在大地圖時回傳 null。</summary>
+        private Vector2[] SurfaceViewQuad()
+        {
+            if (_world == null || _world.Current != WorldScene.Mode.Surface) return null;
+            var corners = new[] { new Vector2(0, Screen.height), new Vector2(Screen.width, Screen.height), new Vector2(Screen.width, 0), new Vector2(0, 0) };
+            var quad = new Vector2[4];
+            for (int i = 0; i < 4; i++)
+            {
+                if (!_world.Ground(corners[i], out var hit)) return null;
+                quad[i] = new Vector2(hit.x / SurfaceView.S + SurfaceConfig.Center, -hit.z / SurfaceView.S + SurfaceConfig.Center);
+            }
+            return quad;
         }
 
         private void ToggleHome()
@@ -518,7 +532,7 @@ namespace AbyssKingdom.Client.UI
                 case PageHospital: _hospital.Refresh(city, now); break;
             }
             if (_dialog != null) RefreshDialog(city, now);
-            if (_overviewModal != null && _overviewModal.panel != null) _overview.Refresh(city, G.Cities, now);
+            if (_overviewModal != null && _overviewModal.panel != null) _overview.Refresh(city, G.Cities, now, _continent.Selected, SurfaceViewQuad());
         }
 
         private void RefreshItems(CityState city)

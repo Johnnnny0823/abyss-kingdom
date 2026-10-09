@@ -521,6 +521,63 @@ public static class ServerIntegrationTests
     }
 
     [Test]
+    public static async Task Gather_OfflineGathererFinishes_FieldFreedWithoutRelogin()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        var field = SurfaceLogic.Features().First(f => f.Type == FeatureType.ResourceField && f.Level == 1
+            && SurfaceLogic.Sites().Any(s => s.z == SurfaceZone.Outer && SurfaceLogic.Dist2(s.x, s.y, f.X, f.Y) < 225));
+        var site = SurfaceLogic.Sites().First(s => s.z == SurfaceZone.Outer && SurfaceLogic.Dist2(s.x, s.y, field.X, field.Y) < 900);
+
+        March gathering;
+        await using (var a = new TestClient())
+        {
+            await a.ConnectAsync(server.WsUri);
+            await a.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:afk", DisplayName = "掛機者" });
+            await a.ExpectAsync(MessageTypes.CityState);
+            await server.Sessions.ModifyCityAsync("dev-afk", city =>
+            {
+                city.Surface.X = site.x;
+                city.Surface.Y = site.y;
+                city.Troops[TroopType.Shield] = 100;
+            }, CancellationToken.None);
+            await a.ExpectAsync(MessageTypes.CityState);
+            await a.SendAsync(MessageTypes.MapMarch, new MapMarchRequest { Hero = HeroId.Hold, Troops = new() { [TroopType.Shield] = 50 }, X = field.X, Y = field.Y });
+            var m = City(await a.ExpectAsync(MessageTypes.CityState)).Surface.Marches[0];
+            server.Clock.Advance(m.ArriveAt - server.Clock.NowMs);
+            await server.Sessions.TickAsync(CancellationToken.None);
+            Assert.True((await a.ExpectAsync(MessageTypes.MarchArrived)).GetProperty("data").GetProperty("gathering").GetBoolean(), "開始採集");
+            gathering = City(await a.ExpectAsync(MessageTypes.CityState)).Surface.Marches[0];
+        }
+        for (int i = 0; i < 50 && server.Sessions.OnlineCount > 0; i++) await Task.Delay(50);
+        Assert.Equal(0, server.Sessions.OnlineCount, "採集者下線");
+
+        // 還沒採滿：掃描不會動它
+        await server.Sessions.SweepOfflineGatherersAsync(CancellationToken.None);
+        await using var b = new TestClient();
+        await b.ConnectAsync(server.WsUri);
+        await b.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:watcher" });
+        await b.ExpectAsync(MessageTypes.CityState);
+        await b.SendAsync(MessageTypes.WorldTile, new TileInfoRequest { X = field.X, Y = field.Y });
+        Assert.Equal("掛機者", (await b.ExpectAsync(MessageTypes.WorldTile)).GetProperty("data").GetProperty("occupant").GetString(), "採集中仍佔著");
+
+        // 採滿的時間過了：不用等他上線，田就放開、存量扣掉
+        server.Clock.Advance(gathering.GatherEndMs - server.Clock.NowMs + 1);
+        await server.Sessions.SweepOfflineGatherersAsync(CancellationToken.None);
+        await b.SendAsync(MessageTypes.WorldTile, new TileInfoRequest { X = field.X, Y = field.Y });
+        var info = (await b.ExpectAsync(MessageTypes.WorldTile)).GetProperty("data");
+        Assert.True(info.TryGetProperty("occupant", out var occ) == false || occ.ValueKind == JsonValueKind.Null, "田已經放開");
+        Assert.Equal(GatherConfig.FieldStock(1) - 600, info.GetProperty("stock").GetInt64(), "存量扣掉採走的量");
+
+        // 存檔裡部隊已經在回城路上，採到的資源帶著
+        await using var again = new TestClient();
+        await again.ConnectAsync(server.WsUri);
+        await again.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:afk" });
+        var back = City(await again.ExpectAsync(MessageTypes.CityState)).Surface.Marches.Single();
+        Assert.True(back.Returning && back.Carry.Values.Sum() == 600, "回城中、帶著 600");
+    }
+
+    [Test]
     public static async Task Camp_LostFight_WoundedThenHealed()
     {
         await using var server = new TestServer();

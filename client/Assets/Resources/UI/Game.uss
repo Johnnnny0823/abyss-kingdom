@@ -506,10 +506,17 @@
 /* ───── 全區地圖 ───── */
 .overview-dialog { width: 640px; }
 .overview-canvas { margin-top: 8px; border-radius: 8px; overflow: hidden; }
-.overview-legend { margin-top: 8px; }
+.overview-legend { margin-top: 8px; flex-wrap: wrap; }
 .overview-legend Label { margin-right: 14px; font-size: 12px; }
 .ov-mine { color: rgb(255, 214, 110); }
 .ov-other { color: rgb(220, 90, 80); }
 .ov-gate { color: rgb(110, 240, 215); }
 .ov-march { color: rgb(255, 226, 140); }
+.ov-pass { color: rgb(255, 205, 110); }
+.ov-route { color: rgb(255, 255, 255); }
+.ov-view { color: rgb(220, 220, 220); }
+.ov-zone {
+    color: rgb(250, 244, 228); font-size: 13px; -unity-font-style: bold; -unity-text-align: middle-center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9); letter-spacing: 4px;
+}
 .hud-btn-map { border-color: rgb(110, 240, 215); }

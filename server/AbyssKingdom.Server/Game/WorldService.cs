@@ -20,6 +20,8 @@ public sealed class WorldService : IFieldRegistry
         public string? Owner;
         public long March;
         public long RespawnAt;
+        /// <summary>佔用者離線時，最早什麼時候需要替他結算（通常是採滿的時間）；0 表示還不知道、下次掃描就查。</summary>
+        public long CheckAt;
     }
 
     private readonly Dictionary<int, Field> _fields = new();
@@ -63,7 +65,7 @@ public sealed class WorldService : IFieldRegistry
         lock (_fields)
             foreach (var r in all)
                 foreach (var m in r.City.Surface.Marches)
-                    if (m.Gathering) _fields[m.Destination] = new Field { Stock = MaxStock(m.Destination), Owner = r.Id, March = m.Id };
+                    if (m.Gathering) _fields[m.Destination] = new Field { Stock = MaxStock(m.Destination), Owner = r.Id, March = m.Id, CheckAt = m.GatherEndMs };
         _loaded = true;
         _log.LogInformation("World loaded: {Count} cities on the surface", _sites.Count);
     }
@@ -159,8 +161,33 @@ public sealed class WorldService : IFieldRegistry
             if (f.Stock <= 0) return 0;
             f.Owner = owner;
             f.March = marchId;
+            f.CheckAt = 0;
             return f.Stock;
         }
+    }
+
+    /// <summary>
+    /// 被離線玩家佔用、而且到了該替他結算時間的資源田的佔用者（不重複）。
+    /// 線上玩家由每秒的推進處理，這裡只管離線的，避免採滿了還一直佔著田。
+    /// </summary>
+    public List<string> OfflineOccupantsDue(long nowMs, Func<string, bool> isOnline)
+    {
+        lock (_fields)
+            return _fields.Values
+                .Where(f => f.Owner != null && nowMs >= f.CheckAt && !isOnline(f.Owner))
+                .Select(f => f.Owner!).Distinct().ToList();
+    }
+
+    /// <summary>替離線佔用者結算後：還在採的田記下採滿時間，到時再查；佔用者已經找不到的就放開。</summary>
+    public void AfterOfflineCheck(string owner, Dictionary<int, long>? stillGatheringUntil)
+    {
+        lock (_fields)
+            foreach (var (tile, f) in _fields)
+            {
+                if (f.Owner != owner) continue;
+                if (stillGatheringUntil != null && stillGatheringUntil.TryGetValue(tile, out var until)) f.CheckAt = until;
+                else f.Owner = null; // 存檔裡已經沒有這支採集中的行軍
+            }
     }
 
     public void Release(int tile, string owner, long marchId, long gathered, long nowMs)

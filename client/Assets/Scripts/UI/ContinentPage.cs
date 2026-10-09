@@ -57,6 +57,9 @@ namespace AbyssKingdom.Client.UI
             Root.Add(_desc);
         }
 
+        /// <summary>目前選取的格子（沒有選取為 null）。</summary>
+        public (int x, int y)? Selected => _selected;
+
         public void Select(int x, int y)
         {
             _selected = (x, y);
