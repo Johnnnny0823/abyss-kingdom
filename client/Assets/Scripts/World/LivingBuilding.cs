@@ -46,7 +46,60 @@ namespace AbyssKingdom.Client.World
             shadow.name = "ContactShadow";
 
             lb.SpawnMotes(w, artName, width, height);
+            lb.SpawnSmoke(artName, width, height);
             return lb;
+        }
+
+        private static Material _smokeMat;
+        private static string _chimneyJson;
+
+        /// <summary>煙囪冒煙：位置來自 Art/Buildings/chimneys.json（{"Sawmill_1":[[u,v]], ...}，u 從左、v 從下）。</summary>
+        private void SpawnSmoke(string artName, float width, float height)
+        {
+            if (_chimneyJson == null) _chimneyJson = Resources.Load<TextAsset>("Art/Buildings/chimneys")?.text ?? "";
+            int i = _chimneyJson.IndexOf("\"" + artName + "\"", System.StringComparison.Ordinal);
+            if (i < 0) return;
+            int end = _chimneyJson.IndexOf("]]", i, System.StringComparison.Ordinal);
+            var spots = ParseRunes("{\"runes\":" + _chimneyJson.Substring(_chimneyJson.IndexOf('[', i), end + 2 - _chimneyJson.IndexOf('[', i)) + "}");
+            if (_smokeMat == null) _smokeMat = Resources.Load<Material>("Abyss/Smoke");
+            if (_smokeMat == null) return;
+            foreach (var s in spots)
+            {
+                var go = new GameObject("ChimneySmoke") { layer = WorldScene.Layer };
+                go.transform.SetParent(_art, false);
+                go.transform.localPosition = new Vector3((s.x - .5f) * width, s.y * height, -.02f);
+                var ps = go.AddComponent<ParticleSystem>();
+                ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                var main = ps.main;
+                main.startLifetime = new ParticleSystem.MinMaxCurve(2.5f, 3.5f);
+                main.startSpeed = 0f;
+                main.startSize = new ParticleSystem.MinMaxCurve(.09f, .14f);
+                main.startRotation = new ParticleSystem.MinMaxCurve(0f, 6.28f);
+                main.startColor = new Color(.85f, .83f, .8f, .8f);
+                main.simulationSpace = ParticleSystemSimulationSpace.World;
+                main.maxParticles = 30;
+                var emission = ps.emission;
+                emission.rateOverTime = 4f;
+                var shape = ps.shape;
+                shape.enabled = false;
+                var vel = ps.velocityOverLifetime;
+                vel.enabled = true;
+                vel.space = ParticleSystemSimulationSpace.World;
+                vel.x = new ParticleSystem.MinMaxCurve(.03f, .09f); // 微風往右吹
+                vel.y = new ParticleSystem.MinMaxCurve(.12f, .18f);
+                vel.z = new ParticleSystem.MinMaxCurve(0f, 0f);
+                var size = ps.sizeOverLifetime;
+                size.enabled = true;
+                size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0, .6f, 1, 2.6f));
+                var col = ps.colorOverLifetime;
+                col.enabled = true;
+                var grad = new Gradient();
+                grad.SetKeys(new[] { new GradientColorKey(Color.white, 0), new GradientColorKey(new Color(.7f, .7f, .72f), 1) },
+                    new[] { new GradientAlphaKey(0, 0), new GradientAlphaKey(.85f, .15f), new GradientAlphaKey(0, 1) });
+                col.color = grad;
+                go.GetComponent<ParticleSystemRenderer>().sharedMaterial = _smokeMat;
+                ps.Play();
+            }
         }
 
         private void SpawnMotes(WorldScene w, string artName, float width, float height)

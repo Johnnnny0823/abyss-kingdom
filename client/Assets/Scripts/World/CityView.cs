@@ -79,6 +79,8 @@ namespace AbyssKingdom.Client.World
             _select = w.Prim(PrimitiveType.Cube, Color.white, Vector3.zero, Vector3.one, Root);
             _select.GetComponent<Renderer>().sharedMaterial = w.Glow;
             _select.SetActive(false);
+
+            CityWalkers.Create(w, Root, () => _state);
         }
 
         /// <summary>格子 (x, y) 為佔地左上角時，建築中心的世界座標。</summary>

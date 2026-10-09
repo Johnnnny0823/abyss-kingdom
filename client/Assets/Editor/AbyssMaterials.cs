@@ -27,6 +27,10 @@ public static class AbyssMaterials
         mote.mainTexture = AssetDatabase.GetBuiltinExtraResource<Texture2D>("Default-Particle.psd");
         mote.SetColor("_TintColor", new Color(0.5f, 0.5f, 0.5f, 0.5f));
         EditorUtility.SetDirty(mote);
+        var smoke = Load(Shader.Find("Legacy Shaders/Particles/Alpha Blended"), "Smoke");
+        smoke.mainTexture = AssetDatabase.GetBuiltinExtraResource<Texture2D>("Default-Particle.psd");
+        smoke.SetColor("_TintColor", new Color(0.5f, 0.5f, 0.5f, 0.5f));
+        EditorUtility.SetDirty(smoke);
         // 深淵的霧（半透明、微微發光）與坑口光暈（青綠）
         MakeFade(standard, "Mist", new Color(0.72f, 0.78f, 0.84f, 1f), new Color(0.08f, 0.1f, 0.12f));
         MakeFade(standard, "RimGlow", new Color(0.4f, 0.95f, 0.85f, 1f), new Color(0.2f, 0.9f, 0.75f));

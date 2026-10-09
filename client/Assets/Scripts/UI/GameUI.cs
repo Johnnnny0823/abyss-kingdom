@@ -158,6 +158,7 @@ namespace AbyssKingdom.Client.UI
                     _continent.Select(f.X, f.Y);
                 }).StartingIn(4000);
             if (Array.IndexOf(args, "-hospital") >= 0) OpenPage(PageHospital);
+            if (Array.IndexOf(args, "-overview") >= 0) _root.schedule.Execute(OpenOverview).StartingIn(4000);
             int ti = Array.IndexOf(args, "-tile");
             if (ti >= 0 && ti + 2 < args.Length && int.TryParse(args[ti + 1], out var tx) && int.TryParse(args[ti + 2], out var ty))
                 _root.schedule.Execute(() => { _continent.Select(tx, ty); _continent.FocusTile(tx, ty); }).StartingIn(3000);
@@ -303,6 +304,7 @@ namespace AbyssKingdom.Client.UI
                 int idx = i;
                 right.Add(Btn(PageNames[i], () => OpenPage(idx), "hud-btn"));
             }
+            right.Add(Btn("全圖", OpenOverview, "hud-btn", "hud-btn-map"));
             hud.Add(right);
             game.Add(hud);
 
@@ -386,6 +388,35 @@ namespace AbyssKingdom.Client.UI
             if (panel == null) return false;
             var p = RuntimePanelUtils.ScreenToPanel(panel, new Vector2(screen.x, Screen.height - screen.y));
             return panel.Pick(p) != null;
+        }
+
+        private WorldOverview _overview;
+        private VisualElement _overviewModal;
+
+        /// <summary>全區地圖：彈出整張大陸的俯視圖；點選位置就切到大地圖並把鏡頭移過去。</summary>
+        private void OpenOverview()
+        {
+            if (_overview == null)
+            {
+                _overview = new WorldOverview();
+                _overview.TilePicked += (x, y) =>
+                {
+                    if (_world.Current != WorldScene.Mode.Surface) ToggleHome();
+                    _continent.FocusTile(x, y);
+                    _overviewModal?.RemoveFromHierarchy();
+                    _overviewModal = null;
+                };
+            }
+            var box = El("dialog", "overview-dialog");
+            var head = El("row");
+            head.Add(Lbl("全區地圖", "panel-title", "grow"));
+            head.Add(Btn("關閉", () => { _overviewModal?.RemoveFromHierarchy(); _overviewModal = null; }, "btn-small"));
+            box.Add(head);
+            box.Add(_overview.Root);
+            _overviewModal = OpenModal(box);
+            var city = G.Predicted();
+            if (city != null) _overview.Refresh(city, G.Cities, G.ServerNowMs);
+            G.RequestCities();
         }
 
         private void ToggleHome()
@@ -487,6 +518,7 @@ namespace AbyssKingdom.Client.UI
                 case PageHospital: _hospital.Refresh(city, now); break;
             }
             if (_dialog != null) RefreshDialog(city, now);
+            if (_overviewModal != null && _overviewModal.panel != null) _overview.Refresh(city, G.Cities, now);
         }
 
         private void RefreshItems(CityState city)

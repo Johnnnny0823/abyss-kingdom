@@ -45,6 +45,7 @@ namespace AbyssKingdom.Client.World
                     _chunks[cx, cy] = w.Group($"Chunk{cx}_{cy}", Root, Vector3.zero);
             BuildGround();
             BuildWalls();
+            BuildOuterValley();
             foreach (var f in SurfaceLogic.Features()) BuildFeature(f);
             BuildTrees();
             _select = w.Prim(PrimitiveType.Cube, Color.white, Vector3.zero, Vector3.one, Root);
@@ -124,6 +125,27 @@ namespace AbyssKingdom.Client.World
                         _w.Prim(PrimitiveType.Cylinder, new Color32(150, 60, 50, 255), tower + Vector3.up * 0.76f, new Vector3(0.42f, 0.06f, 0.42f), t);
                     }
                     _w.Text(t, center + Vector3.up * 0.9f, 0.05f, new Color(1f, 0.9f, 0.6f)).text = "關隘";
+                }
+            }
+        }
+
+        /// <summary>整張地圖最外圍環繞的山谷：兩排錯開的高山，沒有缺口。</summary>
+        private void BuildOuterValley()
+        {
+            for (int row = 0; row < 2; row++)
+            {
+                float r = SurfaceConfig.OuterRadius + 4 + row * 7;
+                int n = Mathf.RoundToInt(2 * Mathf.PI * r / 4.5f);
+                for (int i = 0; i < n; i++)
+                {
+                    float a = (i + row * .5f) * Mathf.PI * 2 / n;
+                    float jitter = (Hash(i, 40 + row) % 5 - 2) * .8f;
+                    int x = SurfaceConfig.Center + Mathf.RoundToInt(Mathf.Cos(a) * (r + jitter));
+                    int y = SurfaceConfig.Center + Mathf.RoundToInt(Mathf.Sin(a) * (r + jitter));
+                    var p = TilePos(x, y);
+                    float k = 1.3f + row * .35f + Hash(i, 50 + row) % 4 * .12f;
+                    if (ModelLibrary.Spawn("World/Mountain", ChunkOf(x, y), p, S * k, Hash(i, 60 + row), Hash(i, 70 + row) % 360) != null) continue;
+                    _w.Prim(PrimitiveType.Sphere, new Color32(110, 100, 90, 255), p + Vector3.up * .4f * k, new Vector3(1.2f * k, 1.1f * k, 1.2f * k), ChunkOf(x, y));
                 }
             }
         }
