@@ -21,6 +21,9 @@ namespace AbyssKingdom.Shared.Map
         /// <summary>打贏時，每種資源可掠奪「超過保護量部分」的比例（%）。</summary>
         public const long PlunderPercent = 20;
 
+        /// <summary>守方的攻城紀錄保留多久（正常情況攻方套用完就刪；這是當機後留下的紀錄的上限）。</summary>
+        public const long SiegeLogKeepMs = 30L * 24 * 3_600_000;
+
         /// <summary>城防（城牆）：主堡等級越高越硬。部隊打光了也要先打穿城防。</summary>
         public static SquadInput Wall(int keepLevel)
         {
@@ -33,17 +36,21 @@ namespace AbyssKingdom.Shared.Map
         }
     }
 
-    /// <summary>攻城的結果：先在守方身上結算（扣兵、掠奪），再交給攻方套用。</summary>
+    /// <summary>攻城的結果：先在守方身上結算（扣兵、掠奪），再交給攻方套用。也存在守方的攻城紀錄裡（所以用屬性，才會被存檔）。</summary>
     public sealed class PvpOutcome
     {
-        public bool Shielded;            // 對方有新手護盾，沒有開打
-        public bool AttackerWon;
-        public BattleResult Report;
-        public Dictionary<TroopType, long> AttackerLosses = new Dictionary<TroopType, long>();
-        public Dictionary<TroopType, long> AttackerSurvivors = new Dictionary<TroopType, long>();
-        public Dictionary<ResourceType, long> Plunder = new Dictionary<ResourceType, long>();
-        public Dictionary<TroopType, long> DefenderWounded = new Dictionary<TroopType, long>();
-        public Dictionary<TroopType, long> DefenderDead = new Dictionary<TroopType, long>();
+        /// <summary>對方有新手護盾，沒有開打。</summary>
+        public bool Shielded { get; set; }
+        public bool AttackerWon { get; set; }
+        /// <summary>精簡過的戰報：只留攻方小隊與攻方的剋制出手（攻方主將累積修練值用得到的部分）。</summary>
+        public BattleResult Report { get; set; }
+        public Dictionary<TroopType, long> AttackerLosses { get; set; } = new Dictionary<TroopType, long>();
+        public Dictionary<TroopType, long> AttackerSurvivors { get; set; } = new Dictionary<TroopType, long>();
+        public Dictionary<ResourceType, long> Plunder { get; set; } = new Dictionary<ResourceType, long>();
+        public Dictionary<TroopType, long> DefenderWounded { get; set; } = new Dictionary<TroopType, long>();
+        public Dictionary<TroopType, long> DefenderDead { get; set; } = new Dictionary<TroopType, long>();
+        /// <summary>在守方身上結算的時間（攻城紀錄過期清理用）。</summary>
+        public long AtMs { get; set; }
     }
 
     public static class PvpLogic
@@ -115,7 +122,43 @@ namespace AbyssKingdom.Shared.Map
         /// 在守方城市上結算一次攻城（呼叫者要持有守方的鎖）：開打、守方部隊損失（七成傷兵進醫館）、
         /// 攻方打贏就掠奪資源（受攻方倖存部隊的載重限制）。攻方的狀態不在這裡改，交給 FinishAttack。
         /// </summary>
-        public static PvpOutcome ResolveOnDefender(CityState defender, List<(SquadInput squad, TroopType troop)> attackers, ulong seed, long nowMs)
+        public static PvpOutcome ResolveOnDefender(CityState defender, List<(SquadInput squad, TroopType troop)> attackers, ulong seed, long nowMs,
+            string battleId = null)
+        {
+            // 同一場仗重試（伺服器停機後接續）：直接拿回當初的結果，守方不會被打兩次
+            if (battleId != null && defender.SiegeLog.TryGetValue(battleId, out var done)) return done;
+            var o = Fight(defender, attackers, seed, nowMs);
+            if (battleId != null && !o.Shielded)
+            {
+                o.AtMs = nowMs;
+                PruneSiegeLog(defender, nowMs);
+                defender.SiegeLog[battleId] = o;
+            }
+            return o;
+        }
+
+        /// <summary>攻方已經套用完結果：刪掉守方的這筆攻城紀錄。</summary>
+        public static bool ForgetSiege(CityState defender, string battleId) => battleId != null && defender.SiegeLog.Remove(battleId);
+
+        /// <summary>清掉過期的攻城紀錄（當機後沒刪掉的）。</summary>
+        public static void PruneSiegeLog(CityState defender, long nowMs)
+        {
+            var old = new List<string>();
+            foreach (var kv in defender.SiegeLog)
+                if (nowMs - kv.Value.AtMs > PvpConfig.SiegeLogKeepMs) old.Add(kv.Key);
+            foreach (var k in old) defender.SiegeLog.Remove(k);
+        }
+
+        /// <summary>精簡戰報：守方小隊與其他出手紀錄不存（攻城紀錄要存進守方存檔，越小越好）。</summary>
+        static BattleResult Compact(BattleResult r)
+        {
+            var c = new BattleResult { Outcome = r.Outcome, Rounds = r.Rounds, Seed = r.Seed, Attackers = r.Attackers };
+            foreach (var a in r.Actions)
+                if (a.Side == BattleSide.Attacker && a.CounterPercent > 100) c.Actions.Add(a);
+            return c;
+        }
+
+        static PvpOutcome Fight(CityState defender, List<(SquadInput squad, TroopType troop)> attackers, ulong seed, long nowMs)
         {
             var o = new PvpOutcome();
             if (IsShielded(defender, nowMs))
@@ -131,7 +174,7 @@ namespace AbyssKingdom.Shared.Map
             var dIn = new List<SquadInput>();
             foreach (var d in def) dIn.Add(d.squad);
             var report = BattleEngine.Run(aIn, dIn, seed);
-            o.Report = report;
+            o.Report = Compact(report);
             o.AttackerWon = report.Outcome == BattleOutcome.AttackerWins;
 
             for (int i = 0; i < attackers.Count; i++)
@@ -188,6 +231,7 @@ namespace AbyssKingdom.Shared.Map
             var m = attacker.Surface.Marches.Find(x => x.Id == marchId);
             if (m == null || !m.Sieging) return null;
             m.Sieging = false;
+            m.SiegeTarget = null;
             var ev = new MarchEvent { MarchId = m.Id, Hero = m.Hero, Tile = m.Destination, Shielded = o.Shielded };
             if (!o.Shielded)
             {

@@ -78,6 +78,40 @@ public sealed class SessionManager : BackgroundService
     /// </summary>
     public List<MarchEvent> AdvanceMarches(PlayerSession session, long nowMs) => AdvanceMarches(session.Record.City, session.PlayerId, nowMs);
 
+    /// <summary>卡在城下、又不在結算中的攻城：重新產生攻城事件並登記為結算中（呼叫者要持有該玩家的鎖或 LoadLock）。</summary>
+    private List<MarchEvent> ResumeSieges(CityState city, string playerId, long nowMs)
+    {
+        var events = MarchLogic.ResumeSieges(city, nowMs, id => _sieging.ContainsKey((playerId, id)));
+        foreach (var ev in events) _sieging[(playerId, ev.MarchId)] = 0;
+        return events;
+    }
+
+    /// <summary>
+    /// 線上玩家的攻城如果結算失敗（例如守方存檔失敗）會留在城下：定期用同一個戰鬥 ID 重試。
+    /// 離線玩家的會在下次登入時接續。
+    /// </summary>
+    public async Task RecoverStuckSiegesAsync(CancellationToken ct)
+    {
+        var now = _clock.NowMs;
+        foreach (var session in _online.Values)
+        {
+            if (session.Record.City.Surface.Marches.All(m => !m.Sieging)) continue;
+            List<MarchEvent> events;
+            await session.Gate.WaitAsync(ct);
+            try
+            {
+                if (session.Closed) continue;
+                events = ResumeSieges(session.Record.City, session.PlayerId, now);
+                if (events.Count > 0) session.Dirty = true;
+            }
+            finally
+            {
+                session.Gate.Release();
+            }
+            await ResolveAttacksAsync(session, events, ct);
+        }
+    }
+
     private List<MarchEvent> AdvanceMarches(CityState city, string playerId, long nowMs)
     {
         var events = MarchLogic.Advance(city, nowMs, _world, playerId);
@@ -149,9 +183,11 @@ public sealed class SessionManager : BackgroundService
         if (LegacyMigration.Run(record.City)) session.Dirty = true; // 舊深淵行軍的部隊還給兵營
         if (PvpLogic.GrantNewbieShieldOnce(record.City, _clock.NowMs)) session.Dirty = true; // 功能上線前的舊帳號也有一次新手護盾
         if (await _world.EnsureSiteAsync(record, ct)) session.Dirty = true; // 地表主城位置
-        // 上次攻城結算到一半伺服器就停了（存檔裡卡在城下、又沒有在結算）：不開打、原封撤回
-        if (MarchLogic.AbortSieges(record.City, _clock.NowMs, id => _sieging.ContainsKey((playerId, id))) > 0) session.Dirty = true;
+        // 上次攻城結算到一半伺服器就停了（存檔裡卡在城下、又沒有在結算）：用同一個戰鬥 ID 接著結算
+        var resumed = ResumeSieges(record.City, playerId, _clock.NowMs);
+        if (resumed.Count > 0) session.Dirty = true;
         var loginEvents = AdvanceMarches(record.City, playerId, _clock.NowMs);
+        loginEvents.AddRange(resumed);
         if (loginEvents.Count > 0) session.Dirty = true; // 離線期間抵達、採集的行軍
         var added = _online.GetOrAdd(playerId, session);
         if (!ReferenceEquals(added, session))
@@ -290,24 +326,28 @@ public sealed class SessionManager : BackgroundService
     /// 1. 在守方身上開打、扣兵、掠奪（守方在線就鎖 Gate，離線就讀檔改完存回）；
     /// 2. 回到攻方身上（同樣在線或離線都可以），套用倖存部隊與掠奪品，行軍回城。
     /// 結算期間行軍維持「攻城中」，不能被召回；兩段都完成（或失敗）才解除登記。
+    /// 每場仗有戰鬥 ID：守方的結果和扣兵一起存檔（攻城紀錄），兩段都立刻存檔，攻方存好後才刪紀錄。
+    /// 任何一段之間停機，重開後重試會拿到同一個結果——守方不會被打兩次，攻方也不會白拿或白損。
     /// </summary>
     private async Task ResolveAttackAsync(string attackerId, string attackerName, MarchEvent ev, CancellationToken ct)
     {
+        string battleId = $"{attackerId}:{ev.MarchId}";
         try
         {
             var now = _clock.NowMs;
             ulong seed = _world.NextSeed();
             PvpOutcome? outcome = null;
-            bool found = false;
+            bool found;
             try
             {
-                found = await ModifyCityAsync(ev.AttackTarget!, def => outcome = PvpLogic.ResolveOnDefender(def, ev.AttackSquads, seed, now), ct);
+                found = await ModifyCityAsync(ev.AttackTarget!, def => outcome = PvpLogic.ResolveOnDefender(def, ev.AttackSquads, seed, now, battleId), ct,
+                    saveNow: true);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                // 守方沒有存成功：當作沒開打，攻方原封撤回
-                _log.LogError(ex, "Siege resolution on defender {Def} failed", ev.AttackTarget);
-                outcome = null;
+                // 守方那邊沒存成功：行軍留在城下，之後的復原掃描會用同一個戰鬥 ID 重試
+                _log.LogError(ex, "Siege {Battle} failed on defender {Def}; will retry", battleId, ev.AttackTarget);
+                return;
             }
             if (!found || outcome == null)
             {
@@ -329,7 +369,14 @@ public sealed class SessionManager : BackgroundService
                 {
                     March = done.MarchId, Hero = done.Hero, Tile = done.Tile, BattleWon = done.BattleWon, BattleLost = done.BattleLost,
                     Shielded = done.Shielded, Carry = done.Carry, Wounded = done.Wounded, Dead = done.Dead, TargetName = targetName,
-                }));
+                }), saveNow: true);
+
+            // 攻方已經存好：守方的這筆紀錄可以刪了（失敗也沒關係，30 天後會自動清掉）
+            if (found && !outcome.Shielded)
+            {
+                try { await ModifyCityAsync(ev.AttackTarget!, def => PvpLogic.ForgetSiege(def, battleId), ct); }
+                catch (Exception ex) when (ex is not OperationCanceledException) { _log.LogWarning(ex, "Could not clear siege log {Battle}", battleId); }
+            }
         }
         finally
         {
@@ -427,9 +474,10 @@ public sealed class SessionManager : BackgroundService
     /// 修改某位玩家的城市（GM 工具、攻城結算共用）。在線上就在鎖內改並推播最新狀態；離線就讀檔、修改、存檔。
     /// 和登入、下線共用 LoadLock，所以離線修改不會和登入讀檔交錯。回傳 false 表示找不到玩家。
     /// beforePush：線上時，在推播城市狀態之前先送的通知。
+    /// saveNow：線上時也立刻存檔（攻城結算用；離線本來就會立刻存）。
     /// </summary>
     public async Task<bool> ModifyCityAsync(string playerId, Action<CityState> apply, CancellationToken ct,
-        Func<PlayerSession, Task>? beforePush = null)
+        Func<PlayerSession, Task>? beforePush = null, bool saveNow = false)
     {
         var now = _clock.NowMs;
         if (_online.TryGetValue(playerId, out var session))
@@ -443,6 +491,7 @@ public sealed class SessionManager : BackgroundService
                     CityLogic.Advance(session.Record.City, now);
                     apply(session.Record.City);
                     session.Dirty = true;
+                    if (saveNow) await SaveLockedAsync(session, force: true, ct);
                     snapshot = JsonSerializer.SerializeToUtf8Bytes(session.Record.City, _json);
                 }
             }
@@ -468,7 +517,7 @@ public sealed class SessionManager : BackgroundService
             {
                 loadLock.Release();
                 loadLock = null;
-                return await ModifyCityAsync(playerId, apply, ct, beforePush);
+                return await ModifyCityAsync(playerId, apply, ct, beforePush, saveNow);
             }
             var record = await _store.LoadAsync(playerId, ct);
             if (record == null) return false;
@@ -506,6 +555,7 @@ public sealed class SessionManager : BackgroundService
                         lastSave = DateTime.UtcNow;
                         await SaveAllAsync(force: false, stoppingToken);
                         await SweepOfflineGatherersAsync(stoppingToken);
+                        await RecoverStuckSiegesAsync(stoppingToken);
                     }
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)

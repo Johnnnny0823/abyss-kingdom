@@ -116,6 +116,17 @@ public static class ServerIntegrationTests
     static CityState City(JsonElement msg) =>
         msg.GetProperty("data").GetProperty("city").Deserialize<CityState>(Json.Options)!;
 
+    /// <summary>要一份最新的城市狀態（略過之前排在佇列裡的推播）。</summary>
+    static async Task<CityState> FreshCity(TestClient c)
+    {
+        int req = await c.SendAsync(MessageTypes.CityGet, null);
+        while (true)
+        {
+            var msg = await c.ExpectAsync(MessageTypes.CityState);
+            if (msg.GetProperty("reqId").GetInt32() == req) return City(msg);
+        }
+    }
+
     [Test]
     public static async Task Login_ReturnsPlayerAndCity()
     {
@@ -693,6 +704,73 @@ public static class ServerIntegrationTests
         Assert.True(result.GetProperty("battleWon").GetBoolean(), "攻方收到戰果");
         var back = City(await atk.ExpectAsync(MessageTypes.CityState)).Surface.Marches[0];
         Assert.True(back.Returning && !back.Sieging, "沒有卡在城下");
+    }
+
+    [Test]
+    public static async Task Pvp_CrashBetweenPhases_ResumesWithSameResult_DefenderHitOnce()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        await using var def = new TestClient();
+        await def.ConnectAsync(server.WsUri);
+        await def.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:victim", DisplayName = "受害者" });
+        var defCity = City(await def.ExpectAsync(MessageTypes.CityState));
+        await server.Sessions.ModifyCityAsync("dev-victim", c =>
+        {
+            c.ShieldUntilMs = 0;
+            c.Troops[TroopType.Shield] = 10;
+            foreach (var r in CityConfig.AllResources) c.Resources[r] = 5000;
+        }, CancellationToken.None);
+
+        long marchId;
+        await using (var atk = new TestClient())
+        {
+            await atk.ConnectAsync(server.WsUri);
+            await atk.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:crasher", DisplayName = "當機者" });
+            await atk.ExpectAsync(MessageTypes.CityState);
+            await server.Sessions.ModifyCityAsync("dev-crasher", c => c.Troops[TroopType.Shield] = 250, CancellationToken.None);
+            await atk.ExpectAsync(MessageTypes.CityState);
+            await atk.SendAsync(MessageTypes.MapMarch, new MapMarchRequest { Hero = HeroId.Hold, Troops = new() { [TroopType.Shield] = 250 }, X = defCity.Surface.X, Y = defCity.Surface.Y });
+            var m = City(await atk.ExpectAsync(MessageTypes.CityState)).Surface.Marches[0];
+            marchId = m.Id;
+            server.Clock.Advance(m.ArriveAt - server.Clock.NowMs);
+        }
+        for (int i = 0; i < 50 && server.Sessions.OnlineCount > 1; i++) await Task.Delay(50);
+
+        // 模擬「守方那段結算完、存好了，攻方還沒套用就停機」：攻方存檔卡在城下，守方有攻城紀錄
+        var now = server.Clock.NowMs;
+        List<(AbyssKingdom.Shared.Battle.SquadInput squad, TroopType troop)>? squads = null;
+        await server.Sessions.ModifyCityAsync("dev-crasher", c =>
+        {
+            var reg = new SimpleFieldRegistry();
+            reg.SetCity(defCity.Surface.X, defCity.Surface.Y, "dev-victim");
+            squads = MarchLogic.Advance(c, now, reg, "dev-crasher").Single().AttackSquads;
+        }, CancellationToken.None);
+        string battleId = $"dev-crasher:{marchId}";
+        PvpOutcome? phase1 = null;
+        await server.Sessions.ModifyCityAsync("dev-victim", d => phase1 = PvpLogic.ResolveOnDefender(d, squads!, 7, now, battleId), CancellationToken.None);
+        var hit = await FreshCity(def);
+        Assert.True(hit.SiegeLog.ContainsKey(battleId), "守方記下了這場仗");
+        long troopsAfterHit = hit.GetTroops(TroopType.Shield);
+        long woodAfterHit = hit.GetResource(ResourceType.Wood);
+        Assert.True(woodAfterHit < 5000, "守方已經被搶");
+
+        // 攻方重新登入：接著結算，拿回同一個結果
+        await using var again = new TestClient();
+        await again.ConnectAsync(server.WsUri);
+        await again.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:crasher" });
+        // 登入時先接續結算（戰果推播），才回登入結果
+        var result = (await again.ExpectAsync(MessageTypes.MarchArrived)).GetProperty("data");
+        Assert.True(result.GetProperty("battleWon").GetBoolean(), "攻方收到戰果");
+        var back = (await FreshCity(again)).Surface.Marches.Single();
+        Assert.True(back.Returning && !back.Sieging, "不再卡在城下");
+        Assert.Equal(phase1!.Plunder.Values.Sum(), back.Carry.Values.Sum(), "帶走的正好是當初搶到的");
+
+        CityState after = await FreshCity(def);
+        for (int i = 0; i < 40 && after.SiegeLog.Count > 0; i++) { await Task.Delay(50); after = await FreshCity(def); } // 等第三段（刪紀錄）跑完
+        Assert.Equal(troopsAfterHit, after.GetTroops(TroopType.Shield), "守方沒有被打第二次");
+        Assert.Equal(woodAfterHit, after.GetResource(ResourceType.Wood), "資源沒有被搶第二次");
+        Assert.Equal(0, after.SiegeLog.Count, "攻方套用完，紀錄刪掉");
     }
 
     /// <summary>可以模擬存檔失敗的記憶體存檔。</summary>

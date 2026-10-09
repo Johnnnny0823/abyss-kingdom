@@ -39,6 +39,8 @@ namespace AbyssKingdom.Shared.Map
 
         /// <summary>抵達敵方主城、等伺服器結算攻城中。</summary>
         public bool Sieging { get; set; }
+        /// <summary>攻城中：守方的玩家 ID（伺服器重開後接著結算用）。</summary>
+        public string SiegeTarget { get; set; }
         public long GatherEndMs => GatherStartMs + (GatherCap * 60_000 + GatherRatePerMin - 1) / System.Math.Max(1, GatherRatePerMin);
 
         public int Destination => Path[Path.Count - 1];
@@ -337,8 +339,7 @@ namespace AbyssKingdom.Shared.Map
         }
 
         /// <summary>
-        /// 中斷攻城（伺服器在結算途中當機、重開後的復原用）：不開打，部隊原封不動撤回。
-        /// excluded 裡的行軍正在結算中，不處理。回傳撤回了幾支。
+        /// 中斷攻城：不開打，部隊原封不動撤回。excluded 裡的行軍正在結算中，不處理。回傳撤回了幾支。
         /// </summary>
         public static int AbortSieges(CityState city, long nowMs, Func<long, bool> excluded = null)
         {
@@ -347,10 +348,35 @@ namespace AbyssKingdom.Shared.Map
             {
                 if (!m.Sieging || (excluded != null && excluded(m.Id))) continue;
                 m.Sieging = false;
+                m.SiegeTarget = null;
                 TurnBack(city, m, nowMs);
                 n++;
             }
             return n;
+        }
+
+        /// <summary>
+        /// 接續卡在城下的攻城（伺服器在兩段結算之間停機、重開後）：重新產生攻城事件交給伺服器結算。
+        /// 守方若已經結算過，會從守方的攻城紀錄拿回同一個結果（PvpLogic.ResolveOnDefender 用戰鬥 ID 判斷），不會打兩次。
+        /// 不知道守方是誰（舊存檔）或卡太久（紀錄可能已經清掉）的，就不開打、原封撤回。
+        /// excluded 裡的行軍正在結算中，不處理。
+        /// </summary>
+        public static List<MarchEvent> ResumeSieges(CityState city, long nowMs, Func<long, bool> excluded = null)
+        {
+            var events = new List<MarchEvent>();
+            foreach (var m in city.Surface.Marches)
+            {
+                if (!m.Sieging || (excluded != null && excluded(m.Id))) continue;
+                if (string.IsNullOrEmpty(m.SiegeTarget) || nowMs - m.ArriveAt > PvpConfig.SiegeLogKeepMs)
+                {
+                    m.Sieging = false;
+                    m.SiegeTarget = null;
+                    TurnBack(city, m, nowMs);
+                    continue;
+                }
+                events.Add(new MarchEvent { MarchId = m.Id, Hero = m.Hero, Tile = m.Destination, AttackTarget = m.SiegeTarget, AttackSquads = Squads(city, m) });
+            }
+            return events;
         }
 
         internal static void TurnBack(CityState city, March march, long nowMs)
@@ -450,6 +476,7 @@ namespace AbyssKingdom.Shared.Map
                     // 攻城：先駐紮在城下，交給伺服器到守方那邊結算
                     m.Stationed = true;
                     m.Sieging = true;
+                    m.SiegeTarget = cityOwner;
                     events.Add(new MarchEvent { MarchId = m.Id, Hero = m.Hero, Tile = m.Destination, AttackTarget = cityOwner, AttackSquads = Squads(city, m) });
                     continue;
                 }

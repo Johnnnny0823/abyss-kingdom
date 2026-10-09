@@ -160,6 +160,64 @@ public static class PvpTests
     }
 
     [Test]
+    public static void SameBattleId_ResolvedOnce_RetryGetsSameOutcome()
+    {
+        var (atk, def, w) = Setup();
+        foreach (var r in CityConfig.AllResources) def.Resources[r] = 5000;
+        def.Troops[TroopType.Shield] = 10;
+        MarchLogic.Start(atk, HeroId.Hold, new() { [TroopType.Shield] = 250 }, def.Surface.X, def.Surface.Y, T0, w, "atk");
+        var m = atk.Surface.Marches[0];
+        var arrive = MarchLogic.Advance(atk, m.ArriveAt, w, "atk").Single();
+        Assert.Equal("def", m.SiegeTarget, "記下守方是誰");
+
+        var first = PvpLogic.ResolveOnDefender(def, arrive.AttackSquads, 42, m.ArriveAt, "atk:1");
+        long troopsAfter = def.GetTroops(TroopType.Shield);
+        long woodAfter = def.GetResource(ResourceType.Wood);
+        Assert.True(def.SiegeLog.ContainsKey("atk:1"), "結果和扣兵一起記在守方");
+
+        // 伺服器停機後重試：不同種子也拿回同一個結果，守方沒有再被打一次
+        var again = PvpLogic.ResolveOnDefender(def, arrive.AttackSquads, 999, m.ArriveAt + 5000, "atk:1");
+        Assert.True(ReferenceEquals(first, again) || again.Plunder.Values.Sum() == first.Plunder.Values.Sum(), "同一個結果");
+        Assert.Equal(troopsAfter, def.GetTroops(TroopType.Shield), "守方部隊沒有再扣");
+        Assert.Equal(woodAfter, def.GetResource(ResourceType.Wood), "資源沒有再被搶");
+
+        Assert.NotNull(PvpLogic.FinishAttack(atk, m.Id, again, m.ArriveAt), "攻方套用");
+        Assert.True(!m.Sieging && m.SiegeTarget == null, "解除攻城狀態");
+        Assert.True(PvpLogic.ForgetSiege(def, "atk:1") && def.SiegeLog.Count == 0, "攻方套用完就刪紀錄");
+    }
+
+    [Test]
+    public static void SiegeLog_OldEntriesArePruned()
+    {
+        var (atk, def, w) = Setup();
+        def.SiegeLog["old"] = new PvpOutcome { AtMs = T0 };
+        def.SiegeLog["new"] = new PvpOutcome { AtMs = T0 + PvpConfig.SiegeLogKeepMs };
+        PvpLogic.PruneSiegeLog(def, T0 + PvpConfig.SiegeLogKeepMs + 1);
+        Assert.True(!def.SiegeLog.ContainsKey("old") && def.SiegeLog.ContainsKey("new"), "超過 30 天的清掉");
+    }
+
+    [Test]
+    public static void ResumeSieges_ReemitsAttack_OrAbortsWhenTargetUnknown()
+    {
+        var (atk, def, w) = Setup();
+        MarchLogic.Start(atk, HeroId.Hold, new() { [TroopType.Shield] = 50 }, def.Surface.X, def.Surface.Y, T0, w, "atk");
+        MarchLogic.Start(atk, HeroId.Vesper, new() { [TroopType.Shield] = 10 }, def.Surface.X, def.Surface.Y, T0, w, "atk");
+        long t = atk.Surface.Marches.Max(x => x.ArriveAt);
+        MarchLogic.Advance(atk, t, w, "atk");
+        var a = atk.Surface.Marches[0];
+        var b = atk.Surface.Marches[1];
+        b.SiegeTarget = null; // 舊存檔：不知道守方是誰
+
+        var evs = MarchLogic.ResumeSieges(atk, t + 1000);
+        Assert.Equal(1, evs.Count, "知道守方的接著結算");
+        Assert.Equal("def", evs[0].AttackTarget);
+        Assert.Equal(a.Id, evs[0].MarchId);
+        Assert.True(a.Sieging, "仍在城下等結算");
+        Assert.True(!b.Sieging && b.Returning, "不知道守方的原封撤回");
+        Assert.Equal(0, MarchLogic.ResumeSieges(atk, t + 1000, id => id == a.Id).Count, "結算中的不重複產生");
+    }
+
+    [Test]
     public static void AbortSieges_TurnsBackWithoutFight_SkipsInFlight()
     {
         var (atk, def, w) = Setup();

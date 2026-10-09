@@ -54,6 +54,12 @@ namespace AbyssKingdom.Shared.City
         /// <summary>新手護盾的版本：0/1 = 舊版 24 小時，2 = 7 天。</summary>
         public int NewbieShieldVersion { get; set; }
 
+        /// <summary>
+        /// 守方的攻城紀錄（戰鬥 ID → 結果）：在守方身上結算時和扣兵、掠奪一起存檔，攻方套用完才刪掉。
+        /// 伺服器在兩段結算之間停機時，靠它讓重試拿到同一個結果，守方不會被打兩次。
+        /// </summary>
+        public Dictionary<string, Map.PvpOutcome> SiegeLog { get; set; } = new Dictionary<string, Map.PvpOutcome>();
+
         /// <summary>地表：主城位置。</summary>
         public SurfaceState Surface { get; set; } = new SurfaceState();
 
