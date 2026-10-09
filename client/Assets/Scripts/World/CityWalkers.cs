@@ -5,8 +5,8 @@ using UnityEngine;
 namespace AbyssKingdom.Client.World
 {
     /// <summary>
-    /// 城內走動的小人：在各建築門口之間來回，路線用格子 BFS 繞開建築地基。
-    /// 建築被拖到別處後，下一段路線自然會跟著新位置走。純畫面效果，不影響規則。
+    /// 城內走動的小人：在已蓋好的建築門口之間來回，路線用格子 BFS 繞開建築地基。
+    /// 建築被拖到別處後，正在走的人立刻改走新路線。純畫面效果，不影響規則。
     /// 圖片：Resources/Art/People/*.png（沒有就不生成小人）。
     /// </summary>
     public sealed class CityWalkers : MonoBehaviour
@@ -51,10 +51,26 @@ namespace AbyssKingdom.Client.World
             return cw;
         }
 
+        private int _layoutSig;
+        private bool[,] _blocked;
+
         private void Update()
         {
             var state = _state?.Invoke();
             if (state == null) return;
+
+            // 建築被拖走、蓋好或拆掉：重算阻擋格，正在走的人立刻改走新路線（不會穿過剛放下的建築）
+            int sig = LayoutSig(state);
+            if (sig != _layoutSig || _blocked == null)
+            {
+                bool first = _blocked == null;
+                _layoutSig = sig;
+                _blocked = Blocked(state);
+                if (!first)
+                    foreach (var wk in _walkers)
+                        if (wk.Path.Count > 0) Plan(wk, state);
+            }
+
             foreach (var wk in _walkers)
             {
                 if (wk.Path.Count == 0)
@@ -96,15 +112,26 @@ namespace AbyssKingdom.Client.World
                 Mathf.Clamp(Mathf.FloorToInt(-p.z / CityView.CellSize + half), 0, CityLayout.GridSize - 1));
         }
 
-        /// <summary>門口 = 建築正面（畫面下方）中間外面那一格。</summary>
-        private static (int x, int y) Door(CityState s, BuildingType t)
+        private static bool In(int x, int y) => x >= 0 && y >= 0 && x < CityLayout.GridSize && y < CityLayout.GridSize;
+
+        private static int LayoutSig(CityState s)
         {
-            var c = CityLayout.CellOf(s, t);
-            int f = CityLayout.Footprint(t);
-            return (Mathf.Clamp(c.X + f / 2, 0, CityLayout.GridSize - 1), Mathf.Clamp(c.Y + f, 0, CityLayout.GridSize - 1));
+            unchecked
+            {
+                int h = 17;
+                foreach (var t in CityConfig.AllBuildings)
+                {
+                    var c = CityLayout.CellOf(s, t);
+                    h = h * 31 + c.X;
+                    h = h * 31 + c.Y;
+                    h = h * 31 + (s.GetLevel(t) > 0 ? 1 : 0);
+                }
+                return h;
+            }
         }
 
-        private void Plan(Walker wk, CityState s)
+        /// <summary>所有建築（含還沒蓋的空地）的地基格。</summary>
+        private static bool[,] Blocked(CityState s)
         {
             var blocked = new bool[CityLayout.GridSize, CityLayout.GridSize];
             foreach (var t in CityConfig.AllBuildings)
@@ -113,21 +140,49 @@ namespace AbyssKingdom.Client.World
                 int f = CityLayout.Footprint(t);
                 for (int dy = 0; dy < f; dy++)
                     for (int dx = 0; dx < f; dx++)
-                    {
-                        int x = c.X + dx, y = c.Y + dy;
-                        if (x >= 0 && y >= 0 && x < CityLayout.GridSize && y < CityLayout.GridSize) blocked[x, y] = true;
-                    }
+                        if (In(c.X + dx, c.Y + dy)) blocked[c.X + dx, c.Y + dy] = true;
             }
-            var types = CityConfig.AllBuildings;
-            var goal = Door(s, types[Random.Range(0, types.Length)]);
+            return blocked;
+        }
+
+        /// <summary>
+        /// 門口：建築周圍第一個走得到的格子。優先正面（畫面下方）中間，其次正面其他格、兩側、背面；
+        /// 靠城牆或被其他建築擋住時就換一邊，不會落在任何建築的地基上。都被堵住回傳 null。
+        /// </summary>
+        private static (int x, int y)? Door(CityState s, BuildingType t, bool[,] blocked)
+        {
+            var c = CityLayout.CellOf(s, t);
+            int f = CityLayout.Footprint(t);
+            var candidates = new List<(int x, int y)> { (c.X + f / 2, c.Y + f) };
+            for (int i = 0; i < f; i++) candidates.Add((c.X + i, c.Y + f));           // 正面
+            for (int i = f - 1; i >= 0; i--) { candidates.Add((c.X - 1, c.Y + i)); candidates.Add((c.X + f, c.Y + i)); } // 兩側
+            for (int i = 0; i < f; i++) candidates.Add((c.X + i, c.Y - 1));           // 背面
+            foreach (var (x, y) in candidates)
+                if (In(x, y) && !blocked[x, y]) return (x, y);
+            return null;
+        }
+
+        private void Plan(Walker wk, CityState s)
+        {
+            var blocked = _blocked ?? Blocked(s);
+            // 只去已經蓋好的建築（空地沒有人進出）
+            var built = new List<BuildingType>();
+            foreach (var t in CityConfig.AllBuildings)
+                if (s.GetLevel(t) > 0) built.Add(t);
+            wk.Path.Clear();
+            if (built.Count == 0) { wk.Wait = 2f; return; }
+            var goal = Door(s, built[Random.Range(0, built.Count)], blocked);
+
             var start = CellAt(wk.Root.localPosition);
             if (wk.Root.localPosition == Vector3.zero) // 第一次：從主堡門口出發
             {
-                start = Door(s, BuildingType.Keep);
+                var keepDoor = Door(s, BuildingType.Keep, blocked);
+                if (keepDoor == null) { wk.Wait = 2f; return; }
+                start = keepDoor.Value;
                 wk.Root.localPosition = CellCenter(start.x, start.y);
             }
-            var cells = Bfs(blocked, start, goal);
-            wk.Path.Clear();
+            if (goal == null || goal.Value == start) { wk.Wait = 2f; return; }
+            var cells = Bfs(blocked, start, goal.Value);
             if (cells == null) { wk.Wait = 2f; return; }
             foreach (var (x, y) in cells)
                 wk.Path.Add(CellCenter(x, y) + new Vector3(Random.Range(-.08f, .08f), 0, Random.Range(-.08f, .08f)));
@@ -149,7 +204,7 @@ namespace AbyssKingdom.Client.World
                 {
                     var nb = (c.x + dx, c.y + dy);
                     if (nb.Item1 < 0 || nb.Item2 < 0 || nb.Item1 >= n || nb.Item2 >= n) continue;
-                    if (blocked[nb.Item1, nb.Item2] && nb != goal) continue;
+                    if (blocked[nb.Item1, nb.Item2]) continue; // 起點可以在地基上（建築剛被放到人身上），走出來就好
                     if (prev.ContainsKey(nb)) continue;
                     prev[nb] = c;
                     q.Enqueue(nb);
