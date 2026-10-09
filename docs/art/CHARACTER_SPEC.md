@@ -108,6 +108,22 @@ large ornate level 3, same camera angle for all three
 - **醫館**：`an infirmary with white plaster walls and a teal roof, herb garden beds, a teal diamond rune sign above the door, no red cross`
 - **空地基**（單張就好）：`an empty stone building foundation with wooden stakes and rope marking the plot, a few stacked stones`
 
+## 4c. 城內建築的 2.5D 動態（2026-10-09 使用者定案：自由拖曳建築＋2D 精緻圖＋2.5D 動態）
+
+- 每張建築圖由 `tools/art/make_fx_masks.py` 自動產生效果遮罩 `<名稱>_fx.png`（R 契印、G 暖光、B 布料），以及契印位置 `<名稱>_fx.json`。換圖或加新圖之後要重跑這支程式。
+- 著色器 `Assets/Shaders/LivingSprite.shader`：契印慢慢呼吸發光；窗燈與發光菇像燭光一樣閃爍；下垂的旗幟布條隨風擺動。
+- `World/LivingBuilding.cs` 負責三件事：
+  - 從契印飄出上升的光點
+  - 建築腳下的接觸陰影
+  - 點選時的高亮脈動與輕彈
+- 遮罩是用顏色和形狀判斷的，判斷規則在程式開頭，誤判時調那裡：
+  - 屋頂瓦不算布料（只留細長的布條）
+  - 金色飾邊不算燈光（只留成塊的亮點）
+  - 青綠屋頂不算契印（只留小而亮的發光塊）
+- 之後的擴充：
+  - **Spine 或 Live2D 骨架動畫**：給主將立繪和士兵用，需要授權費和骨架綁定（在 Spine 編輯器或 Live2D Cubism 裡手動綁），AI 很難代做。
+  - **煙囪冒煙、人物沿路走動**：要先在每張圖上標出煙囪和道路位置。
+
 ## 5. 放進遊戲
 
 1. 去背、裁成規定尺寸，用規定的檔名存成 PNG。

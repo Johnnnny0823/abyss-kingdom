@@ -22,6 +22,7 @@ namespace AbyssKingdom.Client.World
         private readonly WorldScene _w;
         private readonly Dictionary<BuildingType, Transform> _buildings = new Dictionary<BuildingType, Transform>();
         private readonly Dictionary<BuildingType, string> _signatures = new Dictionary<BuildingType, string>();
+        private readonly Dictionary<BuildingType, LivingBuilding> _living = new Dictionary<BuildingType, LivingBuilding>();
         private readonly Dictionary<BuildingType, (Cell cell, float until)> _pending = new Dictionary<BuildingType, (Cell, float)>();
         private readonly GameObject _ghost, _gridLines, _select;
         private Material _ok, _bad;
@@ -122,12 +123,17 @@ namespace AbyssKingdom.Client.World
                 {
                     _signatures[type] = sig;
                     if (_buildings.TryGetValue(type, out var t)) UnityEngine.Object.Destroy(t.gameObject);
+                    _living.Remove(type);
                     _buildings[type] = BuildBuilding(type, level, upgrading);
                 }
                 if (Moving != type) _buildings[type].localPosition = PositionOf(type);
             }
 
-            _select.SetActive(selected.HasValue && Moving == null);
+            foreach (var kv in _living)
+                if (kv.Value != null) kv.Value.SetSelected(selected == kv.Key && Moving == null);
+            // 2D 建築用自己的高亮，不再顯示選取方框
+            bool selIsLiving = selected.HasValue && _living.TryGetValue(selected.Value, out var lv) && lv != null;
+            _select.SetActive(selected.HasValue && Moving == null && !selIsLiving);
             if (selected.HasValue)
             {
                 float f = CityLayout.Footprint(selected.Value) * CellSize;
@@ -162,9 +168,11 @@ namespace AbyssKingdom.Client.World
             if (tex != null)
             {
                 var art = _w.Group("Art2D", t, new Vector3(0, 0, -f * .3f));
-                art.gameObject.AddComponent<SpriteRenderer>().sprite = AbyssKingdom.Client.UI.ArtLibrary.SpriteOfWidth(tex, f * 1.1f);
+                var sr = art.gameObject.AddComponent<SpriteRenderer>();
+                sr.sprite = AbyssKingdom.Client.UI.ArtLibrary.SpriteOfWidth(tex, f * 1.1f);
                 _w.AddBillboard(art);
                 float h = f * 1.1f * tex.height / tex.width;
+                _living[type] = LivingBuilding.Attach(_w, t, art, sr, artName, f * 1.1f, h);
                 if (upgrading)
                 {
                     var glow = _w.Prim(PrimitiveType.Cube, Color.white, new Vector3(0, h + .2f, 0), new Vector3(0.14f, 0.14f, 0.14f), t);

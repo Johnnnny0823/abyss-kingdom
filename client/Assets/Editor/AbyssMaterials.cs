@@ -20,6 +20,13 @@ public static class AbyssMaterials
         // 主畫面灰盒的基底材質（顏色在執行期換）與選取標記的發光材質
         Make(standard, "Chamber", new Color(0.48f, 0.45f, 0.42f), smooth: 0.2f);
         Make(standard, "Select", new Color(1f, 0.85f, 0.45f), new Color(1.2f, 0.9f, 0.4f));
+        // 2D 建築圖的動態著色器與契印光點
+        var living = Load(Shader.Find("AbyssKingdom/LivingSprite"), "LivingSprite");
+        EditorUtility.SetDirty(living);
+        var mote = Load(Shader.Find("Legacy Shaders/Particles/Additive"), "Mote");
+        mote.mainTexture = AssetDatabase.GetBuiltinExtraResource<Texture2D>("Default-Particle.psd");
+        mote.SetColor("_TintColor", new Color(0.5f, 0.5f, 0.5f, 0.5f));
+        EditorUtility.SetDirty(mote);
         // 深淵的霧（半透明、微微發光）與坑口光暈（青綠）
         MakeFade(standard, "Mist", new Color(0.72f, 0.78f, 0.84f, 1f), new Color(0.08f, 0.1f, 0.12f));
         MakeFade(standard, "RimGlow", new Color(0.4f, 0.95f, 0.85f, 1f), new Color(0.2f, 0.9f, 0.75f));
