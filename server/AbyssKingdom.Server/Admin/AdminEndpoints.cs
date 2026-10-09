@@ -11,9 +11,12 @@ public sealed class AdminGrant
     public Dictionary<ResourceType, long>? Resources { get; set; }
     public Dictionary<ItemType, long>? Items { get; set; }
     public Dictionary<TroopType, long>? Troops { get; set; }
+    /// <summary>直接設定建築等級（測試與美術檢查用，限 0~最高等級）。</summary>
+    public Dictionary<BuildingType, int>? Buildings { get; set; }
 
     public void ApplyTo(CityState city)
     {
+        foreach (var (k, v) in Buildings ?? new()) city.Buildings[k] = Math.Clamp(v, 0, CityConfig.MaxLevel);
         foreach (var (k, v) in Resources ?? new()) city.Resources[k] = Math.Max(0, city.GetResource(k) + v);
         foreach (var (k, v) in Items ?? new()) city.Items[k] = Math.Max(0, city.GetItemCount(k) + v);
         foreach (var (k, v) in Troops ?? new()) city.Troops[k] = Math.Max(0, city.GetTroops(k) + v);
