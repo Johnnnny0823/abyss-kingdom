@@ -10,5 +10,8 @@ namespace AbyssKingdom.Client.World
     public static class ArtSettings
     {
         public static readonly bool City3D = Array.IndexOf(Environment.GetCommandLineArgs(), "-city2d") < 0;
+
+        /// <summary>建築等級對應的外觀：1 = Lv.1～3、2 = Lv.4～6、3 = Lv.7～10（城內與大地圖主城共用）。</summary>
+        public static int TierOf(int level) => level <= 3 ? 1 : level <= 6 ? 2 : 3;
     }
 }

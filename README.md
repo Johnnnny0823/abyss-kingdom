@@ -89,5 +89,5 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | ← | `world.tile` | `{ x, y, stock, max, occupant, mine, campBackAt }` |
 | ← | `city.healingCompleted` | `{ troops }`（治療完成，伺服器主動推播） |
 | ← | `city.attacked` | `{ attackerName, defenderWon, wounded, dead, plundered }`（你的主城被攻打，伺服器主動推播） |
-| ← | `world.cities` | `{ cities: [{ x, y, name, power, mine, shielded }] }` |
+| ← | `world.cities` | `{ cities: [{ x, y, name, power, mine, shielded, keepLevel }] }` |
 | ← | `error` | `{ code, detail }` |

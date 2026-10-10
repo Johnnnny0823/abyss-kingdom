@@ -192,6 +192,8 @@ namespace AbyssKingdom.Shared.Protocol
         public bool Mine { get; set; }
         /// <summary>護盾中（不能被攻打）。</summary>
         public bool Shielded { get; set; }
+        /// <summary>主堡等級（大地圖上依等級顯示不同外觀的主城）。</summary>
+        public int KeepLevel { get; set; }
     }
 
     /// <summary>查詢地表某一格的即時狀態（目前只有資源田的存量與誰在採）。</summary>

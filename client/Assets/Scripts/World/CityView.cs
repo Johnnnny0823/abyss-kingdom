@@ -179,7 +179,7 @@ namespace AbyssKingdom.Client.World
 
             // 美術：依等級分三種外觀（1~3、4~6、7~10 級），未建造用空地基。
             // 順序：新版 3D 模型（Models/City3D，ArtSettings.City3D 開著時）→ 2D 建築圖 → 舊灰盒
-            int tier = level <= 3 ? 1 : level <= 6 ? 2 : 3;
+            int tier = ArtSettings.TierOf(level);
             string artName = level > 0 ? $"{type}_{tier}" : "Site";
             if (ArtSettings.City3D)
             {

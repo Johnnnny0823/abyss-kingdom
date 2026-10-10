@@ -26,7 +26,7 @@ namespace AbyssKingdom.Client.World
 
         private readonly WorldScene _w;
         private readonly Transform[,] _chunks = new Transform[Chunks, Chunks];
-        private readonly Dictionary<int, (GameObject castle, TextMesh name, bool mine)> _castles = new Dictionary<int, (GameObject, TextMesh, bool)>();
+        private readonly Dictionary<int, (GameObject castle, TextMesh name, bool mine, int tier)> _castles = new Dictionary<int, (GameObject, TextMesh, bool, int)>();
         private readonly GameObject _select;
         private readonly Dictionary<int, GameObject> _shields = new Dictionary<int, GameObject>();
         private readonly List<GameObject> _dots = new List<GameObject>();
@@ -291,12 +291,12 @@ namespace AbyssKingdom.Client.World
                 }
         }
 
-        private GameObject Castle(Transform parent, Vector3 pos, bool mine)
+        private GameObject Castle(Transform parent, Vector3 pos, bool mine, int tier)
         {
             var root = _w.Group("Castle", parent, pos).gameObject;
             var t = root.transform;
             // 新版 3D 主堡（和城內同一個模型，底面 1×1，放大到約 2×2 格佔地 × 顯示倍率）；沒有就用舊的大地圖主城模型
-            GameObject keep3D = ArtSettings.City3D ? ModelLibrary.Spawn("City3D/Keep_1", t, Vector3.zero, S * 2 * CityScale) : null;
+            GameObject keep3D = ArtSettings.City3D ? ModelLibrary.Spawn("City3D/Keep_" + tier, t, Vector3.zero, S * 2 * CityScale) : null;
             if (keep3D != null) CityView.MakeMatte(keep3D);
             if (keep3D != null || ModelLibrary.Spawn("World/City", t, Vector3.zero, S * CityScale) != null)
             {
@@ -333,12 +333,13 @@ namespace AbyssKingdom.Client.World
                 int key = SurfaceLogic.Tile(pin.X, pin.Y);
                 seen.Add(key);
                 _castles.TryGetValue(key, out var c);
-                if (c.castle == null || c.mine != pin.Mine)
+                int tier = ArtSettings.TierOf(pin.KeepLevel);
+                if (c.castle == null || c.mine != pin.Mine || c.tier != tier)
                 {
                     if (c.castle != null) UnityEngine.Object.Destroy(c.castle);
-                    var castle = Castle(ChunkOf(pin.X, pin.Y), CityPos(pin.X, pin.Y), pin.Mine);
+                    var castle = Castle(ChunkOf(pin.X, pin.Y), CityPos(pin.X, pin.Y), pin.Mine, tier);
                     var name = _w.Text(castle.transform, new Vector3(0, 0.95f, 0), 0.03f, pin.Mine ? new Color(1f, 0.86f, 0.5f) : Color.white);
-                    c = (castle, name, pin.Mine);
+                    c = (castle, name, pin.Mine, tier);
                     _castles[key] = c;
                 }
                 c.name.text = pin.Name;

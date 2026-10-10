@@ -443,6 +443,7 @@ public static class ServerIntegrationTests
         var mine = pins.EnumerateArray().Single(p => p.GetProperty("mine").GetBoolean());
         Assert.Equal(sa.X, mine.GetProperty("x").GetInt32());
         Assert.Equal(sa.Y, mine.GetProperty("y").GetInt32());
+        Assert.Equal(1, mine.GetProperty("keepLevel").GetInt32(), "帶主堡等級（大地圖依等級顯示主城外觀）");
         Assert.True(pins.EnumerateArray().Any(p => p.GetProperty("name").GetString() == "南境"), "看得到鄰居的名字");
     }
 

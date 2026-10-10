@@ -1,4 +1,5 @@
 using AbyssKingdom.Server.Persistence;
+using AbyssKingdom.Shared.City;
 using AbyssKingdom.Shared.Heroes;
 using AbyssKingdom.Shared.Map;
 using AbyssKingdom.Shared.Protocol;
@@ -33,6 +34,7 @@ public sealed class WorldService : IFieldRegistry
         public string Name = "";
         public long Power;
         public long ShieldUntil;
+        public int KeepLevel;
     }
 
     private readonly IPlayerStore _store;
@@ -74,7 +76,7 @@ public sealed class WorldService : IFieldRegistry
     private void Register(int site, PlayerRecord r)
     {
         if (_byPlayer.TryGetValue(r.Id, out var old) && old != site) _sites.Remove(old);
-        _sites[site] = new Owner { PlayerId = r.Id, Name = r.DisplayName, Power = PowerLogic.TotalPower(r.City), ShieldUntil = r.City.ShieldUntilMs };
+        _sites[site] = new Owner { PlayerId = r.Id, Name = r.DisplayName, Power = PowerLogic.TotalPower(r.City), ShieldUntil = r.City.ShieldUntilMs, KeepLevel = r.City.GetLevel(BuildingType.Keep) };
         _byPlayer[r.Id] = site;
     }
 
@@ -127,6 +129,7 @@ public sealed class WorldService : IFieldRegistry
             o.Name = record.DisplayName;
             o.Power = PowerLogic.TotalPower(record.City);
             o.ShieldUntil = record.City.ShieldUntilMs;
+            o.KeepLevel = record.City.GetLevel(BuildingType.Keep);
         }
     }
 
@@ -253,7 +256,7 @@ public sealed class WorldService : IFieldRegistry
             return _sites.Select(p => new CityPin
             {
                 X = p.Key % SurfaceConfig.Size, Y = p.Key / SurfaceConfig.Size, Name = p.Value.Name, Power = p.Value.Power,
-                Mine = p.Value.PlayerId == viewerId, Shielded = p.Value.ShieldUntil > nowMs,
+                Mine = p.Value.PlayerId == viewerId, Shielded = p.Value.ShieldUntil > nowMs, KeepLevel = p.Value.KeepLevel,
             }).ToList();
     }
 

@@ -1,0 +1,823 @@
+{
+  "base_commit": "bf51933",
+  "generated_assets": 24,
+  "all_pass": true,
+  "models": [
+    {
+      "name": "Barracks_1",
+      "status": "PASS",
+      "triangles": 1080,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        0.9200000166893005,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "4700ed192563eb13902fe81577837141dcf857b2d7edb7e25d249e7ad9ee59d7",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Barracks_2",
+      "status": "PASS",
+      "triangles": 1804,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        1.1200000047683716,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "7888deacaaca39d31bb03ee2b24a98415bc9c1d067bd07fbec2e7ea4ba3faaa6",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Barracks_3",
+      "status": "PASS",
+      "triangles": 2882,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        1.2999999523162842,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "14d3c3a3227f8ae1b4288f6c149cbe52f6d2f1205cca997f61e38561711e8024",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "CrystalMine_1",
+      "status": "PASS",
+      "triangles": 1044,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        0.8399999737739563,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "20a3c6c701e77b25ee7e566ca33732d36866e6e3d16fd4fc93883fe3de6cda19",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "CrystalMine_2",
+      "status": "PASS",
+      "triangles": 1406,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        1.0499999523162842,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "2ae3992a163c7b0fbcca988814c41f38f74a75cba47143aabb1b62c69825b0a1",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "CrystalMine_3",
+      "status": "PASS",
+      "triangles": 1598,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        1.2200000286102295,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "5ddc7dfa82d6183f9ae79f7b041e8f00dc4154dd37fb0a97147e4926bc906d25",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Farm_1",
+      "status": "PASS",
+      "triangles": 1706,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        0.8199999928474426,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "0685293528e418124ef2e17aa5fdd63190b40d8ba9e9ef2dde0d6e991367ce80",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Farm_2",
+      "status": "PASS",
+      "triangles": 2328,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        0.9599999785423279,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "b6cd5aca4b06b423f0463b32b904e6f13c063283b4a426366f128b9730fe43b4",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Farm_3",
+      "status": "PASS",
+      "triangles": 2326,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        1.149999976158142,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "96b91c2194e9bcf1f96ea459de7deae52d4a9308cc3dc2e3db19ed8ab66d0062",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Hospital_1",
+      "status": "PASS",
+      "triangles": 1216,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        0.9599999785423279,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "985e00eff98a704eca129a36fc8c04b1bbdcec572826f99e9a141be6a74b5c31",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Hospital_2",
+      "status": "PASS",
+      "triangles": 1520,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        1.1299999952316284,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "1ca444220e08f5a38dd95b3585f6b854cbe46dc93077fd6a66e06c134a0371aa",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Hospital_3",
+      "status": "PASS",
+      "triangles": 2244,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        1.2999999523162842,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "160fe973859c5995587c6551e7a2329bf0c21f559dcc527826659277f632dcc9",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Keep_2",
+      "status": "PASS",
+      "triangles": 3636,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        1.4199999570846558,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "f476ddff25094654ddf2ce41fb565b6783d6c6bc37c6daa6bd8e8fa26c0ebed7",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Keep_3",
+      "status": "PASS",
+      "triangles": 4086,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        1.600000023841858,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "724641c96e57ed2e57d6c14f653942894e9895e39ea95060c53b7fc7f920ba01",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Quarry_1",
+      "status": "PASS",
+      "triangles": 924,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        0.699999988079071,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "d85a02d75d75d1d3289e4f006dda40284e34f97bc4894f04ec91266188ed1490",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Quarry_2",
+      "status": "PASS",
+      "triangles": 1248,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        0.8700000047683716,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "50369adb879557031baef4ecece96b713a3731e49554cdbac91c59b6d117ded8",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Quarry_3",
+      "status": "PASS",
+      "triangles": 1496,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        1.0800000429153442,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "ddeaf0355f11b8010600ed6034ba4c761cee017aaabf5301b9b8c26c9b414246",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Sawmill_1",
+      "status": "PASS",
+      "triangles": 1412,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        0.8999999761581421,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "319e18430cb1e345cf765e2de84ed0a3981db8ea852b2b583df61aca2656fdad",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Sawmill_2",
+      "status": "PASS",
+      "triangles": 1724,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        1.059999942779541,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "0165c5cb697a4367cde940a18bd4badf5377892e908fec265903fd8daeeae823",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Sawmill_3",
+      "status": "PASS",
+      "triangles": 1910,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        1.2200000286102295,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "d1c49e4707072c923318a803ea1dde387c08d56c633316efc0a5dc2c2954f5b5",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Site",
+      "status": "PASS",
+      "triangles": 1316,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        0.3199999928474426,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "e105f16a7cc303beb08e4eed309ea236a68a8955f7f85553962f39436bdc26bf",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Warehouse_1",
+      "status": "PASS",
+      "triangles": 1266,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        0.8600000143051147,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "acdb3e6aad3ad48f302f0071c9ce7aba35416f69d49aa8fcdba830be037db4b2",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Warehouse_2",
+      "status": "PASS",
+      "triangles": 1624,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        1.0700000524520874,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "78e15951da3ecb7614d41c7b8acee63f687a3a9ea4a7ac6a6e517b8062024709",
+      "unity_runtime_verified": false
+    },
+    {
+      "name": "Warehouse_3",
+      "status": "PASS",
+      "triangles": 1988,
+      "materials": 1,
+      "textures": [
+        [
+          1024,
+          1024
+        ]
+      ],
+      "raw_fbx_min_xyz": [
+        -0.5,
+        0.0,
+        -0.5
+      ],
+      "raw_fbx_max_xyz": [
+        0.5,
+        1.25,
+        0.5
+      ],
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fbx_y_up": true,
+      "front_metadata": "-Z",
+      "metallic": 0,
+      "specular": 0,
+      "roughness": 1,
+      "sha256": "70b706434ec986056a9e9ee85ec346ba557db13f398e1393b83eb21a572ccff3",
+      "unity_runtime_verified": false
+    }
+  ]
+}

@@ -95,7 +95,8 @@
 - **規格**：FBX，底面 1×1、原點在底部中心、Y 朝上、正面朝 -Z；4,000～5,000 三角形以內、1 個材質、1 張 1024 albedo（不含光照與高光）；檔名同 2D 圖（`Keep_1.fbx`、`Site.fbx`…）。
 - **遊戲裡的順序**：City3D 模型 → 2D 建築圖 → 舊灰盒（`City/`）。有哪棟就換哪棟，其他自動維持 2D。
 - 材質在遊戲裡一律換成霧面（`Resources/Abyss/Rock`，保留貼圖）：專案是 Gamma 色彩空間，Standard 的高光會讓整棟發灰。
-- 大地圖的主城也用 `City3D/Keep_1`（顯示倍率同舊主城）。
+- 全部 25 個（8 種建築 × 3 外觀＋Site）已完成（Codex 批次：`tools/blender/generate_city3d.py`，說明 `tools/blender/CITY3D_BATCH.md`，驗證清單 `city3d_manifest.json`）。
+- 大地圖的主城也用 `City3D/Keep_<外觀>`，依伺服器 `world.cities` 傳來的 `keepLevel` 換外觀（顯示倍率同舊主城）。
 - **換回 2D**：`client/Assets/Scripts/World/ArtSettings.cs` 的 `City3D` 改成 false，或啟動參數加 `-city2d`。
 - 2D 建築圖與 2.5D 動態（符文光、炊煙、旗幟擺動）保留不刪；3D 版目前沒有這些動態。
 
