@@ -23,6 +23,8 @@ JOINTS = {'Body':(0,0,.38), 'Head':(0,0,.68),
           'LegL':(.105,0,.37), 'LegR':(-.105,0,.37),
           'ArmL':(.225,0,.61), 'ArmR':(-.225,0,.61)}
 PARTS = {}
+NAME = 'Shield'
+HEIGHT = 1.0
 
 
 def joint(name, build):
@@ -158,7 +160,7 @@ def shield():
 def atlas_and_export():
     OUT.mkdir(parents=True,exist_ok=True)
     ART.mkdir(parents=True,exist_ok=True)
-    atlas=bpy.data.images.new('Shield_Albedo',width=1024,height=1024,alpha=False)
+    atlas=bpy.data.images.new(NAME+'_Albedo',width=1024,height=1024,alpha=False)
     atlas.colorspace_settings.name='sRGB'
     pixels=[0.0,0.0,0.0,1.0]*(1024*1024)
     keys=list(PALETTE)
@@ -171,14 +173,14 @@ def atlas_and_export():
             offset=(yy*1024+col*256)*4
             pixels[offset:offset+1024]=stripe
     atlas.pixels[:]=pixels
-    atlas.filepath_raw=str(OUT/'Shield_Albedo.png'); atlas.file_format='PNG'; atlas.save()
-    mat=bpy.data.materials.new('Shield_Matte'); mat.use_nodes=True
+    atlas.filepath_raw=str(OUT/(NAME+'_Albedo.png')); atlas.file_format='PNG'; atlas.save()
+    mat=bpy.data.materials.new(NAME+'_Matte'); mat.use_nodes=True
     bsdf=mat.node_tree.nodes.get('Principled BSDF')
     for key,value in [('Metallic',0),('Roughness',1),('Specular IOR Level',0)]:
         bsdf.inputs[key].default_value=value
     tex=mat.node_tree.nodes.new('ShaderNodeTexImage'); tex.image=atlas
     mat.node_tree.links.new(tex.outputs['Color'],bsdf.inputs['Base Color'])
-    root=bpy.data.objects.new('Shield',None); bpy.context.collection.objects.link(root)
+    root=bpy.data.objects.new(NAME,None); bpy.context.collection.objects.link(root)
     root['front_axis']='-Z'; root['up_axis']='Y'; root['animation']='Rigid parts; no armature'
     for name,obj in PARTS.items():
         while obj.data.uv_layers:
@@ -201,7 +203,7 @@ def atlas_and_export():
     bpy.context.view_layer.objects.active=root
     bpy.context.scene.unit_settings.system='METRIC'
     bpy.context.scene.unit_settings.scale_length=1
-    bpy.ops.export_scene.fbx(filepath=str(OUT/'Shield.fbx'),use_selection=True,object_types={'MESH','EMPTY'},
+    bpy.ops.export_scene.fbx(filepath=str(OUT/(NAME+'.fbx')),use_selection=True,object_types={'MESH','EMPTY'},
         axis_forward='-Z',axis_up='Y',apply_unit_scale=True,apply_scale_options='FBX_SCALE_UNITS',
         bake_space_transform=True,use_mesh_modifiers=True,add_leaf_bones=False,bake_anim=False,
         path_mode='COPY',embed_textures=True,use_custom_props=True)
@@ -219,37 +221,49 @@ def previews():
         obj=bpy.data.objects.new(name,data); scene.collection.objects.link(obj); obj.location=pos
         obj.rotation_euler=(Vector((0,0,.5))-obj.location).to_track_quat('-Z','Y').to_euler()
     data=bpy.data.cameras.new('PreviewCamera'); camera=bpy.data.objects.new('PreviewCamera',data)
-    scene.collection.objects.link(camera); scene.camera=camera; data.type='ORTHO'; data.ortho_scale=1.36
+    scene.collection.objects.link(camera); scene.camera=camera; data.type='ORTHO'; data.ortho_scale=HEIGHT*1.50
     scene.render.resolution_x=1024; scene.render.resolution_y=1024; scene.render.resolution_percentage=100
     scene.render.image_settings.file_format='PNG'; scene.render.film_transparent=False
     scene.view_settings.view_transform='Standard'; scene.view_settings.look='None'
     for suffix,elev,az in [('front',0,0),('52',52,-25)]:
-        target=Vector((.025,.035,.51)); el=math.radians(elev); a=math.radians(az)
+        target=Vector((.025,.06,HEIGHT*.51)); el=math.radians(elev); a=math.radians(az)
         camera.location=target+Vector((3*math.cos(el)*math.sin(a),3*math.cos(el)*math.cos(a),3*math.sin(el)))
         camera.rotation_euler=(target-camera.location).to_track_quat('-Z','Y').to_euler()
-        scene.render.filepath=str(ART/f'Shield_{suffix}.png')
+        scene.render.filepath=str(ART/f'{NAME}_{suffix}.png')
         bpy.ops.render.render(write_still=True)
-    bpy.ops.wm.save_as_mainfile(filepath=str(ART/'Shield.blend'))
+    bpy.ops.wm.save_as_mainfile(filepath=str(ART/(NAME+'.blend')))
 
 
 def main():
+    global NAME, HEIGHT
     started=time.monotonic()
+    args=sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else ['Shield']
+    NAME=args[0]
+    assert NAME in ('Shield','Crossbow','Rider','Hold','Vesper','Karst')
     c.reset()
+    PARTS.clear()
+    if NAME!='Shield':
+        import units3d_characters as characters
+        HEIGHT=characters.configure(sys.modules[__name__],NAME)
     c.M.clear()
     for key,value in PALETTE.items():
         c.M[key]=c.material(key,value); c.M[key]['palette_key']=key
-    joint('Body',body); joint('Head',head)
-    joint('LegL',lambda:leg(1)); joint('LegR',lambda:leg(-1))
-    joint('ArmL',lambda:arm(1)); joint('ArmR',lambda:arm(-1))
+    if NAME=='Shield':
+        joint('Body',body); joint('Head',head)
+        joint('LegL',lambda:leg(1)); joint('LegR',lambda:leg(-1))
+        joint('ArmL',lambda:arm(1)); joint('ArmR',lambda:arm(-1))
+    else:
+        characters.build()
     count=sum(len(o.data.polygons) for o in PARTS.values())
     assert count<=3000,count
     atlas_and_export()
     previews()
-    report={'name':'Shield','triangles':count,'parts':[], 'root_origin':[0,0,0],
+    report={'name':NAME,'triangles':count,'parts':[], 'root_origin':[0,0,0],
+            'target_height':HEIGHT,'palette':list(PALETTE.values()),
             'up':'Y','forward':'-Z','materials':1,'albedo':[1024,1024],
             'albedo_method':'Unlit sRGB color atlas; no baked lighting or highlights',
             'reserved_colors':{k:PALETTE[k] for k in ('teal','rune','amber')},
-            'reference':'client/Assets/Resources/Art/Troops/Shield.png',
+            'reference':f'client/Assets/Resources/Art/'+(f'Troops/{NAME}.png' if NAME in ('Shield','Crossbow','Rider') else f'Heroes/{NAME}_Portrait.png'),
             'external_service_cost':0,'seconds':round(time.monotonic()-started,2),
             'unity_runtime_verified':False}
     coords=[]
@@ -263,7 +277,7 @@ def main():
     report['dimensions_unity_xyz']=[high[0]-low[0],high[2]-low[2],high[1]-low[1]]
     report['bounds_unity_min']=[low[0],low[2],-high[1]]
     report['bounds_unity_max']=[high[0],high[2],-low[1]]
-    (ART/'Shield.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
+    (ART/(NAME+'.json')).write_text(json.dumps(report,indent=2),encoding='utf-8')
     print('UNITS3D_GENERATED',json.dumps(report),flush=True)
 
 

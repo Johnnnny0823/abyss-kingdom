@@ -1,0 +1,876 @@
+{
+  "base_commit": "18bcc4a",
+  "models": [
+    {
+      "status": "PASS",
+      "name": "Crossbow",
+      "triangles": 1238,
+      "mesh_count": 6,
+      "material_count": 1,
+      "texture_count": 1,
+      "texture_size": [
+        1024,
+        1024
+      ],
+      "root_origin": [
+        0,
+        0,
+        0
+      ],
+      "dimensions_unity_xyz": [
+        0.5951479971408844,
+        1.0000000245119551,
+        0.6856774091720581
+      ],
+      "parts": [
+        {
+          "name": "Body",
+          "joint_unity_xyz": [
+            0.0,
+            0.3799999952316284,
+            -2.8689202125065094e-08
+          ],
+          "triangles": 358,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "Head",
+          "joint_unity_xyz": [
+            0.0,
+            0.6800000071525574,
+            -5.133857428063493e-08
+          ],
+          "triangles": 370,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "LegL",
+          "joint_unity_xyz": [
+            0.08699999749660492,
+            0.3499999940395355,
+            -2.6424267218772002e-08
+          ],
+          "triangles": 108,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "ArmL",
+          "joint_unity_xyz": [
+            0.1679999977350235,
+            0.5850000381469727,
+            -8.776016358069683e-09
+          ],
+          "triangles": 68,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "LegR",
+          "joint_unity_xyz": [
+            -0.08699999749660492,
+            0.3499999940395355,
+            -2.6424267218772002e-08
+          ],
+          "triangles": 108,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "ArmR",
+          "joint_unity_xyz": [
+            -0.1679999977350235,
+            0.5850000381469727,
+            -8.776016358069683e-09
+          ],
+          "triangles": 226,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        }
+      ],
+      "raw_fbx_transforms": {
+        "ArmL": {
+          "Lcl Translation": [
+            0.1679999977350235,
+            0.5850000381469727,
+            3.5390257835388184e-08
+          ]
+        },
+        "ArmR": {
+          "Lcl Translation": [
+            -0.1679999977350235,
+            0.5850000381469727,
+            3.5390257835388184e-08
+          ]
+        },
+        "Body": {
+          "Lcl Translation": [
+            0.0,
+            0.3799999952316284,
+            0.0
+          ]
+        },
+        "Crossbow": {},
+        "Head": {
+          "Lcl Translation": [
+            0.0,
+            0.6800000071525574,
+            0.0
+          ]
+        },
+        "LegL": {
+          "Lcl Translation": [
+            0.08699999749660492,
+            0.3499999940395355,
+            -8.881784197001252e-16
+          ]
+        },
+        "LegR": {
+          "Lcl Translation": [
+            -0.08699999749660492,
+            0.3499999940395355,
+            -8.881784197001252e-16
+          ]
+        }
+      },
+      "palette_png_checks": {
+        "8D969E": "8D969E",
+        "BCC5CC": "BCC5CC",
+        "8C9BA1": "8C9BA1",
+        "222E38": "222E38",
+        "C5A361": "C5A361",
+        "DDC18A": "DDC18A",
+        "604A34": "604A34",
+        "65758B": "65758B",
+        "394859": "394859",
+        "37BCAE": "37BCAE",
+        "B8FFF1": "B8FFF1",
+        "F6B647": "F6B647",
+        "DCAE8C": "DCAE8C",
+        "584334": "584334",
+        "E0DDD1": "E0DDD1",
+        "395664": "395664"
+      },
+      "forward_evidence": "Face is authored on Blender +Y / FBX -Z; inspect front preview",
+      "fbx_sha256": "a150731623f4edfa395db2d45bf8f54c76c2b6bf1b92ff4c56f0b5dded54885f",
+      "albedo_sha256": "d2bf0c6bf345a67623021636a9d9afdea0e02bb72daffc8bc4fd7c3c0d7b97b9",
+      "unity_runtime_verified": false
+    },
+    {
+      "status": "PASS",
+      "name": "Hold",
+      "triangles": 2040,
+      "mesh_count": 6,
+      "material_count": 1,
+      "texture_count": 1,
+      "texture_size": [
+        1024,
+        1024
+      ],
+      "root_origin": [
+        0,
+        0,
+        0
+      ],
+      "dimensions_unity_xyz": [
+        1.0887717604637146,
+        1.1500001073360728,
+        0.5128443092107773
+      ],
+      "parts": [
+        {
+          "name": "Body",
+          "joint_unity_xyz": [
+            0.0,
+            0.4439198076725006,
+            -3.35150147634522e-08
+          ],
+          "triangles": 430,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "Head",
+          "joint_unity_xyz": [
+            0.0,
+            0.7943828105926514,
+            -5.997423357939624e-08
+          ],
+          "triangles": 472,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "LegL",
+          "joint_unity_xyz": [
+            0.12266205996274948,
+            0.4322377145290375,
+            -3.263303938183526e-08
+          ],
+          "triangles": 204,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "ArmL",
+          "joint_unity_xyz": [
+            0.26284730434417725,
+            0.7126081585884094,
+            -1.0602347799704148e-07
+          ],
+          "triangles": 530,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "LegR",
+          "joint_unity_xyz": [
+            -0.12266203761100769,
+            0.4322377145290375,
+            -3.263303938183526e-08
+          ],
+          "triangles": 204,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "ArmR",
+          "joint_unity_xyz": [
+            -0.26284727454185486,
+            0.7126081585884094,
+            -7.773599008942256e-08
+          ],
+          "triangles": 200,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        }
+      ],
+      "raw_fbx_transforms": {
+        "ArmL": {
+          "Lcl Translation": [
+            0.26284730434417725,
+            0.7126081585884094,
+            -5.22230578781091e-08
+          ]
+        },
+        "ArmR": {
+          "Lcl Translation": [
+            -0.26284727454185486,
+            0.7126081585884094,
+            -2.393556819413334e-08
+          ]
+        },
+        "Body": {
+          "Lcl Translation": [
+            0.0,
+            0.4439198076725006,
+            0.0
+          ]
+        },
+        "Head": {
+          "Lcl Translation": [
+            0.0,
+            0.7943828105926514,
+            0.0
+          ]
+        },
+        "Hold": {},
+        "LegL": {
+          "Lcl Translation": [
+            0.12266205996274948,
+            0.4322377145290375,
+            1.037578937969786e-15
+          ]
+        },
+        "LegR": {
+          "Lcl Translation": [
+            -0.12266203761100769,
+            0.4322377145290375,
+            -1.037578937969786e-15
+          ]
+        }
+      },
+      "palette_png_checks": {
+        "526779": "526779",
+        "718493": "718493",
+        "8C9BA1": "8C9BA1",
+        "222E38": "222E38",
+        "C5A361": "C5A361",
+        "DDC18A": "DDC18A",
+        "604A34": "604A34",
+        "B88E3C": "B88E3C",
+        "89632F": "89632F",
+        "37BCAE": "37BCAE",
+        "B8FFF1": "B8FFF1",
+        "F6B647": "F6B647",
+        "C79B7A": "C79B7A",
+        "CBCBC5": "CBCBC5",
+        "E0DDD1": "E0DDD1",
+        "395664": "395664"
+      },
+      "forward_evidence": "Face is authored on Blender +Y / FBX -Z; inspect front preview",
+      "fbx_sha256": "165169813b17bd3d6b261ebe94995025fe5048aedf8958d003b24333a063669f",
+      "albedo_sha256": "e97fe49c8f25f35896285a16b6c65cb04e02a2cfdafe690bebffc3210b1d46bf",
+      "unity_runtime_verified": false
+    },
+    {
+      "status": "PASS",
+      "name": "Rider",
+      "triangles": 2016,
+      "mesh_count": 11,
+      "material_count": 1,
+      "texture_count": 1,
+      "texture_size": [
+        1024,
+        1024
+      ],
+      "root_origin": [
+        0,
+        0,
+        0
+      ],
+      "dimensions_unity_xyz": [
+        0.6956709921360016,
+        1.3000001416388187,
+        1.298821747303009
+      ],
+      "parts": [
+        {
+          "name": "Body",
+          "joint_unity_xyz": [
+            0.0,
+            0.8229436874389648,
+            -6.213052472503477e-08
+          ],
+          "triangles": 166,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "Head",
+          "joint_unity_xyz": [
+            0.0,
+            1.0112553834915161,
+            -7.63476606380209e-08
+          ],
+          "triangles": 220,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "LegL",
+          "joint_unity_xyz": [
+            0.1871212124824524,
+            0.8166666626930237,
+            -6.165662114199222e-08
+          ],
+          "triangles": 204,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "ArmL",
+          "joint_unity_xyz": [
+            0.14123375713825226,
+            0.9673160314559937,
+            -7.887629038805244e-08
+          ],
+          "triangles": 136,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "LegR",
+          "joint_unity_xyz": [
+            -0.1871211975812912,
+            0.8166666626930237,
+            -6.165662114199222e-08
+          ],
+          "triangles": 204,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "ArmR",
+          "joint_unity_xyz": [
+            -0.14123375713825226,
+            0.9673160314559937,
+            -7.887629038805244e-08
+          ],
+          "triangles": 170,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "Mount",
+          "joint_unity_xyz": [
+            0.0,
+            0.58441561460495,
+            -4.412215304228084e-08
+          ],
+          "triangles": 452,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "MountLegFL",
+          "joint_unity_xyz": [
+            0.16883116960525513,
+            0.5627705454826355,
+            -0.2164502590894699
+          ],
+          "triangles": 116,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "MountLegBL",
+          "joint_unity_xyz": [
+            0.16883116960525513,
+            0.5627705454826355,
+            0.27056270837783813
+          ],
+          "triangles": 116,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "MountLegFR",
+          "joint_unity_xyz": [
+            -0.16883116960525513,
+            0.5627705454826355,
+            -0.2164502590894699
+          ],
+          "triangles": 116,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "MountLegBR",
+          "joint_unity_xyz": [
+            -0.16883116960525513,
+            0.5627705454826355,
+            0.27056270837783813
+          ],
+          "triangles": 116,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        }
+      ],
+      "raw_fbx_transforms": {
+        "ArmL": {
+          "Lcl Translation": [
+            0.14123375713825226,
+            0.9673160314559937,
+            -5.845963713113633e-09
+          ]
+        },
+        "ArmR": {
+          "Lcl Translation": [
+            -0.14123375713825226,
+            0.9673160314559937,
+            -5.845963713113633e-09
+          ]
+        },
+        "Body": {
+          "Lcl Translation": [
+            0.0,
+            0.8229436874389648,
+            0.0
+          ]
+        },
+        "Head": {
+          "Lcl Translation": [
+            0.0,
+            1.0112553834915161,
+            0.0
+          ]
+        },
+        "LegL": {
+          "Lcl Translation": [
+            0.1871212124824524,
+            0.8166666626930237,
+            5.575145447839387e-16
+          ]
+        },
+        "LegR": {
+          "Lcl Translation": [
+            -0.1871211975812912,
+            0.8166666626930237,
+            -5.575145447839387e-16
+          ]
+        },
+        "Mount": {
+          "Lcl Translation": [
+            0.0,
+            0.58441561460495,
+            0.0
+          ]
+        },
+        "MountLegBL": {
+          "Lcl Translation": [
+            0.16883116960525513,
+            0.5627705454826355,
+            0.2705627381801605
+          ]
+        },
+        "MountLegBR": {
+          "Lcl Translation": [
+            -0.16883116960525513,
+            0.5627705454826355,
+            0.2705627381801605
+          ]
+        },
+        "MountLegFL": {
+          "Lcl Translation": [
+            0.16883116960525513,
+            0.5627705454826355,
+            -0.21645021438598633
+          ]
+        },
+        "MountLegFR": {
+          "Lcl Translation": [
+            -0.16883116960525513,
+            0.5627705454826355,
+            -0.21645021438598633
+          ]
+        },
+        "Rider": {}
+      },
+      "palette_png_checks": {
+        "6C6A64": "6C6A64",
+        "92908A": "92908A",
+        "8C9BA1": "8C9BA1",
+        "222E38": "222E38",
+        "C5A361": "C5A361",
+        "DDC18A": "DDC18A",
+        "604A34": "604A34",
+        "506B45": "506B45",
+        "304738": "304738",
+        "37BCAE": "37BCAE",
+        "B8FFF1": "B8FFF1",
+        "F6B647": "F6B647",
+        "DCAE8C": "DCAE8C",
+        "E0D8C6": "E0D8C6",
+        "E0DDD1": "E0DDD1",
+        "60492F": "60492F"
+      },
+      "forward_evidence": "Face is authored on Blender +Y / FBX -Z; inspect front preview",
+      "fbx_sha256": "d360bc898f8a7cc676da6c41274cbed9ba27547577c699f1897f61bc569ed8ea",
+      "albedo_sha256": "ce9274d08c5a8c3db0090114ea5cbd87ef097813cc76be2066224f607a126e9e",
+      "unity_runtime_verified": false
+    },
+    {
+      "status": "PASS",
+      "name": "Shield",
+      "triangles": 1842,
+      "mesh_count": 6,
+      "material_count": 1,
+      "texture_count": 1,
+      "texture_size": [
+        1024,
+        1024
+      ],
+      "root_origin": [
+        0,
+        0,
+        0
+      ],
+      "dimensions_unity_xyz": [
+        0.8351837992668152,
+        1.0064391000203683,
+        0.43900009989738464
+      ],
+      "parts": [
+        {
+          "name": "Body",
+          "joint_unity_xyz": [
+            0.0,
+            0.3799999952316284,
+            -2.8689202125065094e-08
+          ],
+          "triangles": 348,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "Head",
+          "joint_unity_xyz": [
+            0.0,
+            0.6800000071525574,
+            -5.133857428063493e-08
+          ],
+          "triangles": 220,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "LegL",
+          "joint_unity_xyz": [
+            0.10500000417232513,
+            0.3700000047683716,
+            -2.7934223822967397e-08
+          ],
+          "triangles": 204,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "LegR",
+          "joint_unity_xyz": [
+            -0.10499998927116394,
+            0.3700000047683716,
+            -2.7934223822967397e-08
+          ],
+          "triangles": 204,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "ArmL",
+          "joint_unity_xyz": [
+            0.2250000387430191,
+            0.6100000143051147,
+            -9.07572044184235e-08
+          ],
+          "triangles": 510,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "ArmR",
+          "joint_unity_xyz": [
+            -0.2250000387430191,
+            0.6100000143051147,
+            -9.07572044184235e-08
+          ],
+          "triangles": 356,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        }
+      ],
+      "raw_fbx_transforms": {
+        "ArmL": {
+          "Lcl Translation": [
+            0.2250000387430191,
+            0.6100000143051147,
+            -4.470348358154297e-08
+          ]
+        },
+        "ArmR": {
+          "Lcl Translation": [
+            -0.2250000387430191,
+            0.6100000143051147,
+            -4.470348358154297e-08
+          ]
+        },
+        "Body": {
+          "Lcl Translation": [
+            0.0,
+            0.3799999952316284,
+            0.0
+          ]
+        },
+        "Head": {
+          "Lcl Translation": [
+            0.0,
+            0.6800000071525574,
+            0.0
+          ]
+        },
+        "LegL": {
+          "Lcl Translation": [
+            0.10500000417232513,
+            0.3700000047683716,
+            8.881784197001252e-16
+          ]
+        },
+        "LegR": {
+          "Lcl Translation": [
+            -0.10499998927116394,
+            0.3700000047683716,
+            -8.881784197001252e-16
+          ]
+        },
+        "Shield": {}
+      },
+      "palette_png_checks": {
+        "526779": "526779",
+        "718493": "718493",
+        "8C9BA1": "8C9BA1",
+        "222E38": "222E38",
+        "C5A361": "C5A361",
+        "DDC18A": "DDC18A",
+        "604A34": "604A34",
+        "8D7547": "8D7547",
+        "594D39": "594D39",
+        "37BCAE": "37BCAE",
+        "B8FFF1": "B8FFF1",
+        "F6B647": "F6B647"
+      },
+      "forward_evidence": "Visor, shield and spear are on Blender +Y / FBX -Z; front preview inspected",
+      "fbx_sha256": "11dedf9ae7f3fbc7d76a26ea69ba1dfe99bbbfc84622ceb366315a5cf60defb6",
+      "albedo_sha256": "d956dda88816002d16491c9810398bd19e63ff235d551ca0f49478a440e7e251",
+      "unity_runtime_verified": false
+    },
+    {
+      "status": "PASS",
+      "name": "Vesper",
+      "triangles": 1458,
+      "mesh_count": 6,
+      "material_count": 1,
+      "texture_count": 1,
+      "texture_size": [
+        1024,
+        1024
+      ],
+      "root_origin": [
+        0,
+        0,
+        0
+      ],
+      "dimensions_unity_xyz": [
+        0.6844201982021332,
+        1.1500000296788642,
+        0.7885290086269379
+      ],
+      "parts": [
+        {
+          "name": "Body",
+          "joint_unity_xyz": [
+            0.0,
+            0.43699997663497925,
+            -3.299258111155723e-08
+          ],
+          "triangles": 414,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "Head",
+          "joint_unity_xyz": [
+            0.0,
+            0.7820000052452087,
+            -5.903935829110196e-08
+          ],
+          "triangles": 418,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "LegL",
+          "joint_unity_xyz": [
+            0.10004999488592148,
+            0.4024999737739563,
+            -3.0387901972517284e-08
+          ],
+          "triangles": 152,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "ArmL",
+          "joint_unity_xyz": [
+            0.1931999921798706,
+            0.6727500557899475,
+            -1.0092421121044026e-08
+          ],
+          "triangles": 68,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "LegR",
+          "joint_unity_xyz": [
+            -0.10004999488592148,
+            0.4024999737739563,
+            -3.0387901972517284e-08
+          ],
+          "triangles": 152,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "ArmR",
+          "joint_unity_xyz": [
+            -0.1931999921798706,
+            0.6727500557899475,
+            -1.0092421121044026e-08
+          ],
+          "triangles": 254,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        }
+      ],
+      "raw_fbx_transforms": {
+        "ArmL": {
+          "Lcl Translation": [
+            0.1931999921798706,
+            0.6727500557899475,
+            4.069879722123915e-08
+          ]
+        },
+        "ArmR": {
+          "Lcl Translation": [
+            -0.1931999921798706,
+            0.6727500557899475,
+            4.069879722123915e-08
+          ]
+        },
+        "Body": {
+          "Lcl Translation": [
+            0.0,
+            0.43699997663497925,
+            0.0
+          ]
+        },
+        "Head": {
+          "Lcl Translation": [
+            0.0,
+            0.7820000052452087,
+            0.0
+          ]
+        },
+        "LegL": {
+          "Lcl Translation": [
+            0.10004999488592148,
+            0.4024999737739563,
+            -1.0214051614793203e-15
+          ]
+        },
+        "LegR": {
+          "Lcl Translation": [
+            -0.10004999488592148,
+            0.4024999737739563,
+            -1.0214051614793203e-15
+          ]
+        },
+        "Vesper": {}
+      },
+      "palette_png_checks": {
+        "8D969E": "8D969E",
+        "BCC5CC": "BCC5CC",
+        "8C9BA1": "8C9BA1",
+        "222E38": "222E38",
+        "C5A361": "C5A361",
+        "DDC18A": "DDC18A",
+        "604A34": "604A34",
+        "65758B": "65758B",
+        "394859": "394859",
+        "37BCAE": "37BCAE",
+        "B8FFF1": "B8FFF1",
+        "F6B647": "F6B647",
+        "F0C5AA": "F0C5AA",
+        "D4D0C3": "D4D0C3",
+        "E0DDD1": "E0DDD1",
+        "4A86A1": "4A86A1"
+      },
+      "forward_evidence": "Face is authored on Blender +Y / FBX -Z; inspect front preview",
+      "fbx_sha256": "f80e0a6eadad059effa9d48eb69bba7f0dd2a77b5c40e05a8ac8ed501d65247c",
+      "albedo_sha256": "f3bba795fefce8c2443a332abd04b09c9daa960905310052e74a8aaeca63eddc",
+      "unity_runtime_verified": false
+    }
+  ]
+}

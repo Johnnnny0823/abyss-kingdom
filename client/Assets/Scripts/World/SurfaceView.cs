@@ -459,13 +459,13 @@ namespace AbyssKingdom.Client.World
             if (anim.Moving) anim.FacingLeft = moveDir.x < -1e-3f; // 鏡頭朝北：畫面左右 = 世界 X
 
             // 3D 小隊（有 Units3D 模型時）：取代 2D 兵種圖，頭上的主將頭像與腳下的顏色圈照舊
-            string unitName = main.ToString();
-            var squadT = troop.Find("Squad3D_" + unitName);
+            string unitName = main.ToString(), heroName = m.Hero.ToString();
+            var squadT = troop.Find($"Squad3D_{unitName}_{heroName}");
             foreach (Transform child in troop)
                 if (child.name.StartsWith("Squad3D_") && child != squadT) UnityEngine.Object.Destroy(child.gameObject);
             UnitSquad squad = squadT != null ? squadT.GetComponent<UnitSquad>() : null;
             if (squad == null && ArtSettings.City3D)
-                squad = UnitSquad.Create(troop, unitName, .42f / Mathf.Max(.01f, troop.localScale.x), (int)m.Id * 13 + (int)m.Hero);
+                squad = UnitSquad.Create(troop, unitName, heroName, .42f / Mathf.Max(.01f, troop.localScale.x), (int)m.Id * 13 + (int)m.Hero);
             if (squad != null)
             {
                 squad.Moving = anim.Moving;
@@ -475,7 +475,7 @@ namespace AbyssKingdom.Client.World
             var heroIcon = AbyssKingdom.Client.UI.ArtLibrary.HeroIcon(m.Hero);
             var iconRenderer = art.Find("HeroIcon").GetComponent<SpriteRenderer>();
             iconRenderer.sprite = AbyssKingdom.Client.UI.ArtLibrary.SpriteOf(heroIcon, .32f);
-            iconRenderer.enabled = heroIcon != null;
+            iconRenderer.enabled = heroIcon != null && (squad == null || !squad.HasHeroModel); // 主將有 3D 模型走在隊伍最前面，就不用頭像
             // 有 2D 圖時把 3D 小兵與旗子藏起來；改用腳下影子的顏色表示出征（暖金）或返回（藍）
             troop.Find("Shadow").GetComponent<Renderer>().sharedMaterial =
                 _w.Mat(m.Returning ? new Color32(60, 100, 160, 255) : new Color32(150, 116, 52, 255));
