@@ -29,7 +29,7 @@ def face(veteran=False, smiling=False):
         g.plate('Eye',[(x-.03,.824),(x+.025,.824),(x+.023,.802),(x-.024,.802)],.116,.007,'white')
         g.c.box('Iris',(x,.122,.813),(.017,.005,.022),'iris')
         g.c.box('Pupil',(x,.126,.813),(.008,.004,.018),'dark')
-        g.c.beam('Brow',(x-s*.025,.123,.839),(x+s*.031,.114,.85),.004 if name=='Vesper' else .008,'leather' if name=='Vesper' else 'hair',4)
+        g.c.beam('Brow',(x-s*.025,.123,.839),(x+s*.031,.114,.85),.004 if name=='Vesper' else .008,'leather' if name in ('Vesper','Karst') else 'hair',4)
         g.loft('Ear',[(.753,.021,.023),(.804,.024,.024)],'skin',s*.126,0)
     if name=='Vesper':
         g.plate('Nose',[(-.009,.798),(.009,.798),(.014,.776),(-.009,.776)],.126,.012,'skin')
@@ -182,6 +182,9 @@ def mounted_body():
     g.c.diamond('Buckle',0,.123,.396,.066,.05,'gold')
     g.loft('GreenScarf',[(.62,.135,.126),(.672,.11,.102)],'cloth')
     g.plate('ScarfTail',[(-.075,.65),(.038,.65),(-.015,.50),(-.10,.535)],.132,.02,'cloth')
+    if name=='Karst':
+        g.c.diamond('CaptainClasp',.075,.132,.60,.045,.066,'gold')
+        g.c.diamond('CaptainJade',.075,.135,.60,.02,.035,'teal')
 
 
 def mounted_arm(s):
@@ -229,6 +232,20 @@ def mount():
         for v in obj.data.vertices:
             x,y,z=v.co; v.co=(s*.235+y,x-.07,z)
         g.c.beam('ClothTrim',(s*.247,-.20,.413),(s*.247,.065,.393),.009,'gold',4)
+    if name=='Karst':
+        # Commander barding: chest plate, larger jade forehead crest and side seals.
+        g.plate('GoldChamfron',[(-.079,.871),(0,.918),(.079,.871),(.063,.76),(0,.733),(-.063,.76)],.578,.016,'gold')
+        g.c.diamond('JadeChamfron',0,.590,.833,.088,.14,'teal')
+        g.c.diamond('PaleCrest',0,.594,.833,.03,.066,'rune')
+        g.plate('ChestBarding',[(-.15,.57),(0,.61),(.15,.57),(.112,.43),(0,.386),(-.112,.43)],.294,.022,'gold')
+        g.c.diamond('ChestJade',0,.311,.50,.081,.116,'teal')
+        for s in (-1,1):
+            emblem=g.plate('SaddleSeal',[(-.065,.57),(0,.63),(.065,.57),(0,.48)],0,.014,'gold')
+            inset=g.plate('SaddleJade',[(-.035,.57),(0,.602),(.035,.57),(0,.517)],0,.018,'teal')
+            for obj in (emblem,inset):
+                for v in obj.data.vertices:
+                    x,y,z=v.co; v.co=(s*(.255+y),x-.09,z)
+            g.c.beam('HarnessGold',(s*.14,.27,.60),(s*.19,.10,.49),.014,'gold',5)
 
 
 def mount_leg(s,front):
@@ -240,6 +257,8 @@ def mount_leg(s,front):
     for dx in (-.032,.028):
         g.c.beam('HoofCrack',(s*.18+dx,y+.148,.018),(s*.18+dx*.55,y+.148,.073),.005,'teal',4)
     g.c.beam('HoofRune',(s*.18-.019,y+.152,.057),(s*.18+.028,y+.152,.029),.003,'rune',4)
+    if name=='Karst':
+        g.loft('GoldFetlock',[(.104,.058,.065),(.13,.059,.066)],'gold',s*.18,y+.048,6)
 
 
 def build():

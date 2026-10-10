@@ -107,7 +107,7 @@
 - 規格：身高約 1、原點在兩腳中間地面、Y 朝上、臉朝 -Z；3,000 三角形以內、1 材質、1 張 1024 albedo；發光用建築的保留色。
 - **分件人偶**（不綁骨架）：根物件底下直接放 `Body`、`Head`、`LegL`、`LegR`、`ArmL`、`ArmR`（騎兵另有 `Mount`、`MountLegFL/FR/BL/BR`），原點在關節。遊戲用 `World/UnitSquad.cs` 擺動零件做走路、待機。
 - 一支行軍：主將模型走在最前面，後面 3 名主力兵種士兵排成三角隊形；主將沒有 3D 模型時改在頭上顯示頭像。沒有該兵種的 3D 模型就用 2D 兵種圖。`-city2d` 也會關掉。騎兵：坐騎四腳對角小跑、騎士坐著不擺腿；持弩（Crossbow、Vesper）雙手同步小擺。
-- 製作：Codex 的 `tools/blender/generate_units3d.py`，說明 `tools/blender/UNITS3D.md`。目前完成：Shield、Crossbow、Rider、Hold、Vesper；Karst 待定（騎乘或步行）。
+- 製作：Codex 的 `tools/blender/generate_units3d.py`，說明 `tools/blender/UNITS3D.md`。全部完成：Shield、Crossbow、Rider、Hold、Vesper、Karst（騎乘版，使用者 2026-10-10 確認）。
 
 ## 6. 程式這邊的對應（給 AI 助手看）
 

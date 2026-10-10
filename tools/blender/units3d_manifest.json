@@ -317,6 +317,253 @@
     },
     {
       "status": "PASS",
+      "name": "Karst",
+      "triangles": 2394,
+      "mesh_count": 11,
+      "material_count": 1,
+      "texture_count": 1,
+      "texture_size": [
+        1024,
+        1024
+      ],
+      "root_origin": [
+        0,
+        0,
+        0
+      ],
+      "dimensions_unity_xyz": [
+        0.699999988079071,
+        1.3000001416388187,
+        1.298821747303009
+      ],
+      "parts": [
+        {
+          "name": "Body",
+          "joint_unity_xyz": [
+            0.0,
+            0.8229436874389648,
+            -6.213052472503477e-08
+          ],
+          "triangles": 170,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "Head",
+          "joint_unity_xyz": [
+            0.0,
+            1.0112553834915161,
+            -7.63476606380209e-08
+          ],
+          "triangles": 388,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "LegL",
+          "joint_unity_xyz": [
+            0.1871212124824524,
+            0.8166666626930237,
+            -6.165662114199222e-08
+          ],
+          "triangles": 204,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "ArmL",
+          "joint_unity_xyz": [
+            0.14123375713825226,
+            0.9673160314559937,
+            -7.887629038805244e-08
+          ],
+          "triangles": 136,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "LegR",
+          "joint_unity_xyz": [
+            -0.1871211975812912,
+            0.8166666626930237,
+            -6.165662114199222e-08
+          ],
+          "triangles": 204,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "ArmR",
+          "joint_unity_xyz": [
+            -0.14123375713825226,
+            0.9673160314559937,
+            -7.887629038805244e-08
+          ],
+          "triangles": 170,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "Mount",
+          "joint_unity_xyz": [
+            0.0,
+            0.58441561460495,
+            -4.412215304228084e-08
+          ],
+          "triangles": 578,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "MountLegFL",
+          "joint_unity_xyz": [
+            0.16883116960525513,
+            0.5627705454826355,
+            -0.2164502590894699
+          ],
+          "triangles": 136,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "MountLegBL",
+          "joint_unity_xyz": [
+            0.16883116960525513,
+            0.5627705454826355,
+            0.27056270837783813
+          ],
+          "triangles": 136,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "MountLegFR",
+          "joint_unity_xyz": [
+            -0.16883116960525513,
+            0.5627705454826355,
+            -0.2164502590894699
+          ],
+          "triangles": 136,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        },
+        {
+          "name": "MountLegBR",
+          "joint_unity_xyz": [
+            -0.16883116960525513,
+            0.5627705454826355,
+            0.27056270837783813
+          ],
+          "triangles": 136,
+          "test_rotation_degrees": 20,
+          "pivot_stays_fixed": true
+        }
+      ],
+      "raw_fbx_transforms": {
+        "ArmL": {
+          "Lcl Translation": [
+            0.14123375713825226,
+            0.9673160314559937,
+            -5.845963713113633e-09
+          ]
+        },
+        "ArmR": {
+          "Lcl Translation": [
+            -0.14123375713825226,
+            0.9673160314559937,
+            -5.845963713113633e-09
+          ]
+        },
+        "Body": {
+          "Lcl Translation": [
+            0.0,
+            0.8229436874389648,
+            0.0
+          ]
+        },
+        "Head": {
+          "Lcl Translation": [
+            0.0,
+            1.0112553834915161,
+            0.0
+          ]
+        },
+        "Karst": {},
+        "LegL": {
+          "Lcl Translation": [
+            0.1871212124824524,
+            0.8166666626930237,
+            5.575145447839387e-16
+          ]
+        },
+        "LegR": {
+          "Lcl Translation": [
+            -0.1871211975812912,
+            0.8166666626930237,
+            -5.575145447839387e-16
+          ]
+        },
+        "Mount": {
+          "Lcl Translation": [
+            0.0,
+            0.58441561460495,
+            0.0
+          ]
+        },
+        "MountLegBL": {
+          "Lcl Translation": [
+            0.16883116960525513,
+            0.5627705454826355,
+            0.2705627381801605
+          ]
+        },
+        "MountLegBR": {
+          "Lcl Translation": [
+            -0.16883116960525513,
+            0.5627705454826355,
+            0.2705627381801605
+          ]
+        },
+        "MountLegFL": {
+          "Lcl Translation": [
+            0.16883116960525513,
+            0.5627705454826355,
+            -0.21645021438598633
+          ]
+        },
+        "MountLegFR": {
+          "Lcl Translation": [
+            -0.16883116960525513,
+            0.5627705454826355,
+            -0.21645021438598633
+          ]
+        }
+      },
+      "palette_png_checks": {
+        "6C6A64": "6C6A64",
+        "92908A": "92908A",
+        "8C9BA1": "8C9BA1",
+        "222E38": "222E38",
+        "C5A361": "C5A361",
+        "DDC18A": "DDC18A",
+        "604A34": "604A34",
+        "506B45": "506B45",
+        "304738": "304738",
+        "37BCAE": "37BCAE",
+        "B8FFF1": "B8FFF1",
+        "F6B647": "F6B647",
+        "DCAE8C": "DCAE8C",
+        "E0D8C6": "E0D8C6",
+        "E0DDD1": "E0DDD1",
+        "60492F": "60492F"
+      },
+      "forward_evidence": "Face is authored on Blender +Y / FBX -Z; inspect front preview",
+      "fbx_sha256": "c09426a4653e3967ad47b3383d623ee85d6a24aefed46ef7937067b1c1a39253",
+      "albedo_sha256": "ce9274d08c5a8c3db0090114ea5cbd87ef097813cc76be2066224f607a126e9e",
+      "unity_runtime_verified": false
+    },
+    {
+      "status": "PASS",
       "name": "Rider",
       "triangles": 2016,
       "mesh_count": 11,

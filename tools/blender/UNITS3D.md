@@ -2,7 +2,7 @@
 
 ## 後續：2026-10-10 批次（基準 18bcc4a）
 
-Shield 已由使用者採用並接入遊戲，走路正常。本批保留 Shield 的 FBX、貼圖及原始 `shield_manifest.json`，新增以下四個角色；**Karst 尚未輸出，待使用者確認騎乘版（連坐騎約 1.3）或步行版（約 1.15）**。原因是參考立繪有坐騎，但本次文字只明列 Rider 加坐騎，且主將高度要求 1.15，不能把建議選項當成已確認決策。
+Shield 已由使用者採用並接入遊戲，走路正常。本批保留 Shield 的 FBX、貼圖及原始 `shield_manifest.json`，新增以下五個角色。使用者已確認 Karst 採騎乘版，連坐騎總高約 1.3，沿用 Rider 的 11 個分件。
 
 | 角色 | 三角形 | 網格 | 高度 | 參考辨識特徵 |
 | --- | --- | --- | --- | --- |
@@ -10,25 +10,26 @@ Shield 已由使用者採用並接入遊戲，走路正常。本批保留 Shield
 | Hold | 2040 | 6 | 1.15 | 灰白髮鬍、赭金圍巾、金飾大盾、短柄武器 |
 | Vesper | 1458 | 6 | 1.15 | 銀髮、藍灰兜帽斗篷、銀白甲、加飾弩 |
 | Rider | 2016 | 11 | 1.30 | 綠披掛、頭盔、長槍旗、灰色白鬃坐騎、青綠蹄紋 |
+| Karst | 2394 | 11 | 1.30 | 棕髮笑容、綠圍巾、長槍旗；金綠額甲、胸甲與側披掛契印、金色蹄環 |
 
-每個新角色都有 `Models/Units3D/<Name>.fbx` 與 `<Name>_Albedo.png`，以及 `artifacts/units3d_previews/<Name>_52.png`、`<Name>_front.png`、`<Name>.blend`、`<Name>.json`、`<Name>_verified.json`。全部維持單一共享材質及 1024 albedo，沒有烘入光照。新的彙總 `tools/blender/units3d_manifest.json` 包含既有 Shield 與本次四個驗證報告、關節和 SHA256。
+每個新角色都有 `Models/Units3D/<Name>.fbx` 與 `<Name>_Albedo.png`，以及 `artifacts/units3d_previews/<Name>_52.png`、`<Name>_front.png`、`<Name>.blend`、`<Name>.json`、`<Name>_verified.json`。全部維持單一共享材質及 1024 albedo，沒有烘入光照。新的彙總 `tools/blender/units3d_manifest.json` 包含既有 Shield 與本次五個驗證報告、關節和 SHA256。
 
-生成器擴充為接受角色名稱；無參數仍只處理 Shield。新造型集中於 `units3d_characters.py`，共用建築工具保持原樣。目前 Karst 分支僅為待決定的騎乘草稿，**不要執行 Karst，先取得設計答覆**。
+生成器擴充為接受角色名稱；無參數仍只處理 Shield。新造型集中於 `units3d_characters.py`，共用建築工具保持原樣。Karst 的坐騎增加金綠額甲、胸部護甲、側面契印與金色蹄環，與士兵坐騎以裝備華麗度區分；整體高度同為 1.3。
 
 ```powershell
 & 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --factory-startup --python-exit-code 1 --python tools/blender/generate_units3d.py -- Crossbow
 & 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --factory-startup --python-exit-code 1 --python tools/blender/verify_units3d.py -- Crossbow
 ```
 
-以上名稱可換成 Hold、Vesper、Rider。每次驗證成功會更新彙總 manifest。單次本機生成含兩張預覽約 15～20 秒，確切時間在各生成 JSON；無外部服務費，不含編寫與修正工時。
+以上名稱可換成 Hold、Vesper、Rider、Karst。每次驗證成功會更新彙總 manifest。單次本機生成含兩張預覽約 15～20 秒，確切時間在各生成 JSON；無外部服務費，不含編寫與修正工時。
 
 所有零件直接掛根節點。Rider 的 Mount 是整個坐騎軀幹與頭鬃，原點在軀幹重心；MountLegFL/FR/BL/BR 的 F 是前腿（Unity -Z 側）、B 是後腿，L 是角色本人的左側（+X）。騎士已在坐騎上坐定位；移動 Mount 不會帶動其他零件，整體起伏應移動共同根節點。總高 1.3 包含槍尖。
 
 Crossbow / Vesper 的整把弩合在 ArmR；ArmL 是支撐手。左右手若各自大幅反向擺動，會離開持弩位置，建議持弩手維持小幅同步擺動。披風、頭髮、鬃毛、旗布是固定幾何。沒有綁骨架或內建步行動畫。
 
-本批四個角色均通過匯出後重新匯入檢查：指定零件集合、關節位置、原點旋轉檢查、面數、貼地、尺寸、單一共享材質／貼圖、單組 UV、無高光、FBX 局部旋轉與縮放，以及 PNG 精確色值。兩角度預覽已檢視。Unity 內的手部接觸、騎兵動作與實際小尺寸辨識仍待使用者／Claude 接入驗證；未修改 `client/Assets/Scripts` 或 2D 美術，未打包、未 commit／push。
+本批五個角色均通過匯出後重新匯入檢查：指定零件集合、關節位置、原點旋轉檢查、面數、貼地、尺寸、單一共享材質／貼圖、單組 UV、無高光、FBX 局部旋轉與縮放，以及 PNG 精確色值。兩角度預覽已檢視。Unity 內的手部接觸、騎兵動作與實際小尺寸辨識仍待使用者／Claude 接入驗證；未修改 `client/Assets/Scripts` 或 2D 美術，未打包、未 commit／push。
 
-三份既有工具文件原版備份位於 `C:\Users\xnikz\.claude\backups\2026-10-10\units3d-batch\`。新增與修改清單：八個 FBX／PNG、`generate_units3d.py`、`verify_units3d.py`、`units3d_characters.py`、`units3d_manifest.json`、本文件及 artifacts 產物。
+三份既有工具文件原版備份位於 `C:\Users\xnikz\.claude\backups\2026-10-10\units3d-batch\`。新增與修改清單：十個 FBX／PNG、`generate_units3d.py`、`verify_units3d.py`、`units3d_characters.py`、`units3d_manifest.json`、本文件及 artifacts 產物。
 
 ---
 
@@ -95,3 +96,4 @@ FBX 重新匯入驗證：6 個指定名字、共同根節點、關節座標、�
 已人工檢視兩張最終預覽。優點是輪廓清楚、面數低、盾矛隨手臂移動；限制是色塊造型較原圖簡化，沒有原图的磨損、手繪紋理與細部曲面，肘膝不能彎曲。六個零件代表每個角色至少六個網格，單材質不保證只需一次 draw call，日後大量小隊仍需實機評估。
 
 未啟動 Unity、未打包、未修改 `client/Assets/Scripts`、未改 2D 圖或建築模型。Unity 材質、縮小辨識度及走路效果交由使用者／Claude 接入驗證。未 commit / push。**停在 Shield 試做，等待確認後才處理 Crossbow、Rider、Hold、Vesper、Karst。**
+
