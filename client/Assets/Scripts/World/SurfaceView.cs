@@ -19,6 +19,8 @@ namespace AbyssKingdom.Client.World
         // 模型顯示倍率：讓主城、資源點、部隊在一般遊玩距離也看得清楚（只影響畫面，不影響規則上的佔地）
         private const float CityScale = 1.5f, FeatureScale = 1.45f, TreeScale = 1.25f, TroopScale = 1.7f, TowerScale = 1.2f;
         private const int ChunkTiles = 40;
+        /// <summary>同一格多支小隊錯開時，離中心的距離（世界單位，約 2 格）。</summary>
+        private const float StackRadius = .4f;
         private const int Chunks = SurfaceConfig.Size / ChunkTiles;
 
         public readonly Transform Root;
@@ -380,6 +382,15 @@ namespace AbyssKingdom.Client.World
         /// <summary>自己的行軍：沿路徑的虛線＋目前位置的部隊（返回中為藍旗）。</summary>
         public void SetMarches(List<March> marches, long nowMs)
         {
+            // 停在同一格的小隊（例如兩支部隊到同一塊資源田）：繞著那一格錯開排列，依行軍編號排序，位置固定不會跳
+            var stacked = new Dictionary<int, List<long>>();
+            foreach (var mm in marches)
+            {
+                if (!mm.Stationed) continue;
+                if (!stacked.TryGetValue(mm.Destination, out var ids)) stacked[mm.Destination] = ids = new List<long>();
+                ids.Add(mm.Id);
+            }
+            foreach (var ids in stacked.Values) ids.Sort();
             int dot = 0;
             for (int i = 0; i < marches.Count; i++)
             {
@@ -412,7 +423,14 @@ namespace AbyssKingdom.Client.World
 
                 var troop = Troop(i);
                 troop.gameObject.SetActive(true);
-                troop.localPosition = here;
+                var offset = Vector3.zero;
+                if (m.Stationed && stacked.TryGetValue(m.Destination, out var group) && group.Count > 1)
+                {
+                    // 從畫面左下開始繞一圈（避開正上方的名牌）
+                    float a = (group.IndexOf(m.Id) * 360f / group.Count + 210f) * Mathf.Deg2Rad;
+                    offset = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * StackRadius;
+                }
+                troop.localPosition = here + offset;
                 var moveDir = m.Stationed || seg >= m.Path.Count - 1 ? Vector3.zero : P(seg + 1) - P(seg);
                 ApplyTroopArt(troop, m, moveDir);
                 troop.Find("Flag").GetComponent<Renderer>().sharedMaterial =
