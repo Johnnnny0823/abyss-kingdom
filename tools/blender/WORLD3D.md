@@ -82,3 +82,46 @@
 逐張檢查 Blender 預覽；修正了草葉重疊面、松樹頂端露出的樹幹、殘拱石塊間距及坑口鍊環方向與間距。模型均有獨立 FBX 回讀驗證。
 
 本輪未重打 Unity、未連使用者帳號、未改遊戲規則，故沒有宣稱遊戲內效果或 164 項規則測試已重新通過。接手者需加入載入與散佈、套用發光材質、綁定怪物程式動畫，再於本機 Dev 客戶端驗收遠近視角與效能。
+
+## 2026-10-11：剩餘舊模型換新（基準 ba92d85）
+
+前述 57 件已由使用者採用並接入。本節新增五件，全部放在 `client/Assets/Resources/Models/World3D/`，不覆蓋 `Models/World/`。這五件尚未在 Unity 內驗收，沒有修改載入程式或進行 commit／push。
+
+| 模型 | 底面 X×Z | 高度 | 三角形 | 外觀 |
+| --- | --- | --- | --- | --- |
+| Mountain_A | 3×3 | 3.70 | 96 | 雙峰、雪頂、暗色岩層 |
+| Mountain_B | 3×3 | 3.85 | 96 | 高主峰與側峰、雪頂 |
+| Mountain_C | 3×3 | 3.60 | 96 | 暗色峰頂與裸岩層 |
+| PassTower | 1.35×1.35 | 2.50 | 492 | 八角塔、扶壁、垛口、正面青綠契印 |
+| AbyssGate | 3×3 | 3.08 | 688 | 抬高井緣、七級下降石階、殘拱與深井契印 |
+
+每件一個材質、一張 512 albedo，沒有烘入光照與高光。沿用保留色 B8FFF1、37BCAE、F6B647；雪色 DFE8E7、井底深色 20242B。原點位於底部中央，Y 朝上，正面 -Z，1 公尺 = 1 格。山脈遵循本輪指定的 1,200 面上限；塔與入口都低於 1,500 面。
+
+### 重建與驗證
+
+新增 `tools/blender/generate_world_landmarks.py`，匯入既有 `generate_world3d.py` 的材質、輸出與預覽流程。既有 57 件的生成腳本和模型未改。
+
+```powershell
+# Generate the five replacements and assembly previews.
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --factory-startup --python-exit-code 1 --python tools/blender/generate_world_landmarks.py
+
+# Rebuild only one asset; names are case-sensitive.
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --factory-startup --python-exit-code 1 --python tools/blender/generate_world_landmarks.py -- AbyssGate
+
+# Verify all five exported assets and merge records by name.
+& 'C:\Program Files\Blender Foundation\Blender 5.2\blender.exe' --background --factory-startup --python-exit-code 1 --python tools/blender/verify_world3d.py -- Mountain PassTower AbyssGate
+```
+
+驗證器原先把非空 footprint 固定視為 2 格，現改成讀取每件報告的 footprint（舊件仍為 2、新件為 3）。manifest 改為依名稱合併，避免新工作環境缺少既有 artifacts 時清掉先前紀錄。`world3d_manifest.json` 合計 62 件；本輪五件各自標記 `base_commit: ba92d85`，其餘紀錄保留。
+
+### 配置方式與證據
+
+- **山牆**：山脊沿模型本地 X 軸，左右端面採同一組七點輪廓。直線中心距離 3 格可精確相接。環狀配置請令本地 X 沿圓環切線，建議中心距離約 2.7 格、略為交疊；不要任意旋轉每座山，否則端面無法對齊。已另做相鄰轉角 10° 的彎曲配置預覽，其他半徑與地形高差仍需遊戲端調整。
+- **石塔**：正面契印朝 -Z，兩座以各自 Y 軸轉向通道。配對預覽使用中心距離 2.6 格，通道淨寬約 1.25 格；遊戲內可自行加寬，不必非等比縮放。
+- **深淵入口**：由正面高處階梯向後方暗井下降。井底高於模型地面，避免未挖洞的地形把洞口遮住。視覺上通往深處，沒有地下延伸網格、通行邏輯或地形挖洞功能。
+- 五張單件預覽：`artifacts/world3d_previews/<Name>.png`；各有 `<Name>.json` 和 `<Name>_verified.json`。
+- 組合預覽：同目錄的 `Mountain_Joined_52.png`、`Mountain_Curved_52.png`、`PassTower_Pair_52.png`。
+- 山脈接縫驗證：`artifacts/world_landmarks_seams.json`，FBX 回讀檢查六個端面及兩處直線接縫，高度差 0。
+- 最終交付核對：`artifacts/world_landmarks_delivery_validation.json`；模型回讀紀錄：`artifacts/world_landmarks_verify.log`。
+
+本次既有文件、manifest、驗證器的修改前備份位於 `C:\Users\xnikz\.claude\backups\2026-10-11\world3d-remaining\`。預覽與 JSON 證據仍放在被 Git 忽略的 artifacts；交接給其他電腦時需另行帶走，或依上方指令重建。

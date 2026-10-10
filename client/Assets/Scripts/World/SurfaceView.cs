@@ -124,12 +124,97 @@ namespace AbyssKingdom.Client.World
             go.AddComponent<MeshRenderer>().sharedMaterial = GroundTextures.Material(_w.BaseMaterial, style, 1f);
         }
 
+        /// <summary>新版地標模型（Models/World3D 的山脈、關隘石塔、深淵入口）可用。</summary>
+        private static bool NewLandmarks => ArtSettings.City3D && ModelLibrary.Get("World3D/Mountain_A") != null;
+
+        /// <summary>
+        /// 山巒（新版山體）：不是一圈整齊的山牆，而是
+        ///   1. 主脊沿著「蜿蜒的半徑」排列（幾個不同頻率的起伏疊在一起），山與山大量交疊、高矮差很多，偶爾冒出特別高的主峰；
+        ///   2. 主脊兩側錯落較矮的前山與岩塊，看起來有層次。
+        /// 模型的本地 X（山脊方向）對齊這條蜿蜒曲線的切線，再加一點偏轉。
+        /// wobble = 主脊左右蜿蜒的幅度（格）；foothills = 兩側前山離主脊的距離（格，0 = 不放）；skipPasses = 關隘處留空。
+        /// </summary>
+        private void BuildRidge(float r, float k, int salt, bool skipPasses, float wobble, float foothills)
+        {
+            float spacing = 2.1f * k; // 比模型長度（3 格）短很多：大量交疊，看不出一顆顆
+            int n = Mathf.RoundToInt(2 * Mathf.PI * r / spacing);
+            string[] variants = { "Mountain_A", "Mountain_B", "Mountain_C" };
+            float ph1 = salt * .37f, ph2 = salt * .91f, ph3 = salt * 1.73f;
+            float RadiusAt(float a) => r + wobble * (.55f * Mathf.Sin(3 * a + ph1) + .3f * Mathf.Sin(7 * a + ph2) + .15f * Mathf.Sin(17 * a + ph3));
+            (float x, float y) At(float a, float extra) { float rr = RadiusAt(a) + extra; return (SurfaceConfig.Center + Mathf.Cos(a) * rr, SurfaceConfig.Center + Mathf.Sin(a) * rr); }
+
+            void Place(float a, float extra, string name, Vector3 scale, float yawJitter)
+            {
+                var (fx, fy) = At(a, extra);
+                int x = (int)fx, y = (int)fy;
+                if (skipPasses && SurfaceLogic.NearPass(x, y, Mathf.CeilToInt(1.5f * k) + 2)) return;
+                // 切線用前後兩點算（蜿蜒的曲線不是正圓）
+                var (ax, ay) = At(a - .002f, extra);
+                var (bx, by) = At(a + .002f, extra);
+                var tangent = TilePos(bx, by) - TilePos(ax, ay);
+                float yaw = Mathf.Atan2(-tangent.z, tangent.x) * Mathf.Rad2Deg + yawJitter;
+                var p = TilePos(fx - .5f, fy - .5f);
+                Defer(x, y, () =>
+                {
+                    var go = ModelLibrary.Spawn("World3D/" + name, ChunkOf(x, y), p, 1f, 0, yaw);
+                    if (go == null) return;
+                    go.transform.localScale = Vector3.Scale(go.transform.localScale, scale * S);
+                    LivingModel.Attach(go, name, 0);
+                });
+            }
+
+            for (int i = 0; i < n; i++)
+            {
+                float a = (i + (Hash(i, salt + 7) % 40) / 100f) * Mathf.PI * 2 / n;
+                // 高矮：大部分 0.75~1.35，約每 9 座有一座 1.7~2.0 的主峰
+                bool peak = Hash(i, salt + 1) % 9 == 0;
+                float h = peak ? 1.7f + Hash(i, salt + 2) % 30 / 100f : .75f + Hash(i, salt + 3) % 60 / 100f;
+                float w = 1f + Hash(i, salt + 4) % 30 / 100f;
+                Place(a, (Hash(i, salt + 5) % 100 / 100f - .5f) * 1.2f, variants[Hash(i, salt) % 3],
+                    new Vector3(k * w, k * h, k * (.9f + Hash(i, salt + 6) % 30 / 100f)), Hash(i, salt + 8) % 24 - 12);
+
+                if (foothills <= 0) continue;
+                // 前山：每座主山的兩側隨機放 0~2 座矮山（往內或往外），偶爾換成大岩塊
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    if (Hash(i, salt + 10 + side) % 100 >= 55) continue;
+                    float fa = a + (Hash(i, salt + 12 + side) % 100 / 100f - .5f) * Mathf.PI * 2 / n;
+                    float dist = side * foothills * (.75f + Hash(i, salt + 14 + side) % 50 / 100f);
+                    if (Hash(i, salt + 16 + side) % 5 == 0)
+                    {
+                        var (bx, by) = At(fa, dist);
+                        int ix = (int)bx, iy = (int)by;
+                        if (skipPasses && SurfaceLogic.NearPass(ix, iy, 3)) continue;
+                        var bp = TilePos(bx - .5f, by - .5f);
+                        string rock = Hash(i, salt + 18 + side) % 2 == 0 ? "WorldProps/Boulder_A" : "WorldProps/RockSpire_B";
+                        int yawR = Hash(i, salt + 20 + side) % 360;
+                        Defer(ix, iy, () =>
+                        {
+                            var go = ModelLibrary.Spawn(rock, ChunkOf(ix, iy), bp, S * k * .9f, 0, yawR);
+                            if (go != null) LivingModel.Attach(go, rock, 0);
+                        });
+                        continue;
+                    }
+                    float fh = .4f + Hash(i, salt + 22 + side) % 30 / 100f;
+                    Place(fa, dist, variants[Hash(i, salt + 24 + side) % 3], new Vector3(k * .7f, k * fh, k * .7f), Hash(i, salt + 26 + side) % 60 - 30);
+                }
+            }
+        }
+        /// <summary>石塔的正面（-Z，有契印）轉向 dir（世界座標、水平）。</summary>
+        private static float YawFacing(Vector3 dir) => Mathf.Atan2(-dir.x, -dir.z) * Mathf.Rad2Deg;
+
         /// <summary>分區之間的環狀山脈；關隘的位置留空，兩側各一座石塔。</summary>
         private void BuildWalls()
         {
             for (int b = 0; b < 2; b++)
             {
                 int r = SurfaceConfig.Boundaries[b];
+                if (NewLandmarks)
+                {
+                    BuildRidge(r, 1.5f, 300 + b, true, 1.6f, 2.6f);
+                    BuildPassTowers(b);
+                    continue;
+                }
                 int n = Mathf.RoundToInt(2 * Mathf.PI * r / 3f);
                 for (int i = 0; i < n; i++)
                 {
@@ -169,9 +254,37 @@ namespace AbyssKingdom.Client.World
             }
         }
 
+        /// <summary>新版關隘石塔：通道兩側各一座，契印正面朝向通道。</summary>
+        private void BuildPassTowers(int b)
+        {
+            for (int i = 0; i < SurfaceConfig.PassesPerBoundary; i++)
+            {
+                var (px, py) = SurfaceLogic.Pass(b, i);
+                var center = TilePos(px, py);
+                var radial = new Vector3(center.x, 0, center.z).normalized;
+                var side = Vector3.Cross(radial, Vector3.up);
+                var t = ChunkOf(px, py);
+                foreach (var s in new[] { -1f, 1f })
+                {
+                    var pos = center + side * ((SurfaceConfig.PassRadius + 1.2f) * S * s);
+                    var go = ModelLibrary.Spawn("World3D/PassTower", t, pos, S * 1.4f, 0, YawFacing(-side * s));
+                    if (go != null) LivingModel.Attach(go, "PassTower", i * 2 + (s > 0 ? 1 : 0));
+                }
+                _w.Text(t, center + Vector3.up * 0.9f, 0.05f, new Color(1f, 0.9f, 0.6f)).text = "關隘";
+            }
+        }
+
         /// <summary>整張地圖最外圍環繞的山谷：兩排錯開的高山，沒有缺口。</summary>
         private void BuildOuterValley()
         {
+            if (NewLandmarks)
+            {
+                // 外圍山谷：三層，越外越高大；內層前山往地圖內側散一點
+                BuildRidge(SurfaceConfig.OuterRadius + 4, 1.5f, 410, false, 4f, 3.5f);
+                BuildRidge(SurfaceConfig.OuterRadius + 10, 2.1f, 421, false, 5f, 0f);
+                BuildRidge(SurfaceConfig.OuterRadius + 17, 2.8f, 433, false, 6f, 0f);
+                return;
+            }
             for (int row = 0; row < 2; row++)
             {
                 float r = SurfaceConfig.OuterRadius + 4 + row * 7;
@@ -209,7 +322,7 @@ namespace AbyssKingdom.Client.World
         {
             if (!ArtSettings.City3D) return null;
             string name = f.Type == FeatureType.ResourceField ? $"Field_{f.Resource}_{f.Level}"
-                : f.Type == FeatureType.MonsterCamp ? $"MonsterCamp_{f.Level}" : null;
+                : f.Type == FeatureType.MonsterCamp ? $"MonsterCamp_{f.Level}" : "AbyssGate";
             return name != null && ModelLibrary.Get("World3D/" + name) != null ? name : null;
         }
 
@@ -220,7 +333,10 @@ namespace AbyssKingdom.Client.World
             {
                 var chunk3 = ChunkOf(f.X, f.Y);
                 var p3 = TilePos(f.X, f.Y);
-                var m3 = ModelLibrary.Spawn("World3D/" + name3D, chunk3, p3, S * FeatureScale, 0, Hash(f.X, f.Y) % 4 * 90);
+                bool gate = f.Type == FeatureType.AbyssGate;
+                // 深淵入口：階梯正面朝外（從崖緣往深淵方向走下去）；其他隨機轉 90 度的倍數
+                var outward = new Vector3(p3.x, 0, p3.z).normalized;
+                var m3 = ModelLibrary.Spawn("World3D/" + name3D, chunk3, p3, S * (gate ? 1.6f : FeatureScale), 0, gate ? YawFacing(outward) : Hash(f.X, f.Y) % 4 * 90);
                 LivingModel.Attach(m3, name3D, f.X * 31 + f.Y);
                 if (f.Type == FeatureType.MonsterCamp)
                 {
@@ -234,6 +350,11 @@ namespace AbyssKingdom.Client.World
                         _monsters[tile] = monster;
                         monster.SetActive(!_defeated.Contains(tile)); // 區塊晚建時，照目前的擊敗狀態
                     }
+                }
+                if (gate)
+                {
+                    _w.Text(chunk3, p3 + Vector3.up * 1.2f, 0.048f, new Color(0.8f, 0.78f, 1f)).text = "深淵入口";
+                    return;
                 }
                 float lift = f.Type == FeatureType.MonsterCamp ? .62f : .6f;
                 _w.Text(chunk3, p3 + Vector3.up * lift, 0.038f, f.Type == FeatureType.MonsterCamp ? new Color(1f, 0.7f, 0.65f) : new Color(1f, 0.97f, 0.9f)).text =

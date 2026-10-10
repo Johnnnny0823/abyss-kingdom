@@ -139,6 +139,75 @@
       "palette_verified": true
     },
     {
+      "name": "AbyssGate",
+      "family": "AbyssGate",
+      "folder": "World3D",
+      "base_commit": "ba92d85",
+      "zones": [
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Landmark placement; no random density",
+      "triangles": 688,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        3.0,
+        3.08000003695291,
+        3.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "AbyssGate",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 688,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "20242B",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "DFE8E7",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 3,
+      "seconds": 4.07,
+      "status": "PASS",
+      "fbx_sha256": "6f1070d13b7493dd154a5e91b1564a170ff22aec1e94147d27791f158d3ccb98",
+      "albedo_sha256": "b1eb1924177fa51ef0a89b9958760bbf737f1bcd50bd1aa8c175c7ea350a9ba2",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
       "name": "AbyssTree_A",
       "family": "AbyssTree",
       "folder": "WorldProps",
@@ -2985,6 +3054,324 @@
       "palette_verified": true
     },
     {
+      "name": "Mountain_A",
+      "family": "Mountain",
+      "folder": "World3D",
+      "base_commit": "ba92d85",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Landmark placement; no random density",
+      "triangles": 96,
+      "triangle_budget": 1200,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        3.0,
+        3.7000001609305713,
+        3.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Mountain_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 96,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "20242B",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "DFE8E7",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 3,
+      "connection": {
+        "axis": "X",
+        "straight_center_spacing": 3,
+        "curved_suggested_spacing": 2.7,
+        "end_profile_blender_yz": [
+          [
+            -1.5,
+            0
+          ],
+          [
+            -1.0,
+            0.85
+          ],
+          [
+            -0.5,
+            1.75
+          ],
+          [
+            0.0,
+            2.35
+          ],
+          [
+            0.5,
+            1.65
+          ],
+          [
+            1.0,
+            0.7
+          ],
+          [
+            1.5,
+            0
+          ]
+        ]
+      },
+      "seconds": 5.08,
+      "status": "PASS",
+      "fbx_sha256": "011b024eefa63c2dd5ddf1bbf5c72c145f8a8bce8c383b51dadaff4d4deeaa1e",
+      "albedo_sha256": "b1eb1924177fa51ef0a89b9958760bbf737f1bcd50bd1aa8c175c7ea350a9ba2",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Mountain_B",
+      "family": "Mountain",
+      "folder": "World3D",
+      "base_commit": "ba92d85",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Landmark placement; no random density",
+      "triangles": 96,
+      "triangle_budget": 1200,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        3.0,
+        3.850000017879424,
+        3.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Mountain_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 96,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "20242B",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "DFE8E7",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 3,
+      "connection": {
+        "axis": "X",
+        "straight_center_spacing": 3,
+        "curved_suggested_spacing": 2.7,
+        "end_profile_blender_yz": [
+          [
+            -1.5,
+            0
+          ],
+          [
+            -1.0,
+            0.85
+          ],
+          [
+            -0.5,
+            1.75
+          ],
+          [
+            0.0,
+            2.35
+          ],
+          [
+            0.5,
+            1.65
+          ],
+          [
+            1.0,
+            0.7
+          ],
+          [
+            1.5,
+            0
+          ]
+        ]
+      },
+      "seconds": 2.56,
+      "status": "PASS",
+      "fbx_sha256": "de4d13d748e56d7d1386e830a45c46415af567ec420d9975e0f6d22540f11f1d",
+      "albedo_sha256": "b1eb1924177fa51ef0a89b9958760bbf737f1bcd50bd1aa8c175c7ea350a9ba2",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Mountain_C",
+      "family": "Mountain",
+      "folder": "World3D",
+      "base_commit": "ba92d85",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Landmark placement; no random density",
+      "triangles": 96,
+      "triangle_budget": 1200,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        3.0,
+        3.600000017879424,
+        3.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Mountain_C",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 96,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "20242B",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "DFE8E7",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 3,
+      "connection": {
+        "axis": "X",
+        "straight_center_spacing": 3,
+        "curved_suggested_spacing": 2.7,
+        "end_profile_blender_yz": [
+          [
+            -1.5,
+            0
+          ],
+          [
+            -1.0,
+            0.85
+          ],
+          [
+            -0.5,
+            1.75
+          ],
+          [
+            0.0,
+            2.35
+          ],
+          [
+            0.5,
+            1.65
+          ],
+          [
+            1.0,
+            0.7
+          ],
+          [
+            1.5,
+            0
+          ]
+        ]
+      },
+      "seconds": 2.7,
+      "status": "PASS",
+      "fbx_sha256": "69ecad671f5a3c84d887bac322ba27f0ad9e42aab344569ba18e04cd1c5fef75",
+      "albedo_sha256": "b1eb1924177fa51ef0a89b9958760bbf737f1bcd50bd1aa8c175c7ea350a9ba2",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
       "name": "OldStatue_A",
       "family": "OldStatue",
       "folder": "WorldProps",
@@ -3125,6 +3512,77 @@
       "status": "PASS",
       "fbx_sha256": "bde3e6e7290772c218ab50bfb0637f7bb93f617ff8be9f37788e579e6a05c6fa",
       "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "PassTower",
+      "family": "PassTower",
+      "folder": "World3D",
+      "base_commit": "ba92d85",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Landmark placement; no random density",
+      "triangles": 492,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        1.350000023841858,
+        2.5000000509610842,
+        1.350000023841858
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "PassTower",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 492,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "20242B",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "DFE8E7",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 2.5,
+      "footprint": null,
+      "seconds": 2.48,
+      "status": "PASS",
+      "fbx_sha256": "c77027219bda53dfa5bfc8eb86a5db78586c48ce20751e270a829260f945aaa4",
+      "albedo_sha256": "b1eb1924177fa51ef0a89b9958760bbf737f1bcd50bd1aa8c175c7ea350a9ba2",
       "fbx_transforms_verified": true,
       "palette_verified": true
     },

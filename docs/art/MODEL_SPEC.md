@@ -114,6 +114,7 @@
 - `Models/WorldProps/`：樹、草、花、岩石、遺跡等 16 種 × A/B。`World/WorldProps.cs` 依分區與密度（`worldprops_manifest.json`，表格抄在程式裡）確定性散佈，避開主城候選位置、資源田／營地、關隘、深淵；取代舊的兩種樹。整體密度 `WorldProps.Density`（目前 0.6）。
 - `Models/World3D/`：資源田 `Field_<資源>_<等級>`、營地 `MonsterCamp_<等級>`、怪物 `Monster_<等級>`（外環小獸、中環魔物、崖緣深淵大型魔物，營地前站一隻，`World/MonsterIdle.cs` 做待機動作）。
 - `Models/Abyss/`：坑口斷崖 `RimRock`、殘破木架 `RimRuin`、坑壁晶簇 `AbyssCrystal`，`AbyssPit.BuildRimModels` 擺放。
+- 山脈、關隘石塔、深淵入口（2026-10-11 第二批）：`World3D/Mountain_A~C`、`PassTower`、`AbyssGate`。山脈由 `SurfaceView.BuildRidge` 排成山巒：主脊沿蜿蜒半徑（多個頻率疊加）排列、山體大量交疊、高矮差大並偶有主峰，兩側散佈前山與岩塊；外圍山谷三層。使用者要求「不要單純的圓，要有山巒的感覺」。
 - 效能：區塊進到鏡頭附近才建，而且分幀建造（每幀約 6 毫秒，`SurfaceView.BuildStep`）。2026-10-11 實測（RTX 3050 筆電、外環）：平均 12.1 毫秒（82 fps），最慢 44.6 毫秒，可見物件約 3,700。量測用啟動參數 `-perflog`（Player.log 搜尋 PERF）。手機版之後要再量、必要時調低密度。
 
 ## 6. 程式這邊的對應（給 AI 助手看）

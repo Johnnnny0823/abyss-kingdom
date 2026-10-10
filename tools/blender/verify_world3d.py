@@ -55,7 +55,7 @@ for expected in reports:
     assert abs(low[2])<1e-5,(name,low)
     assert max(abs(a-b) for a,b in zip(dims,expected['dimensions_unity_xyz']))<1e-5
     if expected['target_height']:assert abs(dims[1]-expected['target_height'])<1e-5
-    if expected['footprint']:assert abs(dims[0]-2)<1e-5 and abs(dims[2]-2)<1e-5
+    if expected['footprint']:assert abs(dims[0]-expected['footprint'])<1e-5 and abs(dims[2]-expected['footprint'])<1e-5
     if len(meshes)==1:assert abs(low[0]+high[0])<1e-5 and abs(low[1]+high[1])<1e-5
     raw,_=parse_fbx.parse(str(path));objects=next(e for e in raw.elems if e.id==b'Objects')
     transforms={}
@@ -83,5 +83,9 @@ for expected in reports:
 verified=[json.loads(p.read_text(encoding='utf-8')) for p in ART.glob('*_verified.json')]
 for filename,subset in [('worldprops_manifest.json',[r for r in verified if r['folder']=='WorldProps']),
                         ('world3d_manifest.json',verified)]:
-    manifest={'base_commit':'c3bfffb','units':'1 meter = 1 map tile','models':sorted(subset,key=lambda r:r['name'])}
-    (ROOT/'tools/blender'/filename).write_text(json.dumps(manifest,indent=2),encoding='utf-8')
+    path=ROOT/'tools/blender'/filename
+    manifest=json.loads(path.read_text(encoding='utf-8')) if path.exists() else {'base_commit':'c3bfffb','units':'1 meter = 1 map tile'}
+    merged={r['name']:r for r in manifest.get('models',[])}
+    merged.update({r['name']:r for r in subset})
+    manifest['models']=sorted(merged.values(),key=lambda r:r['name'])
+    path.write_text(json.dumps(manifest,indent=2),encoding='utf-8')
