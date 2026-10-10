@@ -31,6 +31,7 @@ Material:
     m_Floats:
     - _Highlight: 0
     - _Phase: 0
+    - _Wind: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _RuneColor: {r: 0.35, g: 1, b: 0.88, a: 1}
