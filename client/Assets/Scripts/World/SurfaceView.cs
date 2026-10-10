@@ -54,7 +54,23 @@ namespace AbyssKingdom.Client.World
                 var feature = f;
                 Defer(f.X, f.Y, () => BuildFeature(feature));
             }
-            BuildTrees();
+            if (ArtSettings.City3D && WorldProps.Available)
+            {
+                // 新版裝飾物（樹、草、岩石、遺跡…）依分區密度散佈，取代舊的兩種樹；每個區塊進到鏡頭附近才建
+                for (int cy = 0; cy < Chunks; cy++)
+                    for (int cx = 0; cx < Chunks; cx++)
+                    {
+                        int x0 = cx * ChunkTiles, y0 = cy * ChunkTiles;
+                        var chunk = _chunks[cx, cy];
+                        // 一列一列建（每列 5 格高），讓分幀建造可以在列與列之間停下來
+                        for (int row = 0; row < ChunkTiles; row += 5)
+                        {
+                            int ry = y0 + row;
+                            Defer(x0, y0, () => WorldProps.Build(chunk, x0, ry, x0 + ChunkTiles, ry + 5, S, (x, y) => TilePos(x - .5f, y - .5f)));
+                        }
+                    }
+            }
+            else BuildTrees();
             _select = w.Prim(PrimitiveType.Cube, Color.white, Vector3.zero, Vector3.one, Root);
             _select.GetComponent<Renderer>().sharedMaterial = w.Glow;
             _select.SetActive(false);
@@ -188,8 +204,40 @@ namespace AbyssKingdom.Client.World
             }
         }
 
+        /// <summary>新版 3D 資源田／營地（Models/World3D，2×2 格）；沒有就回傳 null。</summary>
+        private static string Model3DOf(Feature f)
+        {
+            if (!ArtSettings.City3D) return null;
+            string name = f.Type == FeatureType.ResourceField ? $"Field_{f.Resource}_{f.Level}"
+                : f.Type == FeatureType.MonsterCamp ? $"MonsterCamp_{f.Level}" : null;
+            return name != null && ModelLibrary.Get("World3D/" + name) != null ? name : null;
+        }
+
         private void BuildFeature(Feature f)
         {
+            var name3D = Model3DOf(f);
+            if (name3D != null)
+            {
+                var chunk3 = ChunkOf(f.X, f.Y);
+                var p3 = TilePos(f.X, f.Y);
+                var m3 = ModelLibrary.Spawn("World3D/" + name3D, chunk3, p3, S * FeatureScale, 0, Hash(f.X, f.Y) % 4 * 90);
+                LivingModel.Attach(m3, name3D, f.X * 31 + f.Y);
+                if (f.Type == FeatureType.MonsterCamp)
+                {
+                    // 營地前站一隻對應等級的怪物（外環小獸、中環魔物、崖緣深淵大型魔物），待機動作見 MonsterIdle
+                    var monster = ModelLibrary.Spawn("World3D/Monster_" + f.Level, chunk3, p3 + new Vector3(.32f, 0, -.3f), S * 1.5f, 0, 200 + Hash(f.Y, f.X) % 50);
+                    if (monster != null)
+                    {
+                        LivingModel.Attach(monster, "Monster_" + f.Level, f.X * 7 + f.Y);
+                        MonsterIdle.Attach(monster, f.X * 13 + f.Y);
+                    }
+                }
+                float lift = f.Type == FeatureType.MonsterCamp ? .62f : .6f;
+                _w.Text(chunk3, p3 + Vector3.up * lift, 0.038f, f.Type == FeatureType.MonsterCamp ? new Color(1f, 0.7f, 0.65f) : new Color(1f, 0.97f, 0.9f)).text =
+                    (f.Type == FeatureType.MonsterCamp ? "怪 Lv." : "Lv.") + f.Level;
+                return;
+            }
+
             // 有美術模型就用模型（文字標籤另外放），沒有就用下面的灰盒
             var pos = TilePos(f.X, f.Y);
             float fs = f.Type == FeatureType.AbyssGate ? 1f : FeatureScale;
@@ -531,11 +579,53 @@ namespace AbyssKingdom.Client.World
             return _troops[i];
         }
 
+        private readonly bool[,] _queued = new bool[Chunks, Chunks];
+        private readonly List<(int cx, int cy)> _buildQueue = new List<(int, int)>();
+        private bool _queueDirty;
+        private Vector3 _lastFocus;
+
+        /// <summary>
+        /// 分幀建造：每幀最多花約 6 毫秒建延後的東西，離鏡頭近的區塊先建。
+        /// （一次建完鏡頭附近幾十個區塊的上萬個裝飾物會讓畫面卡住好幾秒）
+        /// </summary>
+        public void BuildStep()
+        {
+            if (_buildQueue.Count == 0) return;
+            if (_queueDirty)
+            {
+                _queueDirty = false;
+                _buildQueue.Sort((a, b) => ChunkDist2(a).CompareTo(ChunkDist2(b)));
+            }
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            while (_buildQueue.Count > 0 && watch.Elapsed.TotalMilliseconds < 6)
+            {
+                var (cx, cy) = _buildQueue[0];
+                var list = _pending[cx, cy];
+                if (list == null || list.Count == 0)
+                {
+                    _pending[cx, cy] = null;
+                    _queued[cx, cy] = false;
+                    _buildQueue.RemoveAt(0);
+                    continue;
+                }
+                var build = list[list.Count - 1];
+                list.RemoveAt(list.Count - 1);
+                build();
+            }
+        }
+
+        private float ChunkDist2((int cx, int cy) c)
+        {
+            var p = TilePos(c.cx * ChunkTiles + ChunkTiles / 2, c.cy * ChunkTiles + ChunkTiles / 2);
+            return (p.x - _lastFocus.x) * (p.x - _lastFocus.x) + (p.z - _lastFocus.z) * (p.z - _lastFocus.z);
+        }
+
         /// <summary>只顯示鏡頭附近的區塊（每 0.3 秒更新一次）。</summary>
         public void Cull(Vector3 focus, float viewDist)
         {
             if (Time.unscaledTime < _nextCull) return;
             _nextCull = Time.unscaledTime + 0.3f;
+            _lastFocus = focus;
             float radius = viewDist * 1.4f + ChunkTiles * S;
             for (int cy = 0; cy < Chunks; cy++)
                 for (int cx = 0; cx < Chunks; cx++)
@@ -543,11 +633,11 @@ namespace AbyssKingdom.Client.World
                     var c = TilePos(cx * ChunkTiles + ChunkTiles / 2, cy * ChunkTiles + ChunkTiles / 2);
                     float dx = c.x - focus.x, dz = c.z - focus.z;
                     bool on = dx * dx + dz * dz < radius * radius;
-                    if (on && _pending[cx, cy] != null)
+                    if (on && _pending[cx, cy] != null && !_queued[cx, cy])
                     {
-                        var list = _pending[cx, cy];
-                        _pending[cx, cy] = null;
-                        foreach (var build in list) build();
+                        _queued[cx, cy] = true;
+                        _buildQueue.Add((cx, cy));
+                        _queueDirty = true;
                     }
                     _chunks[cx, cy].gameObject.SetActive(on);
                 }

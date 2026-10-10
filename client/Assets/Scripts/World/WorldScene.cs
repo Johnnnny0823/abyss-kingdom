@@ -47,6 +47,7 @@ namespace AbyssKingdom.Client.World
             DontDestroyOnLoad(go);
             var w = go.AddComponent<WorldScene>();
             w.Build();
+            PerfProbe.AttachIfRequested(go);
             return w;
         }
 
@@ -254,7 +255,7 @@ namespace AbyssKingdom.Client.World
 
             ApplyCamera();
             if (Current == Mode.City) City.Hover(mouse, overUi);
-            else Surface.Cull(v.Focus, v.Dist);
+            else { Surface.Cull(v.Focus, v.Dist); Surface.BuildStep(); }
 
             var rot = _cam.transform.rotation;
             _billboards.RemoveAll(t => t == null);

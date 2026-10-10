@@ -1,0 +1,4192 @@
+{
+  "base_commit": "c3bfffb",
+  "units": "1 meter = 1 map tile",
+  "models": [
+    {
+      "name": "AbyssCrystal_A",
+      "family": "AbyssCrystal",
+      "folder": "Abyss",
+      "zones": [
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 116,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.8126607537269592,
+        1.1100001335144043,
+        1.224824070930481
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "AbyssCrystal_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 116,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": null,
+      "seconds": 5.89,
+      "status": "PASS",
+      "fbx_sha256": "f0ef1b3b77e24e7be9dcc46473f7589386989d8695046a51d8b914b97c8abeca",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "AbyssCrystal_B",
+      "family": "AbyssCrystal",
+      "folder": "Abyss",
+      "zones": [
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 140,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.9773966073989868,
+        1.1100002527236938,
+        1.088249683380127
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "AbyssCrystal_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 140,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": null,
+      "seconds": 6.15,
+      "status": "PASS",
+      "fbx_sha256": "38a3a7e91b70544252d31d5a357eefa046ccaf5fa011c67b904f8bcb5a8fad71",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "AbyssTree_A",
+      "family": "AbyssTree",
+      "folder": "WorldProps",
+      "zones": [
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "rim": 0.45
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 528,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        1.4094160795211792,
+        2.349999882878505,
+        1.0392361879348755
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "AbyssTree_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 528,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 2.35,
+      "footprint": null,
+      "seconds": 6.09,
+      "status": "PASS",
+      "fbx_sha256": "5a679ba649c7debf9de6d101e196ca1ddfa1622e23a96ac17e61010eb04fe692",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "AbyssTree_B",
+      "family": "AbyssTree",
+      "folder": "WorldProps",
+      "zones": [
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "rim": 0.45
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 528,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        1.4821887016296387,
+        2.655499932726811,
+        1.180927336215973
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "AbyssTree_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 528,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 2.6555,
+      "footprint": null,
+      "seconds": 6.47,
+      "status": "PASS",
+      "fbx_sha256": "894025df4eb08f326c47841058a1f8a3caaea0d4de0c314d6fcb5cea0b0d9fa6",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Boulder_A",
+      "family": "Boulder",
+      "folder": "WorldProps",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "outer": 0.25,
+        "middle": 0.55,
+        "rim": 0.8
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 40,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        1.5252686738967896,
+        1.0999999997370384,
+        1.4723519682884216
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Boulder_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 40,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 1.1,
+      "footprint": null,
+      "seconds": 5.89,
+      "status": "PASS",
+      "fbx_sha256": "e1e12f3509eb0824385b59cb8f44c5f0aa3c7e90d5b9dd9c28cc3a1b9073c6a7",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Boulder_B",
+      "family": "Boulder",
+      "folder": "WorldProps",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "outer": 0.25,
+        "middle": 0.55,
+        "rim": 0.8
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 60,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.071960687637329,
+        1.2430000305175781,
+        1.4933152794837952
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Boulder_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 60,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 1.2429999999999999,
+      "footprint": null,
+      "seconds": 5.71,
+      "status": "PASS",
+      "fbx_sha256": "f97e894cd9778ac13c14db8aa30723688e8248ff55541d45aa3fdf21773355e9",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Broadleaf_A",
+      "family": "Broadleaf",
+      "folder": "WorldProps",
+      "zones": [
+        "outer"
+      ],
+      "density_per_100_tiles": {
+        "outer": 2.5
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 240,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        1.9586856365203857,
+        2.400000104037349,
+        1.8019763827323914
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Broadleaf_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 240,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 2.4,
+      "footprint": null,
+      "seconds": 6.97,
+      "status": "PASS",
+      "fbx_sha256": "28adfda770c30cdec371c19e55842617ba7a7dab821a91d977b4bd4469950578",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Broadleaf_B",
+      "family": "Broadleaf",
+      "folder": "WorldProps",
+      "zones": [
+        "outer"
+      ],
+      "density_per_100_tiles": {
+        "outer": 2.5
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 292,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.2218692302703857,
+        2.7120001389654087,
+        2.0242459774017334
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Broadleaf_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 292,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 2.7119999999999997,
+      "footprint": null,
+      "seconds": 7.26,
+      "status": "PASS",
+      "fbx_sha256": "6d558f5be7814a92b53efe6b31c515a2c6e9cb4e1937ea02249885904006dd3d",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "BrokenPillar_A",
+      "family": "BrokenPillar",
+      "folder": "WorldProps",
+      "zones": [
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "middle": 0.18,
+        "rim": 0.3
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 112,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.8557144403457642,
+        1.3499999168841796,
+        0.679358959197998
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "BrokenPillar_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 112,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 1.35,
+      "footprint": null,
+      "seconds": 6.18,
+      "status": "PASS",
+      "fbx_sha256": "21af67612a102959cd08f55e9890d710504b8c0cde009ff82f263f3c04a1a077",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "BrokenPillar_B",
+      "family": "BrokenPillar",
+      "folder": "WorldProps",
+      "zones": [
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "middle": 0.18,
+        "rim": 0.3
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 112,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.8794925808906555,
+        1.525499952186931,
+        0.7171579599380493
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "BrokenPillar_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 112,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 1.5254999999999999,
+      "footprint": null,
+      "seconds": 6.16,
+      "status": "PASS",
+      "fbx_sha256": "43727cb27ad6e7273a59915b396884a73c4de89790cbfa170a2316c1dad7b7ab",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Bush_A",
+      "family": "Bush",
+      "folder": "WorldProps",
+      "zones": [
+        "outer",
+        "middle"
+      ],
+      "density_per_100_tiles": {
+        "outer": 3.0,
+        "middle": 0.7
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 80,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.7461505234241486,
+        0.4800000033104599,
+        0.7737792134284973
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Bush_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 80,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 0.48,
+      "footprint": null,
+      "seconds": 8.61,
+      "status": "PASS",
+      "fbx_sha256": "5ad78da5771d989ecd1fbad8aec814ebb8cbe31bd34f192b2de20e7e632233e2",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Bush_B",
+      "family": "Bush",
+      "folder": "WorldProps",
+      "zones": [
+        "outer",
+        "middle"
+      ],
+      "density_per_100_tiles": {
+        "outer": 3.0,
+        "middle": 0.7
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 100,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.9693686366081238,
+        0.5424000033126519,
+        0.8656584620475769
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Bush_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 100,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 0.5423999999999999,
+      "footprint": null,
+      "seconds": 6.17,
+      "status": "PASS",
+      "fbx_sha256": "c3dc16e3ae62035e36d03d14d0230df6224044bfc45bd1988d50b8ce3baa171a",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "DeadTree_A",
+      "family": "DeadTree",
+      "folder": "WorldProps",
+      "zones": [
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "middle": 1.4,
+        "rim": 0.7
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 384,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        1.2894659042358398,
+        2.149999837046197,
+        0.9507906436920166
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "DeadTree_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 384,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 2.15,
+      "footprint": null,
+      "seconds": 6.49,
+      "status": "PASS",
+      "fbx_sha256": "9b1462dca426e4e140abbc309795a9df1bedcb657133356c1705ffedffb1f395",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "DeadTree_B",
+      "family": "DeadTree",
+      "folder": "WorldProps",
+      "zones": [
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "middle": 1.4,
+        "rim": 0.7
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 384,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        1.3560450077056885,
+        2.429500100779732,
+        1.0804229378700256
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "DeadTree_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 384,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 2.4294999999999995,
+      "footprint": null,
+      "seconds": 6.33,
+      "status": "PASS",
+      "fbx_sha256": "60c9015de96528ef04e56890803c103526a741ab28850119056fd5d6d9218159",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "FallenLog_A",
+      "family": "FallenLog",
+      "folder": "WorldProps",
+      "zones": [
+        "outer",
+        "middle"
+      ],
+      "density_per_100_tiles": {
+        "outer": 0.28,
+        "middle": 0.25
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 172,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        1.7359178066253662,
+        0.3999999738935516,
+        0.6009151935577393
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "FallenLog_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 172,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 0.4,
+      "footprint": null,
+      "seconds": 5.6,
+      "status": "PASS",
+      "fbx_sha256": "9dfab9d2f38f191ea3095ec98f40e0152d3b73db771443d6032df8a8fff10f57",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "FallenLog_B",
+      "family": "FallenLog",
+      "folder": "WorldProps",
+      "zones": [
+        "outer",
+        "middle"
+      ],
+      "density_per_100_tiles": {
+        "outer": 0.28,
+        "middle": 0.25
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 172,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.4410250186920166,
+        0.4519999591612818,
+        0.662885457277298
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "FallenLog_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 172,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 0.45199999999999996,
+      "footprint": null,
+      "seconds": 5.85,
+      "status": "PASS",
+      "fbx_sha256": "2910dac4ee79090fc5859bff4869b4577a7296887650e0bf4047d24bbd2ddc4f",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Field_Crystal_1",
+      "family": "Field_Crystal",
+      "folder": "World3D",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 200,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.0,
+        0.9400000134418409,
+        2.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Field_Crystal_1",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 200,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 2,
+      "seconds": 6.1,
+      "status": "PASS",
+      "fbx_sha256": "15e0a1e94a325e1354da771764b6e3840b9146a16667be20b5d7226fdcc088ff",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Field_Crystal_2",
+      "family": "Field_Crystal",
+      "folder": "World3D",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 312,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.0,
+        1.0599999586055677,
+        2.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Field_Crystal_2",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 312,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 2,
+      "seconds": 6.13,
+      "status": "PASS",
+      "fbx_sha256": "865b2e492cb541ffc66e266b040ed2f4015ecaa35f55b9699169e490c0188acb",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Field_Crystal_3",
+      "family": "Field_Crystal",
+      "folder": "World3D",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 424,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.0,
+        1.1799999633739393,
+        2.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Field_Crystal_3",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 424,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 2,
+      "seconds": 6.7,
+      "status": "PASS",
+      "fbx_sha256": "21a33c1df3595b8a172a2ffde440891a120a62953e781818d96aa61b81a049bf",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Field_Food_1",
+      "family": "Field_Food",
+      "folder": "World3D",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 452,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.0,
+        0.3918001214650033,
+        2.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Field_Food_1",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 452,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 2,
+      "seconds": 6.17,
+      "status": "PASS",
+      "fbx_sha256": "8d695be2fde856beb7041bf0b2fbbd7a7813c4eecd9c6b65f7dd6e992d3bd04c",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Field_Food_2",
+      "family": "Field_Food",
+      "folder": "World3D",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 656,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.0,
+        0.4292001287129281,
+        2.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Field_Food_2",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 656,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 2,
+      "seconds": 6.07,
+      "status": "PASS",
+      "fbx_sha256": "b5859476c973866deeb831ceaa579fd6a40e8b66da4a129f6e3188b055846c49",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Field_Food_3",
+      "family": "Field_Food",
+      "folder": "World3D",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 904,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.0,
+        0.8100001374867318,
+        2.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Field_Food_3",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 904,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 2,
+      "seconds": 6.52,
+      "status": "PASS",
+      "fbx_sha256": "36f442a08c073a73e41ea83f0f005e5721cec5445b2e77fbb7aecc84993a2159",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Field_Stone_1",
+      "family": "Field_Stone",
+      "folder": "World3D",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 128,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.0,
+        0.6199999821189994,
+        2.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Field_Stone_1",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 128,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 2,
+      "seconds": 6.06,
+      "status": "PASS",
+      "fbx_sha256": "a4bafb8522d3338616869973bded4d3487702eefd5ac39ff89b6229265ce45d6",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Field_Stone_2",
+      "family": "Field_Stone",
+      "folder": "World3D",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 172,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.0,
+        0.7200000361600196,
+        2.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Field_Stone_2",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 172,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 2,
+      "seconds": 5.98,
+      "status": "PASS",
+      "fbx_sha256": "21c3e9440201ec0230864893f2153d18c84dea174f569326e88289fe7b75c16e",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Field_Stone_3",
+      "family": "Field_Stone",
+      "folder": "World3D",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 292,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.0,
+        1.1899999455609596,
+        2.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Field_Stone_3",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 292,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 2,
+      "seconds": 6.45,
+      "status": "PASS",
+      "fbx_sha256": "a57c5b59d8e8d56c03314a5a8c79eb002099152ee46d91a561a62f2df6e3345f",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Field_Wood_1",
+      "family": "Field_Wood",
+      "folder": "World3D",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 664,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.0,
+        1.0906766481042727,
+        2.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Field_Wood_1",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 664,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 2,
+      "seconds": 7.83,
+      "status": "PASS",
+      "fbx_sha256": "764ee6438c0723aa43a325e18fc7f08537eff948241c0528aa5afb0f7735426d",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Field_Wood_2",
+      "family": "Field_Wood",
+      "folder": "World3D",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 960,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.0,
+        1.209228537847487,
+        2.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Field_Wood_2",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 960,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 2,
+      "seconds": 7.22,
+      "status": "PASS",
+      "fbx_sha256": "c8de224cc23815da09d6a5606d3328fd8b4a222e4518385e2c2605e33b8c48a8",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Field_Wood_3",
+      "family": "Field_Wood",
+      "folder": "World3D",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 1392,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.0,
+        1.3277803816361953,
+        2.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Field_Wood_3",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 1392,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 2,
+      "seconds": 6.77,
+      "status": "PASS",
+      "fbx_sha256": "1cafad7f0f8525c43636bc8bf8648ad0fa19da6af276c717012358e0c558dbac",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Flowers_A",
+      "family": "Flowers",
+      "folder": "WorldProps",
+      "zones": [
+        "outer"
+      ],
+      "density_per_100_tiles": {
+        "outer": 2.5
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 324,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.5626773834228516,
+        0.3200000377513046,
+        0.50911945104599
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Flowers_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 324,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 0.32,
+      "footprint": null,
+      "seconds": 5.51,
+      "status": "PASS",
+      "fbx_sha256": "5e8225d4a877db5607e91c6c5465f939c2ecdf3b2a84f03a9e21f97c645a20dc",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Flowers_B",
+      "family": "Flowers",
+      "folder": "WorldProps",
+      "zones": [
+        "outer"
+      ],
+      "density_per_100_tiles": {
+        "outer": 2.5
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 432,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.6358254551887512,
+        0.3616000337440344,
+        0.7102001309394836
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Flowers_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 432,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 0.3616,
+      "footprint": null,
+      "seconds": 5.39,
+      "status": "PASS",
+      "fbx_sha256": "01bd1690c10b4470ff61228444c1c4742c5543a4778384640b3fff41a996f1e3",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "GlowMushroom_A",
+      "family": "GlowMushroom",
+      "folder": "WorldProps",
+      "zones": [
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "rim": 1.2
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 192,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.6781473755836487,
+        0.4999999806034028,
+        0.6339447498321533
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "GlowMushroom_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 192,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 0.5,
+      "footprint": null,
+      "seconds": 5.87,
+      "status": "PASS",
+      "fbx_sha256": "fdbfe3f7a77734666250e563c483bb13396b4ae0f5585140d674865bd8cfad2d",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "GlowMushroom_B",
+      "family": "GlowMushroom",
+      "folder": "WorldProps",
+      "zones": [
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "rim": 1.2
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 256,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.724198579788208,
+        0.5650000068837242,
+        0.6503806710243225
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "GlowMushroom_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 256,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 0.565,
+      "footprint": null,
+      "seconds": 5.63,
+      "status": "PASS",
+      "fbx_sha256": "fd98e70d0ebb73d8d24b51596f412e4782166e70fba55bb77023a695efec5d57",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "GrassTuft_A",
+      "family": "GrassTuft",
+      "folder": "WorldProps",
+      "zones": [
+        "outer",
+        "middle"
+      ],
+      "density_per_100_tiles": {
+        "outer": 9.0,
+        "middle": 4.0
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 36,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.4897666871547699,
+        0.35000000413723154,
+        0.457176610827446
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "GrassTuft_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 36,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 0.35,
+      "footprint": null,
+      "seconds": 6.89,
+      "status": "PASS",
+      "fbx_sha256": "9798f05b274700fbffa4fca61fda16576762f634a22d096f1b8c9f90195e62e8",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "GrassTuft_B",
+      "family": "GrassTuft",
+      "folder": "WorldProps",
+      "zones": [
+        "outer",
+        "middle"
+      ],
+      "density_per_100_tiles": {
+        "outer": 9.0,
+        "middle": 4.0
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 48,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.5534363389015198,
+        0.39550001853897676,
+        0.6097005605697632
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "GrassTuft_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 48,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 0.39549999999999996,
+      "footprint": null,
+      "seconds": 5.84,
+      "status": "PASS",
+      "fbx_sha256": "ba36ab94a9cb8512e5b2e72e4e819979e5e1b34912c46b5987790f0ea0d5474c",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "MonsterCamp_1",
+      "family": "MonsterCamp",
+      "folder": "World3D",
+      "zones": [
+        "outer"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 599,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.0,
+        1.1500000516560434,
+        2.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "MonsterCamp_1",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 599,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 2,
+      "seconds": 6.64,
+      "status": "PASS",
+      "fbx_sha256": "1b3ce15a0f5c49540a65b2a5adfc3c0c2df7356a56dda5ae8351ba5700d60d91",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "MonsterCamp_2",
+      "family": "MonsterCamp",
+      "folder": "World3D",
+      "zones": [
+        "middle"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 670,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.0,
+        1.3299999768522142,
+        2.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "MonsterCamp_2",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 670,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 2,
+      "seconds": 6.59,
+      "status": "PASS",
+      "fbx_sha256": "6a8cfef6a4d111a36a386af03767b9faeb39f3de695041af3899f3f85ddbe3be",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "MonsterCamp_3",
+      "family": "MonsterCamp",
+      "folder": "World3D",
+      "zones": [
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 813,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.0,
+        1.5100000436094163,
+        2.0
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "MonsterCamp_3",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 813,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": 2,
+      "seconds": 6.97,
+      "status": "PASS",
+      "fbx_sha256": "ec3d869fa36d7f7f91a90a5e6e618cd172c66f7b17b0229be0c5551b5feeff43",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Monster_1",
+      "family": "Monster",
+      "folder": "World3D",
+      "zones": [
+        "outer"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 516,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.7807351648807526,
+        0.80000002196011,
+        1.526263177394867
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Body",
+          "joint_unity_xyz": [
+            0.0,
+            0.4540540874004364,
+            -3.025278871859882e-08
+          ],
+          "triangles": 80,
+          "pivot_rotation_check": true
+        },
+        {
+          "name": "Head",
+          "joint_unity_xyz": [
+            4.027340683165903e-09,
+            0.49729734659194946,
+            -0.30270275473594666
+          ],
+          "triangles": 148,
+          "pivot_rotation_check": true
+        },
+        {
+          "name": "LegFL",
+          "joint_unity_xyz": [
+            0.21621622145175934,
+            0.4756756126880646,
+            -0.24864867329597473
+          ],
+          "triangles": 64,
+          "pivot_rotation_check": true
+        },
+        {
+          "name": "LegBL",
+          "joint_unity_xyz": [
+            0.21621623635292053,
+            0.47567570209503174,
+            0.3135134279727936
+          ],
+          "triangles": 64,
+          "pivot_rotation_check": true
+        },
+        {
+          "name": "LegFR",
+          "joint_unity_xyz": [
+            -0.21621622145175934,
+            0.4756756126880646,
+            -0.24864867329597473
+          ],
+          "triangles": 64,
+          "pivot_rotation_check": true
+        },
+        {
+          "name": "LegBR",
+          "joint_unity_xyz": [
+            -0.21621623635292053,
+            0.47567570209503174,
+            0.3135134279727936
+          ],
+          "triangles": 64,
+          "pivot_rotation_check": true
+        },
+        {
+          "name": "Tail",
+          "joint_unity_xyz": [
+            4.027340683165903e-09,
+            0.43243253231048584,
+            0.42162156105041504
+          ],
+          "triangles": 32,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 0.8,
+      "footprint": null,
+      "seconds": 5.62,
+      "status": "PASS",
+      "fbx_sha256": "c9f93e980ccc868c978a274e5f441416029fdf2e7432ad122f3ddae19c30c4a3",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Monster_2",
+      "family": "Monster",
+      "folder": "World3D",
+      "zones": [
+        "middle"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 496,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.8765366077423096,
+        1.2000000626048788,
+        0.4780389070510864
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Body",
+          "joint_unity_xyz": [
+            0.0,
+            0.62428879737854,
+            -4.7132495240020944e-08
+          ],
+          "triangles": 108,
+          "pivot_rotation_check": true
+        },
+        {
+          "name": "Head",
+          "joint_unity_xyz": [
+            7.49537747424256e-08,
+            0.8529279828071594,
+            -6.439427124860231e-08
+          ],
+          "triangles": 124,
+          "pivot_rotation_check": true
+        },
+        {
+          "name": "LegL",
+          "joint_unity_xyz": [
+            0.1463291049003601,
+            0.4322317838668823,
+            -4.1150066465434065e-08
+          ],
+          "triangles": 64,
+          "pivot_rotation_check": true
+        },
+        {
+          "name": "ArmL",
+          "joint_unity_xyz": [
+            0.21034811437129974,
+            0.7980545163154602,
+            -6.365842608602179e-08
+          ],
+          "triangles": 68,
+          "pivot_rotation_check": true
+        },
+        {
+          "name": "LegR",
+          "joint_unity_xyz": [
+            -0.1463291049003601,
+            0.4322317838668823,
+            -4.1150066465434065e-08
+          ],
+          "triangles": 64,
+          "pivot_rotation_check": true
+        },
+        {
+          "name": "ArmR",
+          "joint_unity_xyz": [
+            -0.21034811437129974,
+            0.7980545163154602,
+            -6.365842608602179e-08
+          ],
+          "triangles": 68,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 1.2,
+      "footprint": null,
+      "seconds": 5.61,
+      "status": "PASS",
+      "fbx_sha256": "73889893d921f6e08891ab05e6e9b491ab50c5ffba9a487b1a77dc0d4525c8d2",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Monster_3",
+      "family": "Monster",
+      "folder": "World3D",
+      "zones": [
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 836,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        1.087460994720459,
+        1.600000142390111,
+        2.008939743041992
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Body",
+          "joint_unity_xyz": [
+            3.883042776209322e-09,
+            0.7087955474853516,
+            -4.574648926336522e-08
+          ],
+          "triangles": 316,
+          "pivot_rotation_check": true
+        },
+        {
+          "name": "Head",
+          "joint_unity_xyz": [
+            7.766085552418645e-09,
+            0.9485352635383606,
+            -0.38566821813583374
+          ],
+          "triangles": 208,
+          "pivot_rotation_check": true
+        },
+        {
+          "name": "LegFL",
+          "joint_unity_xyz": [
+            0.3335508108139038,
+            0.7338119149208069,
+            -0.38358354568481445
+          ],
+          "triangles": 64,
+          "pivot_rotation_check": true
+        },
+        {
+          "name": "LegBL",
+          "joint_unity_xyz": [
+            0.3335508704185486,
+            0.7338119149208069,
+            0.4836485981941223
+          ],
+          "triangles": 64,
+          "pivot_rotation_check": true
+        },
+        {
+          "name": "LegFR",
+          "joint_unity_xyz": [
+            -0.3335508108139038,
+            0.7338119149208069,
+            -0.38358354568481445
+          ],
+          "triangles": 64,
+          "pivot_rotation_check": true
+        },
+        {
+          "name": "LegBR",
+          "joint_unity_xyz": [
+            -0.3335508704185486,
+            0.7338119149208069,
+            0.4836485981941223
+          ],
+          "triangles": 64,
+          "pivot_rotation_check": true
+        },
+        {
+          "name": "Tail",
+          "joint_unity_xyz": [
+            -3.106434220967458e-08,
+            0.7921832799911499,
+            0.5524434447288513
+          ],
+          "triangles": 56,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 1.6,
+      "footprint": null,
+      "seconds": 6.18,
+      "status": "PASS",
+      "fbx_sha256": "b6115946c77913bbcd20b884866ff12c4c65ff5c634fa9d050d970dfd458f4b1",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "OldStatue_A",
+      "family": "OldStatue",
+      "folder": "WorldProps",
+      "zones": [
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "middle": 0.035,
+        "rim": 0.065
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 88,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.719748318195343,
+        1.6499999991479246,
+        0.6754561960697174
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "OldStatue_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 88,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 1.65,
+      "footprint": null,
+      "seconds": 6.16,
+      "status": "PASS",
+      "fbx_sha256": "0282a2c3cd7c952a3693489bc611618eb9f93c83c14b3fa168399034244f780b",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "OldStatue_B",
+      "family": "OldStatue",
+      "folder": "WorldProps",
+      "zones": [
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "middle": 0.035,
+        "rim": 0.065
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 104,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.9677175283432007,
+        1.864500071754824,
+        0.7632655203342438
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "OldStatue_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 104,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 1.8644999999999998,
+      "footprint": null,
+      "seconds": 5.97,
+      "status": "PASS",
+      "fbx_sha256": "bde3e6e7290772c218ab50bfb0637f7bb93f617ff8be9f37788e579e6a05c6fa",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Pine_A",
+      "family": "Pine",
+      "folder": "WorldProps",
+      "zones": [
+        "outer",
+        "middle"
+      ],
+      "density_per_100_tiles": {
+        "outer": 3.0,
+        "middle": 0.35
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 176,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        1.2561614513397217,
+        2.3500001551947785,
+        1.2246668338775635
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Pine_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 176,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 2.35,
+      "footprint": null,
+      "seconds": 7.78,
+      "status": "PASS",
+      "fbx_sha256": "7da37b596cbcddf0f77dfb32273bd72386507cb8c8cd19527fa68500992a665c",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Pine_B",
+      "family": "Pine",
+      "folder": "WorldProps",
+      "zones": [
+        "outer",
+        "middle"
+      ],
+      "density_per_100_tiles": {
+        "outer": 3.0,
+        "middle": 0.35
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 192,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        1.4559664726257324,
+        2.6555001900124715,
+        1.4559664726257324
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Pine_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 192,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 2.6555,
+      "footprint": null,
+      "seconds": 6.18,
+      "status": "PASS",
+      "fbx_sha256": "dba0b0617ccd7eeb8162c559e1ad17f825eb589989f111dbe24de9ccb80e3247",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "RimRock_A",
+      "family": "RimRock",
+      "folder": "Abyss",
+      "zones": [
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 128,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.277761220932007,
+        1.3499998959320418,
+        1.5951130986213684
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "RimRock_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 128,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": null,
+      "seconds": 7.28,
+      "status": "PASS",
+      "fbx_sha256": "4f705d61690836da8bf413a310983cb9ff7a10eefb7f5f727d05974b0e33e765",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "RimRock_B",
+      "family": "RimRock",
+      "folder": "Abyss",
+      "zones": [
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 172,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.335814118385315,
+        1.449999916957891,
+        1.575932264328003
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "RimRock_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 172,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": null,
+      "seconds": 6.18,
+      "status": "PASS",
+      "fbx_sha256": "2206775bf01322fca27dfe9a182a0679957324a638e5960c1a01dd64c41f74f2",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "RimRock_C",
+      "family": "RimRock",
+      "folder": "Abyss",
+      "zones": [
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 216,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        2.366722345352173,
+        1.5499998238231516,
+        1.5998042821884155
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "RimRock_C",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 216,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": null,
+      "seconds": 6.31,
+      "status": "PASS",
+      "fbx_sha256": "d91b3c5cc343eb87f92479823e5e8e60b557c751d6cea99ad21668383721540b",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "RimRuin_A",
+      "family": "RimRuin",
+      "folder": "Abyss",
+      "zones": [
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 436,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        1.5642528533935547,
+        0.8800000360610003,
+        0.8580648005008698
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "RimRuin_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 436,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": null,
+      "seconds": 7.43,
+      "status": "PASS",
+      "fbx_sha256": "6fa1c07fe78c9ae1b6df71828397cfcbdb0a915b2c15094e5d24116602da02b2",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "RimRuin_B",
+      "family": "RimRuin",
+      "folder": "Abyss",
+      "zones": [
+        "rim"
+      ],
+      "density_per_100_tiles": {},
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 748,
+      "triangle_budget": 1500,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        1.5689280033111572,
+        1.1700000688433638,
+        0.47922779619693756
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "RimRuin_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 748,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": null,
+      "footprint": null,
+      "seconds": 5.47,
+      "status": "PASS",
+      "fbx_sha256": "6231dbd9568a36e876127790a63d23a2b555192aa5dea486e03e6205485e8aaa",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "RockSpire_A",
+      "family": "RockSpire",
+      "folder": "WorldProps",
+      "zones": [
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "rim": 0.7
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 48,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.9334157705307007,
+        1.6499999952263913,
+        0.5051332116127014
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "RockSpire_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 48,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 1.65,
+      "footprint": null,
+      "seconds": 5.6,
+      "status": "PASS",
+      "fbx_sha256": "c98898bda08e99837ea14d645aafd5a8a7f61d3501fb3bd672a3ed2299cefe2a",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "RockSpire_B",
+      "family": "RockSpire",
+      "folder": "WorldProps",
+      "zones": [
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "rim": 0.7
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 72,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        1.398975133895874,
+        1.864499948114199,
+        0.5708005428314209
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "RockSpire_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 72,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 1.8644999999999998,
+      "footprint": null,
+      "seconds": 6.52,
+      "status": "PASS",
+      "fbx_sha256": "931efca75ff853304f73827c718e9788af0bc9a8bf631e927678609e414fc58f",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Rock_A",
+      "family": "Rock",
+      "folder": "WorldProps",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "outer": 1.3,
+        "middle": 2.2,
+        "rim": 3.0
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 40,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.5119697451591492,
+        0.3599999766139428,
+        0.48066774010658264
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Rock_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 40,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 0.36,
+      "footprint": null,
+      "seconds": 6.36,
+      "status": "PASS",
+      "fbx_sha256": "beeda13ac3834e7ad037345a54f8ceb554739579b0ceaff13da3001121a87f39",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Rock_B",
+      "family": "Rock",
+      "folder": "WorldProps",
+      "zones": [
+        "outer",
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "outer": 1.3,
+        "middle": 2.2,
+        "rim": 3.0
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 60,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.6840608716011047,
+        0.4068000018596649,
+        0.4629397392272949
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Rock_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 60,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 0.40679999999999994,
+      "footprint": null,
+      "seconds": 5.65,
+      "status": "PASS",
+      "fbx_sha256": "e0c4e8b462f39c99f5a317ec87a4a7e21e42f3264d9b9da47a985981f818e59a",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "RuinArch_A",
+      "family": "RuinArch",
+      "folder": "WorldProps",
+      "zones": [
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "middle": 0.06,
+        "rim": 0.09
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 268,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        1.6589298248291016,
+        1.8999999878304514,
+        0.7705679833889008
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "RuinArch_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 268,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 1.9,
+      "footprint": null,
+      "seconds": 7.13,
+      "status": "PASS",
+      "fbx_sha256": "5a6f846d06cac5f99263a6b9eb2546007102ecfb5b101d0ebcd9135f6e2ae233",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "RuinArch_B",
+      "family": "RuinArch",
+      "folder": "WorldProps",
+      "zones": [
+        "middle",
+        "rim"
+      ],
+      "density_per_100_tiles": {
+        "middle": 0.06,
+        "rim": 0.09
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 232,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        1.8745907545089722,
+        2.1470000875763064,
+        0.8707418143749237
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "RuinArch_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 232,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 2.147,
+      "footprint": null,
+      "seconds": 6.24,
+      "status": "PASS",
+      "fbx_sha256": "0507ab1995bbb192cbd7ea4ffe94b227d22391ddbe7230248385fc4a43a783fc",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Stump_A",
+      "family": "Stump",
+      "folder": "WorldProps",
+      "zones": [
+        "outer",
+        "middle"
+      ],
+      "density_per_100_tiles": {
+        "outer": 0.35,
+        "middle": 0.4
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 136,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.7544684410095215,
+        0.42999998029542064,
+        0.754467785358429
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Stump_A",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 136,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 0.43,
+      "footprint": null,
+      "seconds": 5.95,
+      "status": "PASS",
+      "fbx_sha256": "93dcb7b9e66b32cdd52793d5c375b23f3e349399c5c6dd69fa738a3696afa374",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    },
+    {
+      "name": "Stump_B",
+      "family": "Stump",
+      "folder": "WorldProps",
+      "zones": [
+        "outer",
+        "middle"
+      ],
+      "density_per_100_tiles": {
+        "outer": 0.35,
+        "middle": 0.4
+      },
+      "density_semantics": "Total per family, split equally across A/B; not additive per variant",
+      "triangles": 136,
+      "triangle_budget": 800,
+      "texture_size": 512,
+      "materials": 1,
+      "dimensions_unity_xyz": [
+        0.7640989422798157,
+        0.4859000031679539,
+        0.7643575072288513
+      ],
+      "up": "Y",
+      "forward": "-Z",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "parts": [
+        {
+          "name": "Stump_B",
+          "joint_unity_xyz": [
+            0.0,
+            0.0,
+            -0.0
+          ],
+          "triangles": 136,
+          "pivot_rotation_check": true
+        }
+      ],
+      "palette": [
+        "70787B",
+        "A0A498",
+        "282422",
+        "654632",
+        "B28B58",
+        "3D6545",
+        "73914E",
+        "AD975C",
+        "51453B",
+        "C2B69C",
+        "39383F",
+        "69434D",
+        "37BCAE",
+        "B8FFF1",
+        "F6B647",
+        "302A28"
+      ],
+      "camera_elevation": 52,
+      "camera_azimuth": -30,
+      "albedo": "sRGB color cells, no baked lighting",
+      "unity_runtime_verified": false,
+      "target_height": 0.48589999999999994,
+      "footprint": null,
+      "seconds": 6.36,
+      "status": "PASS",
+      "fbx_sha256": "bed6aeec97ab5a4ab7c09c6869cb8b15bfdd58f3b66a48b7323cd638c1e4520c",
+      "albedo_sha256": "715f300ddb2c0f0e8ca213e36d3fd1951440d078d99b991568b8586e88e76f1a",
+      "fbx_transforms_verified": true,
+      "palette_verified": true
+    }
+  ]
+}

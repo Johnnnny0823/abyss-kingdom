@@ -229,6 +229,7 @@ namespace AbyssKingdom.Client.World
 
             BuildMist(w, root, radius);
             BuildDread(w, root, radius);
+            BuildRimModels(w, root, radius);
 
             // 岩壁上零星發光的契印（越深越少）
             var glowMat = new Material(w.Glow);
@@ -456,6 +457,50 @@ namespace AbyssKingdom.Client.World
                     eye.GetComponent<Renderer>().sharedMaterial = eyeMat;
                 }
                 pair.gameObject.AddComponent<Blink>().Seed = i;
+            }
+        }
+
+        /// <summary>
+        /// Codex 做的坑口模型（Models/Abyss）：沿坑口輪廓的破碎斷崖（往坑內伸出一點）、探險者的殘破木架與鐵鍊柱、
+        /// 從坑壁長出的發光晶簇。模型單位是地圖格（1 公尺 = 1 格），沒有模型就略過。
+        /// </summary>
+        private static void BuildRimModels(WorldScene w, Transform root, float radius)
+        {
+            if (ModelLibrary.Get("Abyss/RimRock_A") == null) return;
+            float tile = radius / AbyssKingdom.Shared.Map.SurfaceConfig.PitRadius; // 1 格的世界單位
+            string[] rocks = { "RimRock_A", "RimRock_B", "RimRock_C" };
+            int n = 22;
+            for (int i = 0; i < n; i++)
+            {
+                float a = (i + Hash(i, 120) % 60 / 100f) * Mathf.PI * 2 / n;
+                var dir = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a));
+                float r = radius * RimProfile(a) * (.985f + Hash(i, 121) % 4 / 100f);
+                string name = rocks[Hash(i, 122) % rocks.Length];
+                // 模型正面朝 -Z：讓正面朝向坑中心，岩塊才會往坑內突出
+                float yaw = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg + (Hash(i, 123) % 30 - 15);
+                var go = ModelLibrary.Spawn("Abyss/" + name, root, dir * r + Vector3.down * .05f, tile * (2.2f + Hash(i, 124) % 10 / 10f), 0, yaw);
+                if (go != null) LivingModel.Attach(go, name, i);
+            }
+            for (int i = 0; i < 5; i++)
+            {
+                float a = (i * 73 + 25) * Mathf.Deg2Rad;
+                var dir = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a));
+                string name = i % 2 == 0 ? "RimRuin_A" : "RimRuin_B";
+                var go = ModelLibrary.Spawn("Abyss/" + name, root, dir * radius * RimProfile(a) * 1.08f, tile * 2.2f, 0, Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg + 90);
+                if (go != null) LivingModel.Attach(go, name, i + 30);
+            }
+            for (int i = 0; i < 12; i++)
+            {
+                float a = (i * 137 + 11) * Mathf.Deg2Rad;
+                float depth = 1.2f + Hash(i, 125) % 90 / 10f;
+                var dir = new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a));
+                var pos = dir * WallRadius(a, depth) * .97f + Vector3.down * depth;
+                string name = i % 2 == 0 ? "AbyssCrystal_A" : "AbyssCrystal_B";
+                var go = ModelLibrary.Spawn("Abyss/" + name, root, pos, tile * (2.4f + Hash(i, 126) % 12 / 10f), 0, 0);
+                if (go == null) continue;
+                // 從坑壁斜斜長出來：往坑中心倒 50~70 度
+                go.transform.localRotation = Quaternion.LookRotation(dir) * Quaternion.Euler(-(50 + Hash(i, 127) % 20), 0, 0);
+                LivingModel.Attach(go, name, i + 60);
             }
         }
 
