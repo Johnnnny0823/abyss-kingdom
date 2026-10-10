@@ -101,6 +101,14 @@
 - **換回 2D**：`client/Assets/Scripts/World/ArtSettings.cs` 的 `City3D` 改成 false，或啟動參數加 `-city2d`。
 - 2D 建築圖與 2.5D 動態（符文光、炊煙、旗幟擺動）保留不刪；3D 版有發光與炊煙，還沒有旗幟擺動。
 
+## 5c. 行軍 3D 角色（`client/Assets/Resources/Models/Units3D/`，2026-10-10 起）
+
+- 立繪、頭像、兵種圖等介面美術維持 2D；只有大地圖上行軍的部隊用 3D。
+- 規格：身高約 1、原點在兩腳中間地面、Y 朝上、臉朝 -Z；3,000 三角形以內、1 材質、1 張 1024 albedo；發光用建築的保留色。
+- **分件人偶**（不綁骨架）：根物件底下直接放 `Body`、`Head`、`LegL`、`LegR`、`ArmL`、`ArmR`（騎兵另有 `Mount`、`MountLegFL/FR/BL/BR`），原點在關節。遊戲用 `World/UnitSquad.cs` 擺動零件做走路、待機。
+- 一支行軍顯示 3 名士兵的三角隊形（主力兵種），頭上是主將頭像；沒有該兵種的 3D 模型就用 2D 兵種圖。`-city2d` 也會關掉。
+- 製作：Codex 的 `tools/blender/generate_units3d.py`，說明 `tools/blender/UNITS3D.md`。目前完成：Shield。
+
 ## 6. 程式這邊的對應（給 AI 助手看）
 
 - 載入：`client/Assets/Scripts/World/ModelLibrary.cs`，從 `Resources/Models/<路徑>` 讀檔，找不到就回傳 null，由呼叫端改用灰盒。

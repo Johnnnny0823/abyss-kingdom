@@ -1,0 +1,153 @@
+{
+  "status": "PASS",
+  "name": "Shield",
+  "triangles": 1842,
+  "mesh_count": 6,
+  "material_count": 1,
+  "texture_count": 1,
+  "texture_size": [
+    1024,
+    1024
+  ],
+  "root_origin": [
+    0,
+    0,
+    0
+  ],
+  "dimensions_unity_xyz": [
+    0.8351837992668152,
+    1.0064391000203683,
+    0.43900009989738464
+  ],
+  "parts": [
+    {
+      "name": "Body",
+      "joint_unity_xyz": [
+        0.0,
+        0.3799999952316284,
+        -2.8689202125065094e-08
+      ],
+      "triangles": 348,
+      "test_rotation_degrees": 20,
+      "pivot_stays_fixed": true
+    },
+    {
+      "name": "Head",
+      "joint_unity_xyz": [
+        0.0,
+        0.6800000071525574,
+        -5.133857428063493e-08
+      ],
+      "triangles": 220,
+      "test_rotation_degrees": 20,
+      "pivot_stays_fixed": true
+    },
+    {
+      "name": "LegL",
+      "joint_unity_xyz": [
+        0.10500000417232513,
+        0.3700000047683716,
+        -2.7934223822967397e-08
+      ],
+      "triangles": 204,
+      "test_rotation_degrees": 20,
+      "pivot_stays_fixed": true
+    },
+    {
+      "name": "LegR",
+      "joint_unity_xyz": [
+        -0.10499998927116394,
+        0.3700000047683716,
+        -2.7934223822967397e-08
+      ],
+      "triangles": 204,
+      "test_rotation_degrees": 20,
+      "pivot_stays_fixed": true
+    },
+    {
+      "name": "ArmL",
+      "joint_unity_xyz": [
+        0.2250000387430191,
+        0.6100000143051147,
+        -9.07572044184235e-08
+      ],
+      "triangles": 510,
+      "test_rotation_degrees": 20,
+      "pivot_stays_fixed": true
+    },
+    {
+      "name": "ArmR",
+      "joint_unity_xyz": [
+        -0.2250000387430191,
+        0.6100000143051147,
+        -9.07572044184235e-08
+      ],
+      "triangles": 356,
+      "test_rotation_degrees": 20,
+      "pivot_stays_fixed": true
+    }
+  ],
+  "raw_fbx_transforms": {
+    "ArmL": {
+      "Lcl Translation": [
+        0.2250000387430191,
+        0.6100000143051147,
+        -4.470348358154297e-08
+      ]
+    },
+    "ArmR": {
+      "Lcl Translation": [
+        -0.2250000387430191,
+        0.6100000143051147,
+        -4.470348358154297e-08
+      ]
+    },
+    "Body": {
+      "Lcl Translation": [
+        0.0,
+        0.3799999952316284,
+        0.0
+      ]
+    },
+    "Head": {
+      "Lcl Translation": [
+        0.0,
+        0.6800000071525574,
+        0.0
+      ]
+    },
+    "LegL": {
+      "Lcl Translation": [
+        0.10500000417232513,
+        0.3700000047683716,
+        8.881784197001252e-16
+      ]
+    },
+    "LegR": {
+      "Lcl Translation": [
+        -0.10499998927116394,
+        0.3700000047683716,
+        -8.881784197001252e-16
+      ]
+    },
+    "Shield": {}
+  },
+  "palette_png_checks": {
+    "526779": "526779",
+    "718493": "718493",
+    "8C9BA1": "8C9BA1",
+    "222E38": "222E38",
+    "C5A361": "C5A361",
+    "DDC18A": "DDC18A",
+    "604A34": "604A34",
+    "8D7547": "8D7547",
+    "594D39": "594D39",
+    "37BCAE": "37BCAE",
+    "B8FFF1": "B8FFF1",
+    "F6B647": "F6B647"
+  },
+  "forward_evidence": "Visor, shield and spear are on Blender +Y / FBX -Z; front preview inspected",
+  "fbx_sha256": "11dedf9ae7f3fbc7d76a26ea69ba1dfe99bbbfc84622ceb366315a5cf60defb6",
+  "albedo_sha256": "d956dda88816002d16491c9810398bd19e63ff235d551ca0f49478a440e7e251",
+  "unity_runtime_verified": false
+}

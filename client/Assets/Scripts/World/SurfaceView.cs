@@ -457,6 +457,21 @@ namespace AbyssKingdom.Client.World
             var anim = bodyT.GetComponent<MarchAnimator>();
             anim.Moving = moveDir.sqrMagnitude > 1e-6f;
             if (anim.Moving) anim.FacingLeft = moveDir.x < -1e-3f; // 鏡頭朝北：畫面左右 = 世界 X
+
+            // 3D 小隊（有 Units3D 模型時）：取代 2D 兵種圖，頭上的主將頭像與腳下的顏色圈照舊
+            string unitName = main.ToString();
+            var squadT = troop.Find("Squad3D_" + unitName);
+            foreach (Transform child in troop)
+                if (child.name.StartsWith("Squad3D_") && child != squadT) UnityEngine.Object.Destroy(child.gameObject);
+            UnitSquad squad = squadT != null ? squadT.GetComponent<UnitSquad>() : null;
+            if (squad == null && ArtSettings.City3D)
+                squad = UnitSquad.Create(troop, unitName, .42f / Mathf.Max(.01f, troop.localScale.x), (int)m.Id * 13 + (int)m.Hero);
+            if (squad != null)
+            {
+                squad.Moving = anim.Moving;
+                if (anim.Moving) squad.Direction = moveDir;
+            }
+            bodyT.GetComponent<SpriteRenderer>().enabled = squad == null;
             var heroIcon = AbyssKingdom.Client.UI.ArtLibrary.HeroIcon(m.Hero);
             var iconRenderer = art.Find("HeroIcon").GetComponent<SpriteRenderer>();
             iconRenderer.sprite = AbyssKingdom.Client.UI.ArtLibrary.SpriteOf(heroIcon, .32f);
@@ -465,7 +480,7 @@ namespace AbyssKingdom.Client.World
             troop.Find("Shadow").GetComponent<Renderer>().sharedMaterial =
                 _w.Mat(m.Returning ? new Color32(60, 100, 160, 255) : new Color32(150, 116, 52, 255));
             foreach (Transform child in troop)
-                if (child != art && child.name != "Shadow") child.gameObject.SetActive(false);
+                if (child != art && child.name != "Shadow" && !child.name.StartsWith("Squad3D_")) child.gameObject.SetActive(false);
         }
 
         private GameObject Dot(int i)
