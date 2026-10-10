@@ -33,6 +33,8 @@ namespace AbyssKingdom.Shared.Protocol
         public const string MapRecall = "map.recall";
         public const string WorldCities = "world.cities";
         public const string WorldTile = "world.tile";
+        /// <summary>目前被擊敗、還沒重生的怪物營地（大地圖讓營地前的怪物消失）。</summary>
+        public const string WorldCamps = "world.camps";
         public const string CityAttacked = "city.attacked";
         public const string HealingCompleted = "city.healingCompleted";
         public const string Ping = "ping";
@@ -215,6 +217,20 @@ namespace AbyssKingdom.Shared.Protocol
         public bool Mine { get; set; }
         /// <summary>怪物營地被擊敗後重生的時間（Unix 毫秒）；0 = 營地在。</summary>
         public long CampBackAt { get; set; }
+    }
+
+    /// <summary>被擊敗、等待重生的怪物營地。</summary>
+    public class DefeatedCamp
+    {
+        public int X { get; set; }
+        public int Y { get; set; }
+        /// <summary>重生時間（伺服器 Unix 毫秒）。</summary>
+        public long BackAt { get; set; }
+    }
+
+    public class WorldCampsMessage
+    {
+        public List<DefeatedCamp> Camps { get; set; } = new List<DefeatedCamp>();
     }
 
     public class WorldCitiesMessage

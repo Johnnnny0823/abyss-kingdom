@@ -222,6 +222,17 @@ public sealed class WorldService : IFieldRegistry
         }
     }
 
+    /// <summary>目前被擊敗、還沒重生的營地（公開資訊）。</summary>
+    public List<DefeatedCamp> DefeatedCamps(long nowMs)
+    {
+        lock (_campBack)
+            return _campBack.Where(kv => kv.Value > nowMs).Select(kv =>
+            {
+                var (x, y) = SurfaceLogic.FromTile(kv.Key);
+                return new DefeatedCamp { X = x, Y = y, BackAt = kv.Value };
+            }).ToList();
+    }
+
     public ulong NextSeed() => BitConverter.ToUInt64(System.Security.Cryptography.RandomNumberGenerator.GetBytes(8));
 
     /// <summary>某一格的即時狀態（給資訊卡看）。</summary>

@@ -590,6 +590,50 @@ public static class ServerIntegrationTests
     }
 
     [Test]
+    public static async Task Camp_Defeated_ListedUntilRespawn()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        var camp = SurfaceLogic.Features().First(f => f.Type == FeatureType.MonsterCamp && f.Level == 1
+            && SurfaceLogic.Sites().Any(s => s.z == SurfaceZone.Outer && SurfaceLogic.Dist2(s.x, s.y, f.X, f.Y) < 400));
+        var site = SurfaceLogic.Sites().First(s => s.z == SurfaceZone.Outer && SurfaceLogic.Dist2(s.x, s.y, camp.X, camp.Y) < 400);
+
+        await using var c = new TestClient();
+        await c.ConnectAsync(server.WsUri);
+        await c.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:slayer" });
+        await c.ExpectAsync(MessageTypes.CityState);
+        await server.Sessions.ModifyCityAsync("dev-slayer", city =>
+        {
+            city.Surface.X = site.x;
+            city.Surface.Y = site.y;
+            city.Troops[TroopType.Shield] = 250;
+        }, CancellationToken.None);
+        await c.ExpectAsync(MessageTypes.CityState);
+
+        await c.SendAsync(MessageTypes.WorldCamps, null);
+        Assert.Equal(0, (await c.ExpectAsync(MessageTypes.WorldCamps)).GetProperty("data").GetProperty("camps").GetArrayLength(), "一開始沒有被打掉的營地");
+
+        // 滿編去打 Lv.1 營地：打贏，營地消失
+        await c.SendAsync(MessageTypes.MapMarch, new MapMarchRequest { Hero = HeroId.Hold, Troops = new() { [TroopType.Shield] = 250 }, X = camp.X, Y = camp.Y });
+        var m = City(await c.ExpectAsync(MessageTypes.CityState)).Surface.Marches[0];
+        server.Clock.Advance(m.ArriveAt - server.Clock.NowMs);
+        await server.Sessions.TickAsync(CancellationToken.None);
+        Assert.True((await c.ExpectAsync(MessageTypes.MarchArrived)).GetProperty("data").GetProperty("battleWon").GetBoolean(), "打贏");
+
+        await c.SendAsync(MessageTypes.WorldCamps, null);
+        var camps = (await c.ExpectAsync(MessageTypes.WorldCamps)).GetProperty("data").GetProperty("camps");
+        var gone = camps.EnumerateArray().Single();
+        Assert.Equal(camp.X, gone.GetProperty("x").GetInt32(), "被打掉的營地");
+        Assert.Equal(camp.Y, gone.GetProperty("y").GetInt32());
+        Assert.Equal(m.ArriveAt + CampConfig.RespawnMs, gone.GetProperty("backAt").GetInt64(), "帶重生時間");
+
+        // 重生時間到了就不再列出
+        server.Clock.Advance(CampConfig.RespawnMs + 1);
+        await c.SendAsync(MessageTypes.WorldCamps, null);
+        Assert.Equal(0, (await c.ExpectAsync(MessageTypes.WorldCamps)).GetProperty("data").GetProperty("camps").GetArrayLength(), "重生了");
+    }
+
+    [Test]
     public static async Task Camp_LostFight_WoundedThenHealed()
     {
         await using var server = new TestServer();

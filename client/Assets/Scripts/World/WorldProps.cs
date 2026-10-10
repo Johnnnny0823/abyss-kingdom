@@ -16,17 +16,18 @@ namespace AbyssKingdom.Client.World
             public string Name;
             public float Outer, Middle, Rim; // 每 100 格的數量
             public float Scale;              // 顯示倍率（小東西放大一點，遠看才看得到）
+            public float Wind;               // 隨風擺動的強度（0 = 不動）
         }
 
         private static readonly Family[] Families =
         {
-            new Family { Name = "Pine", Outer = 3f, Middle = .35f, Scale = 1.2f },
-            new Family { Name = "Broadleaf", Outer = 2.5f, Scale = 1.2f },
-            new Family { Name = "DeadTree", Middle = 1.4f, Rim = .7f, Scale = 1.2f },
-            new Family { Name = "AbyssTree", Rim = .45f, Scale = 1.2f },
-            new Family { Name = "Bush", Outer = 3f, Middle = .7f, Scale = 1.4f },
-            new Family { Name = "GrassTuft", Outer = 9f, Middle = 4f, Scale = 1.6f },
-            new Family { Name = "Flowers", Outer = 2.5f, Scale = 1.6f },
+            new Family { Name = "Pine", Outer = 3f, Middle = .35f, Scale = 1.2f, Wind = .08f },
+            new Family { Name = "Broadleaf", Outer = 2.5f, Scale = 1.2f, Wind = .1f },
+            new Family { Name = "DeadTree", Middle = 1.4f, Rim = .7f, Scale = 1.2f, Wind = .05f },
+            new Family { Name = "AbyssTree", Rim = .45f, Scale = 1.2f, Wind = .06f },
+            new Family { Name = "Bush", Outer = 3f, Middle = .7f, Scale = 1.4f, Wind = .25f },
+            new Family { Name = "GrassTuft", Outer = 9f, Middle = 4f, Scale = 1.6f, Wind = .6f },
+            new Family { Name = "Flowers", Outer = 2.5f, Scale = 1.6f, Wind = .6f },
             new Family { Name = "GlowMushroom", Rim = 1.2f, Scale = 1.5f },
             new Family { Name = "Rock", Outer = 1.3f, Middle = 2.2f, Rim = 3f, Scale = 1.5f },
             new Family { Name = "Boulder", Outer = .25f, Middle = .55f, Rim = .8f, Scale = 1.2f },
@@ -73,7 +74,7 @@ namespace AbyssKingdom.Client.World
                             float scale = fam.Scale * (.85f + Hash(gx, gy, salt + 6) % 30 / 100f);
                             var go = ModelLibrary.Spawn("WorldProps/" + variant, chunk, tilePos(x, y), tileSize * scale, 0, Hash(gx, gy, salt + 7) % 360);
                             if (go == null) continue;
-                            LivingModel.Attach(go, variant, 0);
+                            LivingModel.Attach(go, variant, 0, fam.Wind);
                             placed++;
                         }
                     }

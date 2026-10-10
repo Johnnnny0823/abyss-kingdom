@@ -156,6 +156,11 @@ namespace AbyssKingdom.Client.Game
 
         public void RequestCities() => _conn.Send(MessageTypes.WorldCities);
 
+        /// <summary>目前被擊敗、還沒重生的怪物營地（大地圖讓營地前的怪物消失）。</summary>
+        public List<DefeatedCamp> DefeatedCamps { get; private set; } = new List<DefeatedCamp>();
+
+        public void RequestCamps() => _conn.Send(MessageTypes.WorldCamps);
+
         /// <summary>最近一次查詢的格子狀態（資源田存量、誰在採）。</summary>
         public TileInfoMessage Tile { get; private set; }
 
@@ -241,6 +246,9 @@ namespace AbyssKingdom.Client.Game
                 case MessageTypes.WorldCities:
                     Cities = msg.DataAs<WorldCitiesMessage>().Cities ?? new List<CityPin>();
                     break;
+                case MessageTypes.WorldCamps:
+                    DefeatedCamps = msg.DataAs<WorldCampsMessage>().Camps ?? new List<DefeatedCamp>();
+                    break;
                 case MessageTypes.CityAttacked:
                     var atk = msg.DataAs<CityAttackedMessage>();
                     string lost = DisplayNames.CarryText(atk.Plundered);
@@ -257,6 +265,7 @@ namespace AbyssKingdom.Client.Game
                     break;
                 case MessageTypes.MarchArrived:
                     var ma = msg.DataAs<MarchArrivedMessage>();
+                    if (ma.BattleWon && ma.TargetName == null) RequestCamps(); // 剛打掉營地：馬上更新，怪物立刻消失
                     var (tx, ty) = AbyssKingdom.Shared.Map.SurfaceLogic.FromTile(ma.Tile);
                     string hero = DisplayNames.Heroes[ma.Hero];
                     string carry = DisplayNames.CarryText(ma.Carry);

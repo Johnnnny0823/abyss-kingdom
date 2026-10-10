@@ -10,7 +10,7 @@ namespace AbyssKingdom.Client.World
     public static class LivingModel
     {
         private static Material _base;
-        private static readonly Dictionary<(Texture, int), Material> Mats = new Dictionary<(Texture, int), Material>();
+        private static readonly Dictionary<(Texture, int, float), Material> Mats = new Dictionary<(Texture, int, float), Material>();
 
         /// <summary>
         /// 煙囪頂端的位置（模型座標，底面 1×1）。來自 tools/blender/generate_city3d.py：
@@ -26,8 +26,8 @@ namespace AbyssKingdom.Client.World
 
         private static Vector3 FromBlender(float x, float y, float z) => new Vector3(-x, z, -y);
 
-        /// <summary>把一個 3D 建築模型裝上發光材質與炊煙。phaseSeed 讓每棟的呼吸節奏錯開。</summary>
-        public static void Attach(GameObject model, string artName, int phaseSeed)
+        /// <summary>把一個 3D 建築模型裝上發光材質與炊煙。phaseSeed 讓每棟的呼吸節奏錯開；wind > 0 時隨風擺（樹、草）。</summary>
+        public static void Attach(GameObject model, string artName, int phaseSeed, float wind = 0)
         {
             if (_base == null) _base = Resources.Load<Material>("Abyss/Building3D");
             if (_base != null)
@@ -39,11 +39,12 @@ namespace AbyssKingdom.Client.World
                     for (int k = 0; k < mats.Length; k++)
                     {
                         var tex = mats[k] != null ? mats[k].mainTexture : null;
-                        if (!Mats.TryGetValue((tex, phase), out var m))
+                        if (!Mats.TryGetValue((tex, phase, wind), out var m))
                         {
                             m = new Material(_base) { mainTexture = tex };
                             m.SetFloat("_Phase", phase / 25f);
-                            Mats[(tex, phase)] = m;
+                            m.SetFloat("_Wind", wind);
+                            Mats[(tex, phase, wind)] = m;
                         }
                         mats[k] = m;
                     }

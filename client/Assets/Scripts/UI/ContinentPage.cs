@@ -103,6 +103,7 @@ namespace AbyssKingdom.Client.UI
             {
                 _nextFetch = Time.unscaledTime + RefreshCitiesSeconds;
                 G.RequestCities();
+                G.RequestCamps();
             }
             if (!_centered && city.Surface.Placed)
             {
@@ -110,6 +111,7 @@ namespace AbyssKingdom.Client.UI
                 _centered = true;
             }
             _view.SetMarches(city.Surface.Marches, now);
+            _view.SetDefeatedCamps(G.DefeatedCamps, now);
             if (_feature != null && _feature.Type == FeatureType.MonsterCamp)
             {
                 if (Time.unscaledTime >= _nextTile)

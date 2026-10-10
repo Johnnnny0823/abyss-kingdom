@@ -256,6 +256,10 @@ public sealed class WebSocketHandler
                 await conn.SendAsync(MessageTypes.WorldCities, reqId, new WorldCitiesMessage { Cities = _world.Pins(session.PlayerId, _clock.NowMs) });
                 break;
 
+            case MessageTypes.WorldCamps:
+                await conn.SendAsync(MessageTypes.WorldCamps, reqId, new WorldCampsMessage { Camps = _world.DefeatedCamps(_clock.NowMs) });
+                break;
+
             case MessageTypes.WorldTile:
                 var tileReq = Deserialize<TileInfoRequest>(data);
                 if (tileReq == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "x and y required"); break; }

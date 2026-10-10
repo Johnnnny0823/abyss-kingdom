@@ -230,6 +230,9 @@ namespace AbyssKingdom.Client.World
                     {
                         LivingModel.Attach(monster, "Monster_" + f.Level, f.X * 7 + f.Y);
                         MonsterIdle.Attach(monster, f.X * 13 + f.Y);
+                        int tile = SurfaceLogic.Tile(f.X, f.Y);
+                        _monsters[tile] = monster;
+                        monster.SetActive(!_defeated.Contains(tile)); // 區塊晚建時，照目前的擊敗狀態
                     }
                 }
                 float lift = f.Type == FeatureType.MonsterCamp ? .62f : .6f;
@@ -370,6 +373,22 @@ namespace AbyssKingdom.Client.World
             _w.Prim(PrimitiveType.Cylinder, new Color32(80, 70, 60, 255), new Vector3(0, 0.45f, 0), new Vector3(0.01f, 0.08f, 0.01f), t);
             _w.Prim(PrimitiveType.Cube, roof, new Vector3(0.035f, 0.5f, 0), new Vector3(0.07f, 0.04f, 0.004f), t);
             return root;
+        }
+
+        private readonly Dictionary<int, GameObject> _monsters = new Dictionary<int, GameObject>();
+        private readonly HashSet<int> _defeated = new HashSet<int>();
+
+        /// <summary>被擊敗的營地：怪物消失；重生時間一到（依伺服器時間）就自己再出現，不必等下次查詢。</summary>
+        public void SetDefeatedCamps(List<DefeatedCamp> camps, long nowMs)
+        {
+            _defeated.Clear();
+            foreach (var c in camps)
+                if (c.BackAt > nowMs) _defeated.Add(SurfaceLogic.Tile(c.X, c.Y));
+            foreach (var kv in _monsters)
+            {
+                bool show = !_defeated.Contains(kv.Key);
+                if (kv.Value.activeSelf != show) kv.Value.SetActive(show);
+            }
         }
 
         // ───── 狀態 ─────
