@@ -40,6 +40,9 @@ public static class AbyssMaterials
         rock.EnableKeyword("_GLOSSYREFLECTIONS_OFF");
         rock.SetFloat("_GlossyReflections", 0f);
         EditorUtility.SetDirty(rock);
+        // 3D 建築：霧面＋契印／窗燈自動發光（Shaders/Building3D.shader）
+        var building3D = Load(Shader.Find("AbyssKingdom/Building3D"), "Building3D");
+        EditorUtility.SetDirty(building3D);
         // 深淵的霧（半透明、微微發光）與坑口光暈（青綠）
         MakeFade(standard, "Mist", new Color(0.72f, 0.78f, 0.84f, 1f), new Color(0.08f, 0.1f, 0.12f));
         MakeFade(standard, "RimGlow", new Color(0.4f, 0.95f, 0.85f, 1f), new Color(0.2f, 0.9f, 0.75f));

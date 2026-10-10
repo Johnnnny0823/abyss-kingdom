@@ -61,45 +61,59 @@ namespace AbyssKingdom.Client.World
             if (i < 0) return;
             int end = _chimneyJson.IndexOf("]]", i, System.StringComparison.Ordinal);
             var spots = ParseRunes("{\"runes\":" + _chimneyJson.Substring(_chimneyJson.IndexOf('[', i), end + 2 - _chimneyJson.IndexOf('[', i)) + "}");
-            if (_smokeMat == null) _smokeMat = Resources.Load<Material>("Abyss/Smoke");
-            if (_smokeMat == null) return;
             foreach (var s in spots)
+                MakeSmoke(_art, new Vector3((s.x - .5f) * width, s.y * height, -.02f));
+        }
+
+        /// <summary>一縷往上飄、被微風往右吹的炊煙（2D 建築圖與 3D 模型共用）。</summary>
+        public static ParticleSystem MakeSmoke(Transform parent, Vector3 localPos)
+        {
+            if (_smokeMat == null)
             {
-                var go = new GameObject("ChimneySmoke") { layer = WorldScene.Layer };
-                go.transform.SetParent(_art, false);
-                go.transform.localPosition = new Vector3((s.x - .5f) * width, s.y * height, -.02f);
-                var ps = go.AddComponent<ParticleSystem>();
-                ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-                var main = ps.main;
-                main.startLifetime = new ParticleSystem.MinMaxCurve(2.5f, 3.5f);
-                main.startSpeed = 0f;
-                main.startSize = new ParticleSystem.MinMaxCurve(.09f, .14f);
-                main.startRotation = new ParticleSystem.MinMaxCurve(0f, 6.28f);
-                main.startColor = new Color(.85f, .83f, .8f, .8f);
-                main.simulationSpace = ParticleSystemSimulationSpace.World;
-                main.maxParticles = 30;
-                var emission = ps.emission;
-                emission.rateOverTime = 4f;
-                var shape = ps.shape;
-                shape.enabled = false;
-                var vel = ps.velocityOverLifetime;
-                vel.enabled = true;
-                vel.space = ParticleSystemSimulationSpace.World;
-                vel.x = new ParticleSystem.MinMaxCurve(.03f, .09f); // 微風往右吹
-                vel.y = new ParticleSystem.MinMaxCurve(.12f, .18f);
-                vel.z = new ParticleSystem.MinMaxCurve(0f, 0f);
-                var size = ps.sizeOverLifetime;
-                size.enabled = true;
-                size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0, .6f, 1, 2.6f));
-                var col = ps.colorOverLifetime;
-                col.enabled = true;
-                var grad = new Gradient();
-                grad.SetKeys(new[] { new GradientColorKey(Color.white, 0), new GradientColorKey(new Color(.7f, .7f, .72f), 1) },
-                    new[] { new GradientAlphaKey(0, 0), new GradientAlphaKey(.85f, .15f), new GradientAlphaKey(0, 1) });
-                col.color = grad;
-                go.GetComponent<ParticleSystemRenderer>().sharedMaterial = _smokeMat;
-                ps.Play();
+                var src = Resources.Load<Material>("Abyss/Smoke");
+                if (src == null) return null;
+                _smokeMat = new Material(src);
+                _smokeMat.SetColor("_TintColor", new Color(.62f, .62f, .62f, .55f)); // 舊版 0.5 灰在畫面上偏暗，調亮成白煙
             }
+            var go = new GameObject("ChimneySmoke") { layer = WorldScene.Layer };
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPos;
+            var ps = go.AddComponent<ParticleSystem>();
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            var main = ps.main;
+            // 數值調過：原本太淡，畫面上只看得到煙囪口一小團暗影
+            main.startLifetime = new ParticleSystem.MinMaxCurve(3f, 4.2f);
+            main.startSpeed = 0f;
+            main.startSize = new ParticleSystem.MinMaxCurve(.12f, .19f);
+            main.startRotation = new ParticleSystem.MinMaxCurve(0f, 6.28f);
+            main.startColor = new Color(1f, 1f, 1f, 1f);
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.maxParticles = 40;
+            var emission = ps.emission;
+            emission.rateOverTime = 6f;
+            var shape = ps.shape;
+            shape.enabled = false;
+            var vel = ps.velocityOverLifetime;
+            vel.enabled = true;
+            vel.space = ParticleSystemSimulationSpace.World;
+            vel.x = new ParticleSystem.MinMaxCurve(.03f, .09f); // 微風往右吹
+            vel.y = new ParticleSystem.MinMaxCurve(.12f, .18f);
+            vel.z = new ParticleSystem.MinMaxCurve(0f, 0f);
+            var size = ps.sizeOverLifetime;
+            size.enabled = true;
+            size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0, .6f, 1, 2.6f));
+            var col = ps.colorOverLifetime;
+            col.enabled = true;
+            var grad = new Gradient();
+            grad.SetKeys(new[] { new GradientColorKey(Color.white, 0), new GradientColorKey(new Color(.86f, .86f, .88f), 1) },
+                new[] { new GradientAlphaKey(0, 0), new GradientAlphaKey(1f, .1f), new GradientAlphaKey(.55f, .55f), new GradientAlphaKey(0, 1) });
+            col.color = grad;
+            var pr = go.GetComponent<ParticleSystemRenderer>();
+            pr.sharedMaterial = _smokeMat;
+            pr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; // 煙不投影（否則地上會出現一團黑影）
+            pr.receiveShadows = false;
+            ps.Play();
+            return ps;
         }
 
         private void SpawnMotes(WorldScene w, string artName, float width, float height)

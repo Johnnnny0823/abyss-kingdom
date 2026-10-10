@@ -187,7 +187,7 @@ namespace AbyssKingdom.Client.World
                 var m3 = ModelLibrary.Spawn("City3D/" + artName, t, Vector3.zero, f);
                 if (m3 != null)
                 {
-                    MakeMatte(m3);
+                    LivingModel.Attach(m3, artName, (int)type * 37);
                     float top3 = 0;
                     foreach (var r in m3.GetComponentsInChildren<Renderer>()) top3 = Mathf.Max(top3, r.bounds.max.y - t.position.y);
                     if (upgrading)
