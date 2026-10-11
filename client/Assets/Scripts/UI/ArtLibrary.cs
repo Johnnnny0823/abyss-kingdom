@@ -36,6 +36,10 @@ namespace AbyssKingdom.Client.UI
         /// <summary>城內建築圖（2D）。檔名：Art/Buildings/&lt;BuildingType&gt;_&lt;1~3&gt;.png，外觀 1 = Lv.1~3、2 = Lv.4~6、3 = Lv.7~10；未建造用 Site.png。</summary>
         public static Texture2D Building(string name) => Load($"Buildings/{name}");
 
+        /// <summary>道具圖示（背包、加速視窗）。加速道具同類共用一張：Art/Items/Speedup_&lt;類別&gt;.png；其他：Art/Items/&lt;ItemType&gt;.png。規格見 docs/art/ICON_SPEC.md。</summary>
+        public static Texture2D ItemIcon(ItemType item) =>
+            Load(ItemConfig.TryGetSpeedup(item, out var category, out _) ? $"Items/Speedup_{category}" : $"Items/{item}");
+
         /// <summary>給 SpriteRenderer 用：圖的寬度對應 worldWidth 個世界單位，錨點在底部中央。</summary>
         public static Sprite SpriteOfWidth(Texture2D tex, float worldWidth)
         {

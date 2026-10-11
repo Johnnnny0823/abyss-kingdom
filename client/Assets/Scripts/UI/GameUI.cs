@@ -60,8 +60,10 @@ namespace AbyssKingdom.Client.UI
         private MarchPanel _march;
         private MarchList _marchList;
         private TrainingPanel _training;
-        private VisualElement _itemList;
+        private VisualElement _itemList, _bagDetail, _bagDetailIcon;
+        private Label _bagDetailName, _bagDetailDesc;
         private string _itemSignature;
+        private ItemType? _bagSelected;
         private QueueType _dialogQueue;
         private Label _dialogTime;
         private VisualElement _dialogList;
@@ -158,6 +160,7 @@ namespace AbyssKingdom.Client.UI
                     _continent.Select(f.X, f.Y);
                 }).StartingIn(4000);
             if (Array.IndexOf(args, "-hospital") >= 0) OpenPage(PageHospital);
+            if (Array.IndexOf(args, "-bag") >= 0) OpenPage(PageBag);
             if (Array.IndexOf(args, "-overview") >= 0) _root.schedule.Execute(OpenOverview).StartingIn(4000);
             int ti = Array.IndexOf(args, "-tile");
             if (ti >= 0 && ti + 2 < args.Length && int.TryParse(args[ti + 1], out var tx) && int.TryParse(args[ti + 2], out var ty))
@@ -367,7 +370,17 @@ namespace AbyssKingdom.Client.UI
             };
             _trainQueue = new QueueView(QueueType.Training, OpenSpeedupDialog);
             _training = new TrainingPanel(_trainQueue);
-            var bag = El("panel");
+            var bag = El("panel", "bag");
+            _bagDetail = El("row", "bag-detail");
+            _bagDetailIcon = El("bag-detail-icon");
+            _bagDetail.Add(_bagDetailIcon);
+            var detailText = El("grow");
+            _bagDetailName = Lbl("", "bag-detail-name");
+            _bagDetailDesc = Lbl("", "muted", "bag-detail-desc");
+            detailText.Add(_bagDetailName);
+            detailText.Add(_bagDetailDesc);
+            _bagDetail.Add(detailText);
+            bag.Add(_bagDetail);
             _itemList = El();
             bag.Add(_itemList);
             _healQueue = new QueueView(QueueType.Healing, OpenSpeedupDialog);
@@ -638,13 +651,39 @@ namespace AbyssKingdom.Client.UI
             if (sig == _itemSignature) return;
             _itemSignature = sig;
             _itemList.Clear();
+            if (_bagSelected != null && !owned.Contains(_bagSelected.Value)) _bagSelected = null;
+            if (_bagSelected == null && owned.Count > 0) _bagSelected = owned[0];
+            Show(_bagDetail, _bagSelected != null);
             if (owned.Count == 0) _itemList.Add(Lbl("背包是空的", "muted"));
-            foreach (var item in owned)
+            // 分組：加速道具／主將養成／信物
+            var groups = new (string title, Func<ItemType, bool> match)[]
             {
-                var row = El("item-row");
-                row.Add(Lbl(DisplayNames.Item(item), "item-name"));
-                row.Add(Lbl("×" + city.GetItemCount(item), "item-count"));
-                _itemList.Add(row);
+                ("加速道具", i => ItemConfig.TryGetSpeedup(i, out _, out _)),
+                ("主將養成", i => ItemConfig.TryGetHeroExp(i, out _) || ItemConfig.TryGetDomainScroll(i, out _, out _)),
+                ("信物", i => i >= ItemType.HeroShardAny),
+            };
+            foreach (var (title, match) in groups)
+            {
+                var items = owned.Where(match).ToList();
+                if (items.Count == 0) continue;
+                _itemList.Add(Lbl(title, "bag-group"));
+                var grid = El("bag-grid");
+                foreach (var item in items)
+                {
+                    var slot = ItemSlot.Create(item, city.GetItemCount(item));
+                    slot.EnableInClassList("selected", item == _bagSelected);
+                    var it = item;
+                    slot.RegisterCallback<ClickEvent>(_ => { _bagSelected = it; _itemSignature = null; RefreshItems(G.Predicted()); });
+                    grid.Add(slot);
+                }
+                _itemList.Add(grid);
+            }
+            if (_bagSelected is ItemType sel)
+            {
+                _bagDetailIcon.Clear();
+                _bagDetailIcon.Add(ItemSlot.Create(sel, 0));
+                _bagDetailName.text = $"{DisplayNames.Item(sel)}　×{city.GetItemCount(sel):N0}";
+                _bagDetailDesc.text = DisplayNames.ItemDescription(sel);
             }
         }
 
@@ -694,6 +733,7 @@ namespace AbyssKingdom.Client.UI
             foreach (var item in usable)
             {
                 var row = El("item-row");
+                row.Add(ItemSlot.Create(item, 0, small: true));
                 row.Add(Lbl(DisplayNames.Item(item), "item-name"));
                 row.Add(Lbl("×" + city.GetItemCount(item), "item-count"));
                 var it = item;

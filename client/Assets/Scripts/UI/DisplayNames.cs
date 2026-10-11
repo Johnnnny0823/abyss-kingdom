@@ -166,7 +166,7 @@ namespace AbyssKingdom.Client.UI
         {
             { FeatureType.ResourceField, "可以派部隊採集的資源田。越靠近深淵，等級越高。" },
             { FeatureType.MonsterCamp, "怪物盤踞的營地，擊敗牠們可以取得材料。" },
-            { FeatureType.AbyssGate, "通往深淵下一層大陸的入口，賽季結束後開放。" },
+            { FeatureType.AbyssGate, "通往深淵的入口。之後開放「探險深淵」。" },
         };
 
         // ───── 淵脈與浮沉（程式內部 = 五行陰陽，2026-10-08 使用者定案改用深淵風格名稱） ─────
@@ -328,6 +328,46 @@ namespace AbyssKingdom.Client.UI
             long minutes = ms / ItemConfig.MsPerMinute;
             string time = minutes >= 60 ? $"{minutes / 60} 小時" : $"{minutes} 分鐘";
             return $"{ItemCategories[category]}加速 {time}";
+        }
+
+        /// <summary>道具說明（背包點選時顯示）。</summary>
+        public static string ItemDescription(ItemType item)
+        {
+            if (ItemConfig.TryGetSpeedup(item, out var category, out var ms))
+            {
+                string where = category == ItemCategory.General ? "任何隊列" : $"{ItemCategories[category]}隊列";
+                long m = ms / ItemConfig.MsPerMinute;
+                return $"讓{where}的剩餘時間減少 {(m >= 60 ? $"{m / 60} 小時" : $"{m} 分鐘")}。在隊列旁按「加速」使用。";
+            }
+            if (ItemConfig.TryGetHeroExp(item, out var exp)) return $"主將獲得 {exp:N0} 經驗。在主將頁使用。";
+            if (ItemConfig.TryGetDomainScroll(item, out var domain, out var xp)) return $"{Domains[domain]} 修練值 +{xp:N0}。在主將頁的四印使用。";
+            if (item == ItemType.HeroShardAny) return "任何主將升星都能用的信物。";
+            foreach (var h in Heroes)
+                if (ItemConfig.ShardFor(h.Key) == item) return $"{h.Value}的信物，升星用。";
+            return "";
+        }
+
+        /// <summary>道具品質（格子邊框顏色）：0 普通、1 精良、2 稀有、3 史詩。</summary>
+        public static int ItemRarity(ItemType item)
+        {
+            if (ItemConfig.TryGetSpeedup(item, out _, out var ms))
+                return ms >= 60 * ItemConfig.MsPerMinute ? 3 : ms >= 30 * ItemConfig.MsPerMinute ? 2 : ms >= 5 * ItemConfig.MsPerMinute ? 1 : 0;
+            switch (item)
+            {
+                case ItemType.HeroExpSmall: return 1;
+                case ItemType.HeroExpMedium: return 2;
+                case ItemType.HeroExpLarge: return 3;
+                case ItemType.HeroShardAny: return 3;
+            }
+            return item >= ItemType.HeroShardAny ? 3 : 2;
+        }
+
+        /// <summary>格子角落的小標籤：加速道具顯示時間（5分、1時）。</summary>
+        public static string ItemBadge(ItemType item)
+        {
+            if (!ItemConfig.TryGetSpeedup(item, out _, out var ms)) return "";
+            long m = ms / ItemConfig.MsPerMinute;
+            return m >= 60 ? $"{m / 60}時" : $"{m}分";
         }
 
         /// <summary>伺服器回傳的錯誤碼 → 給玩家看的說明。</summary>
