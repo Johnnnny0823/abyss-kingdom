@@ -161,6 +161,7 @@ namespace AbyssKingdom.Client.UI
                 }).StartingIn(4000);
             if (Array.IndexOf(args, "-hospital") >= 0) OpenPage(PageHospital);
             if (Array.IndexOf(args, "-bag") >= 0) OpenPage(PageBag);
+            if (Array.IndexOf(args, "-resinfo") >= 0) _root.schedule.Execute(() => OpenResourceInfo(ResourceType.Crystal)).StartingIn(12000);
             if (Array.IndexOf(args, "-overview") >= 0) _root.schedule.Execute(OpenOverview).StartingIn(4000);
             int ti = Array.IndexOf(args, "-tile");
             if (ti >= 0 && ti + 2 < args.Length && int.TryParse(args[ti + 1], out var tx) && int.TryParse(args[ti + 2], out var ty))
@@ -257,6 +258,8 @@ namespace AbyssKingdom.Client.UI
                 chip.Add(amount);
                 chip.Add(cap);
                 chip.tooltip = DisplayNames.Resources[r];
+                var res = r;
+                chip.RegisterCallback<ClickEvent>(_ => OpenResourceInfo(res));
                 _resChips[r] = (amount, cap);
                 top.Add(chip);
             }
@@ -444,6 +447,31 @@ namespace AbyssKingdom.Client.UI
             var city = G.Predicted();
             if (city != null) _overview.Refresh(city, G.Cities, G.ServerNowMs, _continent.Selected, SurfaceViewQuad());
             G.RequestCities();
+        }
+
+        /// <summary>點上方資源列：顯示這種資源的名稱、由來、用途、取得方式，以及目前的產量與上限。</summary>
+        private void OpenResourceInfo(ResourceType r)
+        {
+            var city = G.Predicted();
+            VisualElement overlay = null;
+            var box = El("dialog", "res-info");
+            var head = El("row");
+            head.Add(ResIcon(r, false));
+            head.Add(Lbl(DisplayNames.Resources[r], "panel-title", "grow", "res-info-name"));
+            head.Add(Btn("關閉", () => overlay?.RemoveFromHierarchy(), "btn-small"));
+            box.Add(head);
+            box.Add(Lbl(DisplayNames.ResourceDescriptions[r], "res-info-desc"));
+            if (city != null)
+            {
+                var producer = CityConfig.AllBuildings.FirstOrDefault(b => CityConfig.TryGetProducedResource(b, out var pr) && pr == r);
+                int level = city.GetLevel(producer);
+                int warehouse = city.GetLevel(BuildingType.Warehouse);
+                box.Add(Lbl($"持有：{city.GetResource(r):N0} / 上限 {CityConfig.Capacity(warehouse):N0}（倉庫 Lv.{warehouse}）", "res-info-stat"));
+                box.Add(Lbl($"產量：每小時 {CityConfig.ProductionPerHour(level):N0}（{DisplayNames.Buildings[producer]} Lv.{level}）", "res-info-stat"));
+                box.Add(Lbl($"被掠奪時保護：{PvpConfig.Protected(warehouse):N0}", "res-info-stat"));
+            }
+            box.Add(Lbl("取得方式：城內生產建築、大地圖資源田採集、擊敗怪物營地、任務獎勵。倉庫滿了就停止生產；採集與戰利品帶回城不受上限限制。", "muted", "res-info-desc"));
+            overlay = OpenModal(box);
         }
 
         /// <summary>大地圖鏡頭看到的地面範圍（畫面四角打到地面的格子座標）；不在大地圖時回傳 null。</summary>

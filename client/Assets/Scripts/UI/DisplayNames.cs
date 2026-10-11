@@ -22,6 +22,15 @@ namespace AbyssKingdom.Client.UI
         };
 
         /// <summary>資源圖示上的單字。</summary>
+        /// <summary>資源說明（點上方資源列時顯示）：由來與用途。</summary>
+        public static readonly Dictionary<ResourceType, string> ResourceDescriptions = new Dictionary<ResourceType, string>
+        {
+            { ResourceType.Wood, "貫穿各個地層的古樹根，堅韌耐用。\n用途：建築升級；訓練磐盾衛、鳴弦手。" },
+            { ResourceType.Stone, "一層層神話地層壓成的岩石。\n用途：建築升級；訓練磐盾衛、裂蹄騎。" },
+            { ResourceType.Food, "崖洞裡的發光菇，士兵的口糧。\n用途：建築升級；訓練所有兵種、治療傷兵。" },
+            { ResourceType.Crystal, "凝固的回響，帶著深淵的力量。\n用途：主堡升級；訓練裂蹄騎；主將升星。" },
+        };
+
         public static readonly Dictionary<ResourceType, string> ResourceGlyphs = new Dictionary<ResourceType, string>
         {
             { ResourceType.Wood, "根" },

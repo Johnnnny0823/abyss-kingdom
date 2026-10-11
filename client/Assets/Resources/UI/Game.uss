@@ -588,3 +588,9 @@
     color: rgb(244, 236, 214); font-size: 14px; padding: 4px 14px; border-radius: 4px;
 }
 .quest-pulse { border-color: rgb(255, 224, 140); border-width: 3px; transition-duration: 0.4s; }
+/* ───── 資源說明視窗（點上方資源列） ───── */
+.res-chip:hover { border-color: rgb(232, 196, 118); }
+.res-info { width: 420px; }
+.res-info-name { margin: 0 0 0 10px; font-size: 20px; }
+.res-info-desc { white-space: normal; margin-top: 10px; font-size: 14px; }
+.res-info-stat { margin-top: 6px; font-size: 14px; color: rgb(220, 226, 230); }
