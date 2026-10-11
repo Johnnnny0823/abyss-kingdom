@@ -1,28 +1,33 @@
-# 交接給 Codex（2026-10-09，最新 commit `b483708`）
+# 交接給 Codex（2026-10-11，最新 commit `c224b4b`）
 
-只寫對話裡才有、其他文件沒有的東西。開工前依序讀：`CLAUDE.md` → `docs/HANDOFF.md` → `docs/design/GDD.md` → `docs/art/MODEL_SPEC.md`、`docs/art/CHARACTER_SPEC.md`。
+使用者這週的 Claude 額度快用完，**美術優化與後續功能（聯盟等）交給你**。只寫對話裡才有、其他文件沒有的東西。開工前依序讀：`CLAUDE.md` → `docs/HANDOFF.md` → `docs/design/GDD.md`（**先讀 2.1.0、5.4、5.8、6 開發路線**，其他章節用到再查）→ 做美術時再讀 `docs/art/MODEL_SPEC.md`、`CHARACTER_SPEC.md`、`ICON_SPEC.md`。專案有 `.codegraph/` 索引，找程式碼先用 codegraph，不要整包讀檔（上次唯讀審查就用掉 91% 額度）。
 
 ## 1. 目前狀態
 
-- **遊戲功能**：地表 S1～S5 完成並已部署，測試 164 個全過。內容是大地圖、直線行軍、採集、打怪物營地、傷兵與醫館、PvP 攻城、7 天新手護盾。**S6 聯盟暫停**，使用者要先做美術。
-- **美術**：
-  - 大地圖：13 個 Blender 程式產生的低多邊形模型，由 `tools/blender/generate_world.py` 產生。另有地面雜訊貼圖，以及中央的深淵漏斗坑（含霧和坑口光暈）。
-  - 城內：25 張 2D 精緻建築圖，是使用者用 ChatGPT 生成的。8 種建築各 3 個等級外觀，加 1 張空地基。原圖在 `art/source/buildings/`。
-  - 主將：3 張立繪、3 張頭像；士兵：3 張兵種圖。原圖在 `art/source/`，切圖程式是 `tools/art/slice_sheet.py`。
-  - 2.5D 動態：`tools/art/make_fx_masks.py` 產生效果遮罩，`Shaders/LivingSprite.shader` 做出契印呼吸、窗燈閃爍、旗幟擺動，`World/LivingBuilding.cs` 負責光點、接觸陰影和點選回饋。行軍時的 2D 部隊有程式動畫（`World/MarchAnimator.cs`）。
-- **使用者已定案的方向**：
-  - 城內保留**自由拖曳建築**。
-  - 建築用 **2D 精緻圖＋2.5D 動態**（Shader；之後可能加 Live2D 或 Spine）。
-  - 美術參考《來自深淵》的**氛圍**、神話建築，以及寒霜啟示錄這類 4X 手遊的畫風。**只借氛圍，不做任何作品的具體造型**；給 AI 繪圖的提示詞裡不可寫作品名或畫家名。
-  - 醫館**不可畫紅十字**，用青綠菱形契印代替。
+- **測試 184 個全過**（`dotnet run --project tests/AbyssKingdom.Tests`）。地表 S1～S5（地圖、行軍、採集、怪物營地、傷兵醫館、PvP 攻城、新手護盾）已部署。
+- **10-09 之後新增**：
+  - 新手任務線 15 個任務（`shared/.../City/Quests.cs`、`UI/QuestPanel.cs`，協定 `quest.claim`）。
+  - 新手開場「墜入深淵」運鏡（`UI/IntroSequence.cs`，啟動參數 `-intro` 強制播放）。配音在 `Resources/Audio/Intro/line1~4.mp3`，是 Azure「雲哲」降聲調 -15%；目前經 edge-tts 產生，上架前要用正式 Azure 金鑰跑 `tools/tts/gen_intro_voice.ps1` 重產。
+  - 背包改成圖示格子（`UI/ItemSlot.cs`、`ArtLibrary.ItemIcon`），16 張圖示是 `tools/art/make_item_icons.py` 程式畫的暫代版。測試參數 `-bag` 直接開背包。
+  - 你上次做的 3D 建築、角色、世界物件、山脈關隘都已接進遊戲（見 git log）。
+- **賽季轉向（2026-10-11 使用者定案，GDD 2.1.0）**：每季都在地表、一季一個神話主題；深淵不再是可進入的大世界，改成「深淵潮」活動（系列野怪 → 全服累積進度 → 巨型 BOSS）；深淵入口之後做小副本，先不做；賽季重置保留主城與主將。**GDD 5.3 深淵大陸、回響代價都已作廢，不要再照那些做。**
 
-## 2. 下一步候選（開工前先問使用者要做哪個）
+## 2. 交給你的工作（照順序；每項開工前先問使用者範圍，用 `grill-me`）
 
-1. 煙囪冒煙、小人沿路走動：要先標出每張圖的煙囪和道路位置。
-2. 高等級的建築畫得更大：目前每個等級都一樣寬。
-3. 主將立繪改成 Live2D 或 Spine：要使用者先買授權並手動綁骨架，Codex 負責接進 Unity。
-4. 回頭做 S6 聯盟與盟旗。
+1. **美術優化**（你擅長的 Blender 流程）：
+   - 城內 3D 建築加煙囪、旗幟等細節；大地圖主城加外城牆（之前提過、使用者還沒指定）。
+   - 道具圖示：如果你能產生點陣圖，照 `docs/art/ICON_SPEC.md` 做正式版，同檔名覆蓋；不能就跳過，使用者會自己用 ChatGPT 生。
+   - 已知小問題：開場播放時「歡迎回來」通知會疊在畫面上；有一次觀察到開場結束停在主城約 2 秒後畫面切到大地圖，原因未查。
+2. **S6 聯盟與盟旗領地**：**先寫設計提案 `docs/design/S6_ALLIANCE.md` 給使用者確認，確認後才寫程式。** 提案建議涵蓋：
+   - 建立／加入／退出／踢人、階級權限、成員列表、聯盟簡稱顯示在大地圖主城名牌。
+   - 聯盟聊天、聯盟幫助（成員互按幫忙縮短隊列）。
+   - 盟旗（GDD 5.8：領地由建築撐出來、數量有限、領地內採集與防守加成）。
+   - 集結（GDD 5.4：倒數內最多 5 隊、共用 5v5 戰鬥核心），這是之後全服 BOSS 的基礎。
+   - 資料存放：玩家資料目前是 `Persistence/PlayerStores.cs` 的 `IPlayerStore`（Supabase／InMemory），聯盟需要自己的儲存與鎖（同一玩家的修改仍要持有 `PlayerSession.Gate`，不要同時拿兩位玩家的鎖，參考 PvP 兩段結算）。
+   - 拆成小步驟，每步都有測試、可單獨驗收。
+3. 之後依序：**科技研究所**（科技樹，`ItemCategory.Research` 加速道具已預留）→ **主將招募** → **深淵潮活動＋全服 BOSS** → **賽季框架**。每項同樣先提案再做。
 
+**權限**：這次可以修改所有程式（含 `client/Assets/Scripts`），但規則照 `CLAUDE.md`：共用規則放 `shared/`、整數與確定性、規則改動必加測試、新訊息同步 `Messages.cs`／`WebSocketHandler.cs`／README 協定表、玩家看到的名稱只寫在 `DisplayNames.cs` 並更新 GDD 名詞表、不改 enum 名稱。
 ## 3. 工作方式與踩過的坑
 
 - 回覆用繁體中文，程式碼和 commit 用英文。宣稱完成前要有證據（截圖或測試輸出）。改既有檔超過 30 行，先備份到 `C:\Users\xnikz\.claude\backups\日期\`。
