@@ -94,7 +94,7 @@ def rock(name,pos,scale,mat='stone'):
     return finish(obj,name,mat)
 
 
-def finish_asset(name,height):
+def finish_asset(name,height,after_bake=None):
     started=time.monotonic()
     OUT.mkdir(parents=True,exist_ok=True); PREVIEWS.mkdir(parents=True,exist_ok=True)
     bpy.ops.object.select_all(action='DESELECT')
@@ -142,7 +142,10 @@ def finish_asset(name,height):
     for face in obj.data.polygons: face.material_index=0
     obj['front_axis']='-Z in FBX / +Y in Blender'
     scene.unit_settings.system='METRIC'; scene.unit_settings.scale_length=1
-    bpy.ops.export_scene.fbx(filepath=str(OUT/(name+'.fbx')),use_selection=True,object_types={'MESH'},
+    exported = after_bake(obj, minimum, maximum, (sx,sy,sz)) if after_bake else [obj]
+    bpy.ops.object.select_all(action='DESELECT')
+    for part in exported: part.select_set(True)
+    bpy.ops.export_scene.fbx(filepath=str(OUT/(name+'.fbx')),use_selection=True,object_types={'MESH','EMPTY'},
         axis_forward='-Z',axis_up='Y',apply_unit_scale=True,apply_scale_options='FBX_SCALE_UNITS',
         bake_space_transform=True,use_mesh_modifiers=True,add_leaf_bones=False,bake_anim=False,
         path_mode='COPY',embed_textures=True,use_custom_props=True)
@@ -162,7 +165,7 @@ def finish_asset(name,height):
     scene.render.image_settings.file_format='PNG'; scene.view_settings.view_transform='Standard'; scene.view_settings.look='None'
     scene.cycles.samples=24; scene.cycles.use_denoising=True
     scene.render.filepath=str(PREVIEWS/(name+'.png')); bpy.ops.render.render(write_still=True)
-    report={'name':name,'triangles':triangles,'mesh_count':1,'material_count':1,'albedo':[1024,1024],
+    report={'name':name,'triangles':triangles,'mesh_count':sum(o.type=='MESH' for o in exported),'material_count':1,'albedo':[1024,1024],
             'dimensions_fbx_xyz':[1,height,1],'origin':[0,0,0],'front':'-Z','up':'+Y',
             'camera_elevation':52,'camera_azimuth':-32,'bake':'EMIT color only','metallic':0,'specular':0,
             'reference':f'client/Assets/Resources/Art/Buildings/{name}.png','seconds':round(time.monotonic()-started,2)}

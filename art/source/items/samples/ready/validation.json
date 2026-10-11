@@ -1,0 +1,242 @@
+[
+  {
+    "name": "Speedup_General",
+    "status": "PASS",
+    "width": 256,
+    "height": 256,
+    "transparent_pixels": 46638,
+    "source_bounds": [
+      283,
+      34,
+      970,
+      1178
+    ],
+    "asset_path": "C:\\Users\\xnikz\\abyss-kingdom\\art\\source\\items\\samples\\ready\\Speedup_General.png",
+    "sha256": "6509E24E4C981175637D3CE0C91CE4F5F5C43297C4F884BA9471F24EDFA3426A"
+  },
+  {
+    "name": "Speedup_Building",
+    "status": "PASS",
+    "width": 256,
+    "height": 256,
+    "transparent_pixels": 46235,
+    "source_bounds": [
+      281,
+      32,
+      974,
+      1181
+    ],
+    "asset_path": "C:\\Users\\xnikz\\abyss-kingdom\\art\\source\\items\\samples\\ready\\Speedup_Building.png",
+    "sha256": "BA229229D3A3E155C0A9879FAED1783C4DD831F78AF30228A0A3E361BAB9519F"
+  },
+  {
+    "name": "Speedup_Research",
+    "status": "PASS",
+    "width": 256,
+    "height": 256,
+    "transparent_pixels": 45241,
+    "source_bounds": [
+      275,
+      60,
+      977,
+      1179
+    ],
+    "asset_path": "C:\\Users\\xnikz\\abyss-kingdom\\art\\source\\items\\samples\\ready\\Speedup_Research.png",
+    "sha256": "DCBF49782E6984F2BD6658891F011CD8058241CA012D9A69FA8C323B9AC9C76E"
+  },
+  {
+    "name": "Speedup_Magic",
+    "status": "PASS",
+    "width": 256,
+    "height": 256,
+    "transparent_pixels": 43988,
+    "source_bounds": [
+      258,
+      44,
+      996,
+      1190
+    ],
+    "asset_path": "C:\\Users\\xnikz\\abyss-kingdom\\art\\source\\items\\samples\\ready\\Speedup_Magic.png",
+    "sha256": "947E4445225ADF2E5FF1FAFAC7EFCFC569DDC273A652C22D25BE509F159BB388"
+  },
+  {
+    "name": "Speedup_Training",
+    "status": "PASS",
+    "width": 256,
+    "height": 256,
+    "transparent_pixels": 45992,
+    "source_bounds": [
+      283,
+      48,
+      970,
+      1180
+    ],
+    "asset_path": "C:\\Users\\xnikz\\abyss-kingdom\\art\\source\\items\\samples\\ready\\Speedup_Training.png",
+    "sha256": "9B53ABE6C0BD609723448C4BA3285D9F9A0FE207FC13EC70D79CDF9B9A2C5E12"
+  },
+  {
+    "name": "HeroExpSmall",
+    "status": "PASS",
+    "width": 256,
+    "height": 256,
+    "transparent_pixels": 35890,
+    "source_bounds": [
+      159,
+      99,
+      1136,
+      1163
+    ],
+    "asset_path": "C:\\Users\\xnikz\\abyss-kingdom\\art\\source\\items\\samples\\ready\\HeroExpSmall.png",
+    "sha256": "E4D11947B9B203D3572D50719D41BD475FBA1F06AFCF3A1162A6ECE383774631"
+  },
+  {
+    "name": "HeroExpMedium",
+    "status": "PASS",
+    "width": 256,
+    "height": 256,
+    "transparent_pixels": 35926,
+    "source_bounds": [
+      159,
+      97,
+      1138,
+      1164
+    ],
+    "asset_path": "C:\\Users\\xnikz\\abyss-kingdom\\art\\source\\items\\samples\\ready\\HeroExpMedium.png",
+    "sha256": "CB54E8651B0F37CC07B08DB7C233A19D30C31578A0BE8B5FD04D91DFB8B20C11"
+  },
+  {
+    "name": "HeroExpLarge",
+    "status": "PASS",
+    "width": 256,
+    "height": 256,
+    "transparent_pixels": 35892,
+    "source_bounds": [
+      158,
+      98,
+      1137,
+      1163
+    ],
+    "asset_path": "C:\\Users\\xnikz\\abyss-kingdom\\art\\source\\items\\samples\\ready\\HeroExpLarge.png",
+    "sha256": "A1C5369EEA37187F8D41ED6E8E029A6BB956ADA7D71F6DCF34620778749201A1"
+  },
+  {
+    "name": "DomainScrollPower",
+    "status": "PASS",
+    "width": 256,
+    "height": 256,
+    "transparent_pixels": 39666,
+    "source_bounds": [
+      96,
+      37,
+      1183,
+      1220
+    ],
+    "asset_path": "C:\\Users\\xnikz\\abyss-kingdom\\art\\source\\items\\samples\\ready\\DomainScrollPower.png",
+    "sha256": "F234821FA7151FC0D5B632C9CAFAEA5BEB78ABE62DA4D8937DFC5A9F67525529"
+  },
+  {
+    "name": "DomainScrollTechnique",
+    "status": "PASS",
+    "width": 256,
+    "height": 256,
+    "transparent_pixels": 39769,
+    "source_bounds": [
+      38,
+      55,
+      1215,
+      1205
+    ],
+    "asset_path": "C:\\Users\\xnikz\\abyss-kingdom\\art\\source\\items\\samples\\ready\\DomainScrollTechnique.png",
+    "sha256": "C1B67024316769DE23902BB00D3FF320FB687E1CB4C7873A932392D3DBC3973C"
+  },
+  {
+    "name": "DomainScrollSpeed",
+    "status": "PASS",
+    "width": 256,
+    "height": 256,
+    "transparent_pixels": 39494,
+    "source_bounds": [
+      37,
+      53,
+      1217,
+      1207
+    ],
+    "asset_path": "C:\\Users\\xnikz\\abyss-kingdom\\art\\source\\items\\samples\\ready\\DomainScrollSpeed.png",
+    "sha256": "4BBEB6C5FA17A4B31762ED73644159D58DC2B4F17BA4D46226ED23A63975164F"
+  },
+  {
+    "name": "DomainScrollDurability",
+    "status": "PASS",
+    "width": 256,
+    "height": 256,
+    "transparent_pixels": 39770,
+    "source_bounds": [
+      38,
+      54,
+      1216,
+      1205
+    ],
+    "asset_path": "C:\\Users\\xnikz\\abyss-kingdom\\art\\source\\items\\samples\\ready\\DomainScrollDurability.png",
+    "sha256": "9E789DC92ABD3F52F3EB9ADD5AC6EE3984C5DDB1EDE220B83E526739A2515B39"
+  },
+  {
+    "name": "HeroShardAny",
+    "status": "PASS",
+    "width": 256,
+    "height": 256,
+    "transparent_pixels": 45121,
+    "source_bounds": [
+      222,
+      62,
+      1030,
+      1144
+    ],
+    "asset_path": "C:\\Users\\xnikz\\abyss-kingdom\\art\\source\\items\\samples\\ready\\HeroShardAny.png",
+    "sha256": "E90FAB3E4D95270254CE4011C23129E7B7B26AC8B0D4A1B826C867523F2C34A5"
+  },
+  {
+    "name": "HeroShardHold",
+    "status": "PASS",
+    "width": 256,
+    "height": 256,
+    "transparent_pixels": 45153,
+    "source_bounds": [
+      189,
+      26,
+      1065,
+      1191
+    ],
+    "asset_path": "C:\\Users\\xnikz\\abyss-kingdom\\art\\source\\items\\samples\\ready\\HeroShardHold.png",
+    "sha256": "14A48BA9A169474B1F939F3E896D2B3CF45EAEC45F8AACB1B096AAE61C96761D"
+  },
+  {
+    "name": "HeroShardVesper",
+    "status": "PASS",
+    "width": 256,
+    "height": 256,
+    "transparent_pixels": 45090,
+    "source_bounds": [
+      187,
+      10,
+      1066,
+      1191
+    ],
+    "asset_path": "C:\\Users\\xnikz\\abyss-kingdom\\art\\source\\items\\samples\\ready\\HeroShardVesper.png",
+    "sha256": "9430E90AD77BB9B74B76E329106E6DFC1BA0CA96CC00EFC4DAF8A0DB9FE987F6"
+  },
+  {
+    "name": "HeroShardKarst",
+    "status": "PASS",
+    "width": 256,
+    "height": 256,
+    "transparent_pixels": 44933,
+    "source_bounds": [
+      197,
+      21,
+      1052,
+      1162
+    ],
+    "asset_path": "C:\\Users\\xnikz\\abyss-kingdom\\art\\source\\items\\samples\\ready\\HeroShardKarst.png",
+    "sha256": "B72CAD2A3B585BCFB30AE9BDEBA43D161F17FDBEC291E50C15131AEEB06F7120"
+  }
+]

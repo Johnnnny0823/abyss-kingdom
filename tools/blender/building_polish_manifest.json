@@ -1,0 +1,696 @@
+{
+  "all_pass": true,
+  "models": [
+    {
+      "name": "Keep_1",
+      "status": "PASS",
+      "triangles": 4668,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        1.3070000787569462
+      ],
+      "flags": [
+        {
+          "name": "FlagCloth_00",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        },
+        {
+          "name": "FlagCloth_01",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        },
+        {
+          "name": "FlagCloth_02",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        }
+      ],
+      "smoke_sockets": [
+        {
+          "name": "SmokeSocket_00",
+          "blender_world": [
+            -0.15000000596046448,
+            -0.17725659906864166,
+            1.0164430141448975
+          ]
+        }
+      ],
+      "sha256": "6b73ac64cac3e91d1a3537f13406f26aad59b33fa5bb0ed89d67a070c58c6723"
+    },
+    {
+      "name": "Keep_2",
+      "status": "PASS",
+      "triangles": 3720,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        1.4199999948336064
+      ],
+      "flags": [
+        {
+          "name": "FlagCloth_00",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        },
+        {
+          "name": "FlagCloth_01",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        },
+        {
+          "name": "FlagCloth_02",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        }
+      ],
+      "smoke_sockets": [
+        {
+          "name": "SmokeSocket_00",
+          "blender_world": [
+            -0.15000000596046448,
+            -0.16999991238117218,
+            1.156891107559204
+          ]
+        }
+      ],
+      "sha256": "2b4b80eb1d99b8d90679f434d4d2a69227dd01fc6493b3e319046718e059d40e"
+    },
+    {
+      "name": "Keep_3",
+      "status": "PASS",
+      "triangles": 4170,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        1.6000000615908085
+      ],
+      "flags": [
+        {
+          "name": "FlagCloth_00",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        },
+        {
+          "name": "FlagCloth_01",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        },
+        {
+          "name": "FlagCloth_02",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        }
+      ],
+      "smoke_sockets": [
+        {
+          "name": "SmokeSocket_00",
+          "blender_world": [
+            -0.15000000596046448,
+            -0.16999991238117218,
+            1.230912208557129
+          ]
+        }
+      ],
+      "sha256": "0891db378b1c01f134f5b8fce7a535f7fb2b22685b0530c371619ef7f3c0ada5"
+    },
+    {
+      "name": "Sawmill_1",
+      "status": "PASS",
+      "triangles": 1698,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        0.9000000139070927
+      ],
+      "flags": [
+        {
+          "name": "FlagCloth_00",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        }
+      ],
+      "smoke_sockets": [
+        {
+          "name": "SmokeSocket_00",
+          "blender_world": [
+            -0.28999999165534973,
+            -0.2699999511241913,
+            0.9027027487754822
+          ]
+        }
+      ],
+      "sha256": "d60c981508d9c0c0d1f5d0e6892cbf38640af317f2cca284e9fd2c3219a26b09"
+    },
+    {
+      "name": "Sawmill_2",
+      "status": "PASS",
+      "triangles": 2010,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        1.0599999805284916
+      ],
+      "flags": [
+        {
+          "name": "FlagCloth_00",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        }
+      ],
+      "smoke_sockets": [
+        {
+          "name": "SmokeSocket_00",
+          "blender_world": [
+            -0.28999999165534973,
+            -0.2699999213218689,
+            1.062841773033142
+          ]
+        }
+      ],
+      "sha256": "95cdb718b652e10f71689cc54e827a943b1e6cf82dc47d04b7d98193468bc7f3"
+    },
+    {
+      "name": "Sawmill_3",
+      "status": "PASS",
+      "triangles": 2196,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        1.2200000663591801
+      ],
+      "flags": [
+        {
+          "name": "FlagCloth_00",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        }
+      ],
+      "smoke_sockets": [
+        {
+          "name": "SmokeSocket_00",
+          "blender_world": [
+            -0.28999999165534973,
+            -0.2699999213218689,
+            1.090203881263733
+          ]
+        }
+      ],
+      "sha256": "7bcb5c526acae60e2624bd37a9a38e705e1cf4926069e18eb731894d934f99e7"
+    },
+    {
+      "name": "Farm_1",
+      "status": "PASS",
+      "triangles": 1790,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        0.8200000305963933
+      ],
+      "flags": [],
+      "smoke_sockets": [
+        {
+          "name": "SmokeSocket_00",
+          "blender_world": [
+            -0.28999999165534973,
+            -0.2699999511241913,
+            0.8212005496025085
+          ]
+        }
+      ],
+      "sha256": "d1515975a6032dff6304f2ed2cb4d2256799356c978a2023a0583cec4a858998"
+    },
+    {
+      "name": "Farm_2",
+      "status": "PASS",
+      "triangles": 2412,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        0.9600000162912785
+      ],
+      "flags": [],
+      "smoke_sockets": [
+        {
+          "name": "SmokeSocket_00",
+          "blender_world": [
+            -0.28999999165534973,
+            -0.2699999511241913,
+            0.9611808061599731
+          ]
+        }
+      ],
+      "sha256": "696deb1321757125d867b675de7679bfb485661690c56c67317fd79067e05183"
+    },
+    {
+      "name": "Farm_3",
+      "status": "PASS",
+      "triangles": 2410,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        1.1500000139070927
+      ],
+      "flags": [],
+      "smoke_sockets": [
+        {
+          "name": "SmokeSocket_00",
+          "blender_world": [
+            -0.28999999165534973,
+            -0.2699999511241913,
+            0.8288679718971252
+          ]
+        }
+      ],
+      "sha256": "99a6b3659ac82d097e7791ba2cb8f031fa7cea7668849af2acc45fbb75a8f7c4"
+    },
+    {
+      "name": "Warehouse_1",
+      "status": "PASS",
+      "triangles": 1552,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        0.8600000520540654
+      ],
+      "flags": [
+        {
+          "name": "FlagCloth_00",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        }
+      ],
+      "smoke_sockets": [],
+      "sha256": "c60de0fe3114b63340c895fd81be36e848dab65af4a0c5c0a451ea6aff9e2626"
+    },
+    {
+      "name": "Warehouse_2",
+      "status": "PASS",
+      "triangles": 1910,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        1.070000090201038
+      ],
+      "flags": [
+        {
+          "name": "FlagCloth_00",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        }
+      ],
+      "smoke_sockets": [],
+      "sha256": "595807f1f1784dedb87903a81d5334229688409c704dd6f5885682d9f348fb4c"
+    },
+    {
+      "name": "Warehouse_3",
+      "status": "PASS",
+      "triangles": 2274,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        1.2500000377489506
+      ],
+      "flags": [
+        {
+          "name": "FlagCloth_00",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        }
+      ],
+      "smoke_sockets": [],
+      "sha256": "44dfe86ffb564e6c56ed029bc082be32a3206791699b8c3cbd45623e1ee5eec8"
+    },
+    {
+      "name": "Barracks_1",
+      "status": "PASS",
+      "triangles": 1164,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        0.9200000544382512
+      ],
+      "flags": [],
+      "smoke_sockets": [
+        {
+          "name": "SmokeSocket_00",
+          "blender_world": [
+            -0.23999999463558197,
+            -0.2699999511241913,
+            0.9211316108703613
+          ]
+        }
+      ],
+      "sha256": "4224c2957f75216f591ffe15179919e87857924d94fea82746de08f3e6a87102"
+    },
+    {
+      "name": "Barracks_2",
+      "status": "PASS",
+      "triangles": 1888,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        1.1200000425173222
+      ],
+      "flags": [
+        {
+          "name": "FlagCloth_00",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        }
+      ],
+      "smoke_sockets": [
+        {
+          "name": "SmokeSocket_00",
+          "blender_world": [
+            -0.23999999463558197,
+            -0.2699999511241913,
+            0.8971778750419617
+          ]
+        }
+      ],
+      "sha256": "6359fdbc1e3013908fcf673f0726071180e1b09f77a5193614f2c68c85e3fc10"
+    },
+    {
+      "name": "Barracks_3",
+      "status": "PASS",
+      "triangles": 2966,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        1.2999999900652348
+      ],
+      "flags": [
+        {
+          "name": "FlagCloth_00",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        },
+        {
+          "name": "FlagCloth_01",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        },
+        {
+          "name": "FlagCloth_02",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        }
+      ],
+      "smoke_sockets": [
+        {
+          "name": "SmokeSocket_00",
+          "blender_world": [
+            -0.24026159942150116,
+            -0.2699999213218689,
+            1.062207818031311
+          ]
+        }
+      ],
+      "sha256": "aa8783b5911088cf06e564015efafdb1c8a15373c77d5dc0cf6a66e43f974ef7"
+    },
+    {
+      "name": "Hospital_1",
+      "status": "PASS",
+      "triangles": 1586,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        0.9600000162912785
+      ],
+      "flags": [
+        {
+          "name": "FlagCloth_00",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        }
+      ],
+      "smoke_sockets": [
+        {
+          "name": "SmokeSocket_00",
+          "blender_world": [
+            0.3100000023841858,
+            -0.24999995529651642,
+            0.5895211696624756
+          ]
+        }
+      ],
+      "sha256": "b36c8c90dd86f18932f882433644b321ae35c4de43c2b8f4edb12411b77601d3"
+    },
+    {
+      "name": "Hospital_2",
+      "status": "PASS",
+      "triangles": 1890,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        1.130000032980579
+      ],
+      "flags": [
+        {
+          "name": "FlagCloth_00",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        }
+      ],
+      "smoke_sockets": [
+        {
+          "name": "SmokeSocket_00",
+          "blender_world": [
+            0.3100000023841858,
+            -0.24999995529651642,
+            0.6643030047416687
+          ]
+        }
+      ],
+      "sha256": "6cfa1cf6adabb3bc2a8c77fda1d39ef4bc7362b5fd0e7fbf6fd98cfd09d36f90"
+    },
+    {
+      "name": "Hospital_3",
+      "status": "PASS",
+      "triangles": 2614,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        1.2999999900652348
+      ],
+      "flags": [
+        {
+          "name": "FlagCloth_00",
+          "mask_min": 0.0,
+          "mask_max": 1.0
+        }
+      ],
+      "smoke_sockets": [
+        {
+          "name": "SmokeSocket_00",
+          "blender_world": [
+            0.3100000023841858,
+            -0.24999994039535522,
+            0.7351003885269165
+          ]
+        }
+      ],
+      "sha256": "d7cfb8888704231d63ed0958a9aaa2d19a2126ae249ddd152f87eeaca618366a"
+    },
+    {
+      "name": "CrystalMine_1",
+      "status": "PASS",
+      "triangles": 1044,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        0.8400000115229069
+      ],
+      "flags": [],
+      "smoke_sockets": [],
+      "sha256": "5f2f214ab4959a309c8b679c33faaf04ca88beed15bc6874e8255d260d58d33e"
+    },
+    {
+      "name": "CrystalMine_2",
+      "status": "PASS",
+      "triangles": 1406,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        1.049999926646997
+      ],
+      "flags": [],
+      "smoke_sockets": [],
+      "sha256": "9fb263826d7487e886c60834b90d6b5082c22daf76ad9db41560908f7bb07d6a"
+    },
+    {
+      "name": "CrystalMine_3",
+      "status": "PASS",
+      "triangles": 1598,
+      "materials": 1,
+      "albedo": [
+        1024,
+        1024
+      ],
+      "dimensions_blender_xyz": [
+        1.0,
+        1.0,
+        1.2200000029409424
+      ],
+      "flags": [],
+      "smoke_sockets": [],
+      "sha256": "be59cd2b39863ee69b2a13986fe4088ce70fc132af4d4bbe190b4d81ffc3f6b4"
+    },
+    {
+      "name": "CityWall_1",
+      "status": "PASS",
+      "triangles": 552,
+      "materials": 1,
+      "albedo": [
+        512,
+        512
+      ],
+      "dimensions_blender_xyz": [
+        2.690000057220459,
+        3.1600000858306885,
+        0.5100002289592283
+      ],
+      "flags": [],
+      "smoke_sockets": [],
+      "sha256": "34c38142da1e66bc8ba7e390773aa6cbbb186f9171c27b87a35fb35df3174350"
+    },
+    {
+      "name": "CityWall_2",
+      "status": "PASS",
+      "triangles": 936,
+      "materials": 1,
+      "albedo": [
+        512,
+        512
+      ],
+      "dimensions_blender_xyz": [
+        2.809999942779541,
+        3.1600000858306885,
+        0.8400002718745725
+      ],
+      "flags": [],
+      "smoke_sockets": [],
+      "sha256": "48eb2eeb12f7f143009e3f1a0ab13d0243f867e7a61e4509c599f1b3d7e09c41"
+    },
+    {
+      "name": "CityWall_3",
+      "status": "PASS",
+      "triangles": 1104,
+      "materials": 1,
+      "albedo": [
+        512,
+        512
+      ],
+      "dimensions_blender_xyz": [
+        2.809999942779541,
+        3.1600000858306885,
+        1.1349999905406492
+      ],
+      "flags": [],
+      "smoke_sockets": [],
+      "sha256": "79b4db10a15d724777c06f83e7f6bc34096dbd0777dedd87772d3e0724c544be"
+    }
+  ]
+}

@@ -14,6 +14,7 @@ Shader "AbyssKingdom/Building3D"
         _Phase ("Phase offset", Float) = 0
         _Highlight ("Highlight", Range(0, 1)) = 0
         _Wind ("Wind sway", Float) = 0
+        _Cloth ("Cloth amplitude", Float) = 0
     }
     SubShader
     {
@@ -24,12 +25,21 @@ Shader "AbyssKingdom/Building3D"
 
         sampler2D _MainTex;
         fixed4 _Color, _RuneColor, _WarmColor;
-        float _Phase, _Highlight, _Wind;
+        float _Phase, _Highlight, _Wind, _Cloth;
 
         // 風：用世界座標算（動態合批時頂點已經是世界座標，這樣寫兩種情況都對）。
         // 擺幅和離地高度成正比再加一點，地面附近幾乎不動；相位依位置錯開，整片樹林像被一陣陣風吹過。
         void vert (inout appdata_full v)
         {
+            if (_Cloth > 0)
+            {
+                float4 clothWorld = mul(unity_ObjectToWorld, v.vertex);
+                float weight = v.color.r;
+                float wave = sin(_Time.y * 3.2 + weight * 5.5 + _Phase)
+                           + 0.3 * sin(_Time.y * 5.1 - weight * 8.0 + _Phase);
+                clothWorld.z += wave * weight * weight * _Cloth;
+                v.vertex = mul(unity_WorldToObject, clothWorld);
+            }
             if (_Wind <= 0) return;
             float4 wp = mul(unity_ObjectToWorld, v.vertex);
             float h = max(0, wp.y);

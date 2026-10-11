@@ -478,6 +478,7 @@ namespace AbyssKingdom.Client.UI
         {
             _introPlaying = true;
             Show(_game, false);
+            Show(_toasts, false);
             ClosePage();
             var home = SurfaceView.CityPos(city.Surface.X, city.Surface.Y);
             IntroSequence.Play(gameObject, _root, _world, home, () =>
@@ -488,6 +489,7 @@ namespace AbyssKingdom.Client.UI
                 // 回城內，任務欄閃幾下，提示從第一個任務開始
                 _world.SetMode(WorldScene.Mode.City);
                 Show(_game, true);
+                Show(_toasts, true);
                 _quest.Root.AddToClassList("quest-pulse");
                 _root.schedule.Execute(() => _quest.Root.RemoveFromClassList("quest-pulse")).StartingIn(4500);
                 ShowToast("從左上角的任務開始吧！", false);

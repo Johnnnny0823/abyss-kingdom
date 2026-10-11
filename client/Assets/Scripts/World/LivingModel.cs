@@ -10,7 +10,7 @@ namespace AbyssKingdom.Client.World
     public static class LivingModel
     {
         private static Material _base;
-        private static readonly Dictionary<(Texture, int, float), Material> Mats = new Dictionary<(Texture, int, float), Material>();
+        private static readonly Dictionary<(Texture, int, float, float), Material> Mats = new Dictionary<(Texture, int, float, float), Material>();
 
         /// <summary>
         /// 煙囪頂端的位置（模型座標，底面 1×1）。來自 tools/blender/generate_city3d.py：
@@ -35,16 +35,19 @@ namespace AbyssKingdom.Client.World
                 int phase = phaseSeed & 0xff;
                 foreach (var r in model.GetComponentsInChildren<Renderer>())
                 {
+                    float cloth = r.name.StartsWith("FlagCloth_", System.StringComparison.Ordinal)
+                        ? .018f * Mathf.Abs(model.transform.lossyScale.y) : 0f;
                     var mats = r.sharedMaterials;
                     for (int k = 0; k < mats.Length; k++)
                     {
                         var tex = mats[k] != null ? mats[k].mainTexture : null;
-                        if (!Mats.TryGetValue((tex, phase, wind), out var m))
+                        if (!Mats.TryGetValue((tex, phase, wind, cloth), out var m))
                         {
                             m = new Material(_base) { mainTexture = tex };
                             m.SetFloat("_Phase", phase / 25f);
                             m.SetFloat("_Wind", wind);
-                            Mats[(tex, phase, wind)] = m;
+                            m.SetFloat("_Cloth", cloth);
+                            Mats[(tex, phase, wind, cloth)] = m;
                         }
                         mats[k] = m;
                     }
@@ -53,7 +56,25 @@ namespace AbyssKingdom.Client.World
             }
             else CityView.MakeMatte(model);
 
-            if (Chimneys.TryGetValue(artName, out var spots))
+            bool hasSockets = false;
+            foreach (var socket in model.GetComponentsInChildren<Transform>())
+            {
+                if (!socket.name.StartsWith("SmokeSocket_", System.StringComparison.Ordinal)) continue;
+                hasSockets = true;
+                var parent = model.transform.parent != null ? model.transform.parent : model.transform;
+                var smoke = LivingBuilding.MakeSmoke(parent, parent.InverseTransformPoint(socket.position));
+                if (smoke != null)
+                {
+                    // Keep world-map puffs proportional to the smaller building instance.
+                    float scale = Mathf.Abs(model.transform.lossyScale.y);
+                    var main = smoke.main;
+                    main.startSize = new ParticleSystem.MinMaxCurve(.12f * scale, .19f * scale);
+                    var velocity = smoke.velocityOverLifetime;
+                    velocity.x = new ParticleSystem.MinMaxCurve(.03f * scale, .09f * scale);
+                    velocity.y = new ParticleSystem.MinMaxCurve(.12f * scale, .18f * scale);
+                }
+            }
+            if (!hasSockets && Chimneys.TryGetValue(artName, out var spots))
                 foreach (var p in spots)
                 {
                     // 掛在建築根物件（沒有縮放）上，位置換算成它的座標：煙的大小和 2D 建築的一樣

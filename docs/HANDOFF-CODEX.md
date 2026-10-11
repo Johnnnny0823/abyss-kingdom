@@ -51,4 +51,27 @@
 
 ## 4. 建議使用的 skills
 
+### 2026-10-11 Codex 本輪進度（尚未提交）
+
+- 使用者授權美術四項全做；最新指示為先做不需建模的工作，需 Blender 建模時停下等切換 Astra。
+- 已修正開場通知層未隱藏；新增 opt-in 的本機 Dev 開場回歸檢查。正常播放與跳過後五秒留在城內的檢查皆 PASS。偶發自動出城尚未重現，不算已修復。
+- 使用者已確認圖示畫風；16 張正式道具圖示已完成並覆蓋 `Resources/Art/Items`。原圖與 256×256 透明規格版位於 `art/source/items/samples/` 及 `ready/`；尺寸、留白和檔案雜湊均驗證通過。覆蓋前備份在 `.claude/backups/2026-10-11/item-icons/`。
+- 詳細檔案、證據與下一步見 `docs/art/ART_POLISH_PROGRESS.md`。接著需 Astra 建模：建築煙囪與旗幟細節、三級主城外牆；美術驗收完才開始 S6 提案。
+- 沒有修改遊戲規則、沒有 commit／push。後續提交由使用者或 Claude 處理。
+- 最終 Unity 打包成功，0 errors；完整測試 184 passed、0 failed。實際開場／結束後截圖在 `artifacts/intro-delivery-natural/`。本輪開的 Dev 伺服器與客戶端均已關閉。
+- 圖示替換後再打包成功，0 errors；16/16 客戶端貼圖載入 PASS，背包截圖在 `artifacts/item-icons-game/bag.png`。本輪沒有開始 Blender 建模，等使用者切換 Astra 後再做建築細節與三級外牆。
+
+### 建模接續（以上「等待切換」狀態已完成）
+
+- 使用者已表示「切換了」，完成 21 棟建築細節／分件重建與 3 級大地圖外牆，並接入遊戲。沒有改遊戲規則。
+- 旗布 GPU 飄動、15 個煙口定位炊煙；三級外牆按主堡外觀同步顯示。原本立面徽幟保持固定。
+- 重跑腳本、修改清單、限制與備份見 `tools/blender/BUILDING_POLISH.md`；最新資產驗證清單為 `building_polish_manifest.json`，24 個 FBX 全部 PASS。
+- 最終打包 `artifacts/building-polish-build-final.log`：0 errors；`building-polish-tests.log`：184 passed、0 failed。
+- `artifacts/building-polish-game-final/`：實際城內與大地圖截圖、各三級比較圖、旗布兩時刻截圖；runtime 24/24 PASS，單獨旗布動態 40538 changed pixels PASS。
+- 本輪 Dev 伺服器已關閉、客戶端已退出；沒有 commit／push／部署。等使用者美術驗收，再進行 S6 grill 與設計提案，確認提案後才寫程式。建模工作已完成，後續可由 Sol 接手。
+
 `grill-me`（開工前跟使用者對齊範圍）、`tdd`（改規則時）、`diagnosing-bugs`、`matt-code-review`、`ponytail`（使用者要最簡解時）、`codegraph`（專案已建好 `.codegraph/` 索引）。TypeSafe 插件已安裝，但只能用在非遊戲規則的 AI 判斷，例如審查命名、檢查美術規格。
+
+## 5. 玩法參考（2026-10-11 Claude 補充）
+
+使用者提供的生存經營型 SLG 攻略已整理在 `docs/design/REF_SURVIVAL_SLG.md`。**S6 聯盟提案請一併涵蓋**：聯盟幫助、派援軍駐守盟友城（大使館類功能）、集結容量（指揮部類功能）。

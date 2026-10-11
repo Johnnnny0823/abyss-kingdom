@@ -95,11 +95,13 @@
 - **規格**：FBX，底面 1×1、原點在底部中心、Y 朝上、正面朝 -Z；4,000～5,000 三角形以內、1 個材質、1 張 1024 albedo（不含光照與高光）；檔名同 2D 圖（`Keep_1.fbx`、`Site.fbx`…）。
 - **遊戲裡的順序**：City3D 模型 → 2D 建築圖 → 舊灰盒（`City/`）。有哪棟就換哪棟，其他自動維持 2D。
 - 材質在遊戲裡一律換成 `Shaders/Building3D.shader`（`World/LivingModel.cs` 套用）：只有漫射、沒有高光（Gamma 色彩空間下 Standard 的高光會讓整棟發灰），並依貼圖上的保留色格自動發光——契印 `B8FFF1`、晶簇與玉印 `37BCAE` 青綠呼吸，窗燈與發光菇 `F6B647` 燭光閃爍。**新模型要發光就用這幾個顏色**，其他顏色（例如醫館青綠屋頂 `46A6A0`）不會亮。
-- 炊煙：有煙囪的模型在 `LivingModel.Chimneys` 登記煙囪頂端座標（目前只有伐木場，座標取自 `generate_city3d.py`）。
+- 炊煙：新版以 FBX 的 `SmokeSocket_00` 定位，Keep／Sawmill／Farm／Barracks／Hospital 三級都有煙口；`LivingModel.Chimneys` 僅作舊版模型備案。粒子尺寸隨模型縮放。
 - 全部 25 個（8 種建築 × 3 外觀＋Site）已完成（Codex 批次：`tools/blender/generate_city3d.py`，說明 `tools/blender/CITY3D_BATCH.md`，驗證清單 `city3d_manifest.json`）。
 - 大地圖的主城也用 `City3D/Keep_<外觀>`，依伺服器 `world.cities` 傳來的 `keepLevel` 換外觀（顯示倍率同舊主城）。
 - **換回 2D**：`client/Assets/Scripts/World/ArtSettings.cs` 的 `City3D` 改成 false，或啟動參數加 `-city2d`。
-- 2D 建築圖與 2.5D 動態（符文光、炊煙、旗幟擺動）保留不刪；3D 版有發光與炊煙，還沒有旗幟擺動。
+- 2D 建築圖與 2.5D 動態保留；3D 屋頂／旗桿上的旗布分成 `FlagCloth_*`，vertex color R 為固定邊 0 → 自由端 1，Building3D shader 的 `_Cloth` 控制飄動，旗桿和建築不動。分件仍共用一張 albedo；立面懸掛徽幟維持固定。
+- 大地圖主城外加 `World3D/CityWall_1～3`，依同一外觀級別顯示矮石牆 → 四角守望塔 → 契印城門；內院淨寬 2.16 格，純視覺，不改遊戲佔地或城防數值。
+- 2026-10-11 細節重建改用 `tools/blender/polish_city3d.py`，外牆用 `generate_city_walls.py`；驗證清單為 `building_polish_manifest.json`，操作與分件契約見 `BUILDING_POLISH.md`。舊批次命令仍可用，但會回到未分件的原始版本。
 
 ## 5c. 行軍 3D 角色（`client/Assets/Resources/Models/Units3D/`，2026-10-10 起）
 

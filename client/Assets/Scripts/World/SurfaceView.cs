@@ -471,7 +471,13 @@ namespace AbyssKingdom.Client.World
             var t = root.transform;
             // 新版 3D 主堡（和城內同一個模型，底面 1×1，放大到約 2×2 格佔地 × 顯示倍率）；沒有就用舊的大地圖主城模型
             GameObject keep3D = ArtSettings.City3D ? ModelLibrary.Spawn("City3D/Keep_" + tier, t, Vector3.zero, S * 2 * CityScale) : null;
-            if (keep3D != null) LivingModel.Attach(keep3D, "Keep_" + tier, Hash((int)pos.x * 100, (int)pos.z * 100));
+            if (keep3D != null)
+            {
+                int phase = Hash((int)pos.x * 100, (int)pos.z * 100);
+                LivingModel.Attach(keep3D, "Keep_" + tier, phase);
+                var outerWall = ModelLibrary.Spawn("World3D/CityWall_" + tier, t, Vector3.zero, S * CityScale);
+                if (outerWall != null) LivingModel.Attach(outerWall, "CityWall_" + tier, phase);
+            }
             if (keep3D != null || ModelLibrary.Spawn("World/City", t, Vector3.zero, S * CityScale) != null)
             {
                 var ring = _w.Prim(PrimitiveType.Cylinder, mine ? new Color32(230, 190, 90, 255) : new Color32(190, 70, 60, 255), Vector3.up * 0.002f, new Vector3(0.88f, 0.002f, 0.88f), t);
