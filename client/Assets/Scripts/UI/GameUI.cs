@@ -189,7 +189,12 @@ namespace AbyssKingdom.Client.UI
             var city = G.Predicted();
             bool inGame = G.IsLoggedIn && city != null;
             Show(_login, !inGame);
-            Show(_game, inGame);
+            Show(_game, inGame && !_introPlaying);
+            if (inGame && !_introChecked)
+            {
+                _introChecked = true;
+                if (ShouldPlayIntro(city)) StartIntro(city);
+            }
             _world.SetVisible(inGame);
             SetWorldMode(inGame);
             if (!inGame)
@@ -443,6 +448,38 @@ namespace AbyssKingdom.Client.UI
         }
 
         private QuestPanel _quest;
+        private bool _introChecked, _introPlaying;
+
+        /// <summary>
+        /// 新手開場只給新帳號看一次（還在第一個任務、主堡 1 級、還沒練過兵；看過記在這台電腦）。
+        /// 測試用：啟動參數 -intro 一定播。
+        /// </summary>
+        private bool ShouldPlayIntro(CityState city)
+        {
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-intro") >= 0) return true;
+            if (!city.Surface.Placed || PlayerPrefs.GetInt("intro.seen." + G.PlayerId, 0) == 1) return false;
+            return city.QuestIndex == 0 && city.GetLevel(BuildingType.Keep) == 1 && city.Stats.TroopsTrained == 0;
+        }
+
+        private void StartIntro(CityState city)
+        {
+            _introPlaying = true;
+            Show(_game, false);
+            ClosePage();
+            var home = SurfaceView.CityPos(city.Surface.X, city.Surface.Y);
+            IntroSequence.Play(gameObject, _root, _world, home, () =>
+            {
+                _introPlaying = false;
+                PlayerPrefs.SetInt("intro.seen." + G.PlayerId, 1);
+                PlayerPrefs.Save();
+                // 回城內，任務欄閃幾下，提示從第一個任務開始
+                _world.SetMode(WorldScene.Mode.City);
+                Show(_game, true);
+                _quest.Root.AddToClassList("quest-pulse");
+                _root.schedule.Execute(() => _quest.Root.RemoveFromClassList("quest-pulse")).StartingIn(4500);
+                ShowToast("從左上角的任務開始吧！", false);
+            });
+        }
 
         /// <summary>任務的「前往」：帶玩家到該去的地方（城內選取建築、打開面板、或在大地圖選最近的資源田／營地）。</summary>
         private void GoToQuest(QuestDef q)

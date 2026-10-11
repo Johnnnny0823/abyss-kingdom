@@ -110,6 +110,26 @@ namespace AbyssKingdom.Client.World
             ApplyCamera();
         }
 
+        /// <summary>運鏡中（新手開場）：鏡頭照指定的位置與朝向，玩家的拖曳、縮放、點擊暫停。</summary>
+        public bool Cinematic { get; private set; }
+        private Vector3 _cinePos, _cineFocus;
+        private Quaternion _cineRot;
+
+        /// <summary>設定運鏡鏡頭。cullFocus = 大地圖要以哪裡為中心建造與顯示區塊。</summary>
+        public void SetCinematic(Vector3 pos, Quaternion rot, Vector3 cullFocus)
+        {
+            Cinematic = true;
+            _cinePos = pos;
+            _cineRot = rot;
+            _cineFocus = cullFocus;
+        }
+
+        public void EndCinematic()
+        {
+            Cinematic = false;
+            ApplyCamera();
+        }
+
         public void FocusOn(Mode mode, Vector3 p)
         {
             var v = _views[(int)mode];
@@ -217,6 +237,13 @@ namespace AbyssKingdom.Client.World
         private void Update()
         {
             if (!_visible) return;
+            if (Cinematic)
+            {
+                _cam.transform.SetPositionAndRotation(_cinePos, _cineRot);
+                if (Current == Mode.Surface) { Surface.Cull(_cineFocus, 14f); Surface.BuildStep(); }
+                FaceBillboards();
+                return;
+            }
             var v = _views[(int)Current];
             Vector2 mouse = Input.mousePosition;
             bool overUi = IsPointerOverUi(mouse);
@@ -257,6 +284,11 @@ namespace AbyssKingdom.Client.World
             if (Current == Mode.City) City.Hover(mouse, overUi);
             else { Surface.Cull(v.Focus, v.Dist); Surface.BuildStep(); }
 
+            FaceBillboards();
+        }
+
+        private void FaceBillboards()
+        {
             var rot = _cam.transform.rotation;
             _billboards.RemoveAll(t => t == null);
             // 被區塊剔除（未啟用）的不用轉：大地圖上大部分名牌與部隊圖都在畫面外

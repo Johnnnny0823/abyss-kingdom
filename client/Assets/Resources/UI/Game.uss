@@ -529,3 +529,19 @@
 .quest-fill { height: 6px; border-radius: 3px; background-color: rgb(212, 172, 96); }
 .quest-reward { color: rgb(190, 200, 210); font-size: 11px; margin-top: 4px; white-space: normal; }
 .quest-claim { margin-left: 6px; }
+/* 新手開場：上下黑邊、旁白、跳過 */
+.intro { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.intro-bar { position: absolute; left: 0; right: 0; height: 11%; background-color: rgb(0, 0, 0); }
+.intro-top { top: 0; }
+.intro-bottom { bottom: 0; }
+.intro-line {
+    position: absolute; left: 12%; right: 12%; bottom: 14%;
+    color: rgb(244, 236, 214); font-size: 24px; -unity-text-align: middle-center; white-space: normal;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.95); letter-spacing: 2px;
+}
+.intro-skip {
+    position: absolute; right: 24px; top: 3%;
+    background-color: rgba(0, 0, 0, 0); border-width: 1px; border-color: rgba(244, 236, 214, 0.5);
+    color: rgb(244, 236, 214); font-size: 14px; padding: 4px 14px; border-radius: 4px;
+}
+.quest-pulse { border-color: rgb(255, 224, 140); border-width: 3px; transition-duration: 0.4s; }
