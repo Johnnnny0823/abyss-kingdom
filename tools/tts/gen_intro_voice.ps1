@@ -29,7 +29,7 @@ New-Item -ItemType Directory -Force $out | Out-Null
 $uri = "https://$region.tts.speech.microsoft.com/cognitiveservices/v1"
 $headers = @{
     'Ocp-Apim-Subscription-Key' = $key
-    'X-Microsoft-OutputFormat'  = 'riff-24khz-16bit-mono-pcm'
+    'X-Microsoft-OutputFormat'  = 'audio-24khz-96kbitrate-mono-mp3'
     'User-Agent'                = 'AbyssKingdomTools'
 }
 
@@ -40,9 +40,8 @@ for ($i = 0; $i -lt $lines.Count; $i++) {
   <voice name='$Voice'><prosody pitch='$Pitch' rate='$Rate'>$text</prosody></voice>
 </speak>
 "@
-    $file = Join-Path $out ("line{0}.wav" -f ($i + 1))
+    $file = Join-Path $out ("line{0}.mp3" -f ($i + 1))
     Invoke-WebRequest -Uri $uri -Method Post -Headers $headers -ContentType 'application/ssml+xml; charset=utf-8' `
         -Body ([Text.Encoding]::UTF8.GetBytes($ssml)) -OutFile $file
-    $bytes = (Get-Item $file).Length
-    '{0}  {1:N1} s' -f (Split-Path -Leaf $file), (($bytes - 44) / 48000.0)
+    '{0}  {1:N0} KB' -f (Split-Path -Leaf $file), ((Get-Item $file).Length / 1KB)
 }
