@@ -32,6 +32,7 @@ namespace AbyssKingdom.Shared.City
             {
                 completedTraining = state.Training;
                 state.Troops[completedTraining.Troop] = state.GetTroops(completedTraining.Troop) + completedTraining.Count;
+                state.Stats.TroopsTrained += completedTraining.Count;
                 state.Training = null;
             }
 

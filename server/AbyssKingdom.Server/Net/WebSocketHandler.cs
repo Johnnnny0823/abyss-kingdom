@@ -291,6 +291,11 @@ public sealed class WebSocketHandler
                 await _sessions.DispatchMarchEventsAsync(session, recallEvents, ct);
                 break;
 
+            case MessageTypes.QuestClaim:
+                await RunCityAction(conn, session, reqId, ErrorCodes.QuestRejected, ct, (city, now) =>
+                    Fail(QuestLogic.Claim(city), QuestResult.Ok));
+                break;
+
             case MessageTypes.HeroStarUp:
                 var star = Deserialize<HeroStarUpRequest>(data);
                 if (star == null) { await SendError(conn, reqId, ErrorCodes.BadRequest, "hero required"); break; }

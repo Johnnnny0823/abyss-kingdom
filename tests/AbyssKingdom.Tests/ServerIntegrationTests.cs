@@ -590,6 +590,30 @@ public static class ServerIntegrationTests
     }
 
     [Test]
+    public static async Task Quest_ClaimRejectedUntilDone_ThenRewards()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        await using var c = new TestClient();
+        await c.ConnectAsync(server.WsUri);
+        await c.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:quester" });
+        var start = City(await c.ExpectAsync(MessageTypes.CityState));
+        Assert.Equal(0, start.QuestIndex, "新帳號從第一個任務開始");
+
+        await c.SendAsync(MessageTypes.QuestClaim, null);
+        var err = (await c.ExpectAsync(MessageTypes.Error)).GetProperty("data");
+        Assert.Equal(ErrorCodes.QuestRejected, err.GetProperty("code").GetString());
+        Assert.Equal("NotDone", err.GetProperty("detail").GetString(), "主堡還沒升，不能領");
+
+        await server.Sessions.ModifyCityAsync("dev-quester", city => city.Buildings[BuildingType.Keep] = 2, CancellationToken.None);
+        await c.ExpectAsync(MessageTypes.CityState);
+        await c.SendAsync(MessageTypes.QuestClaim, null);
+        var after = (await FreshCity(c));
+        Assert.Equal(1, after.QuestIndex, "換下一個任務");
+        Assert.True(after.GetResource(ResourceType.Wood) > start.GetResource(ResourceType.Wood), "拿到資源獎勵");
+    }
+
+    [Test]
     public static async Task Camp_Defeated_ListedUntilRespawn()
     {
         await using var server = new TestServer();

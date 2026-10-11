@@ -108,6 +108,7 @@ namespace AbyssKingdom.Shared.Map
             if (won)
             {
                 ev.BattleWon = true;
+                city.Stats.CampsWon++;
                 foreach (var kv in CampConfig.ResourceLoot(camp.Level)) Add(m.Carry, kv.Key, kv.Value);
                 foreach (var kv in CampConfig.ItemLoot(camp.Level, m.Destination)) Add(m.LootItems, kv.Key, kv.Value);
                 ev.Carry = new Dictionary<ResourceType, long>(m.Carry);

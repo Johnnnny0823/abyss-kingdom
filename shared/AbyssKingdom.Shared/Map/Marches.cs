@@ -333,7 +333,7 @@ namespace AbyssKingdom.Shared.Map
             if (march.Returning) return MarchResult.Ok;
             // 守方可能已經扣兵：攻方的結果還沒套用前不能撤，否則攻方就免除了戰損
             if (march.Sieging) return MarchResult.Sieging;
-            if (march.Gathering) StopGathering(march, nowMs, fields, owner);
+            if (march.Gathering && StopGathering(march, nowMs, fields, owner) > 0) city.Stats.GatherTrips++;
             TurnBack(city, march, nowMs);
             return MarchResult.Ok;
         }
@@ -455,7 +455,7 @@ namespace AbyssKingdom.Shared.Map
                 if (m.Gathering && fields != null && nowMs >= m.GatherEndMs)
                 {
                     long end = m.GatherEndMs;
-                    StopGathering(m, end, fields, owner);
+                    if (StopGathering(m, end, fields, owner) > 0) city.Stats.GatherTrips++;
                     TurnBack(city, m, end);
                     events.Add(new MarchEvent { MarchId = m.Id, Hero = m.Hero, Tile = m.Destination, GatherDone = true, Carry = new Dictionary<ResourceType, long>(m.Carry) });
                 }

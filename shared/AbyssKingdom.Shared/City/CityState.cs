@@ -66,6 +66,12 @@ namespace AbyssKingdom.Shared.City
         /// <summary>舊存檔的深淵狀態（已停用）；登入時把行軍中的部隊還給兵營後清成 null。</summary>
         public LegacyMapState Map { get; set; }
 
+        /// <summary>新手任務線：目前做到第幾個（索引，從 0 開始；等於任務數 = 這一章都領完）。</summary>
+        public int QuestIndex { get; set; }
+
+        /// <summary>任務條件用的累計數字（訓練、採集、擊敗營地）。</summary>
+        public QuestStats Stats { get; set; } = new QuestStats();
+
         /// <summary>遠征進度與掛機收益。</summary>
         public ExpeditionState Expedition { get; set; } = new ExpeditionState();
 

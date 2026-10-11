@@ -115,6 +115,23 @@ namespace AbyssKingdom.Client.UI
         };
 
         /// <summary>「根材 600、層岩 200」這樣的文字；沒有東西回傳空字串。</summary>
+        /// <summary>新手任務的說明文字（依條件組出來）。</summary>
+        public static string QuestText(QuestDef q)
+        {
+            switch (q.Goal)
+            {
+                case QuestGoal.BuildingLevel: return q.Target == 1 ? $"建造{Buildings[q.Building]}" : $"將{Buildings[q.Building]}升到 {q.Target} 級";
+                case QuestGoal.TroopsTrained: return $"累計訓練 {q.Target:N0} 名士兵";
+                case QuestGoal.GatherTrips: return q.Target == 1 ? "派部隊到資源田採集一次" : $"累計採集 {q.Target} 次";
+                case QuestGoal.CampsWon: return q.Target == 1 ? "擊敗一座魔物營地" : $"累計擊敗 {q.Target} 座魔物營地";
+                case QuestGoal.HeroLevel: return $"任一主將升到 {q.Target} 級";
+                case QuestGoal.ExpeditionCleared: return $"遠征通關第 {q.Target} 關";
+                case QuestGoal.Power: return $"總戰力達到 {q.Target:N0}";
+                case QuestGoal.ProducersLevel: return $"四座生產建築都升到 {q.Target} 級";
+                default: return "";
+            }
+        }
+
         public static string CarryText(Dictionary<ResourceType, long> carry)
         {
             if (carry == null) return "";
@@ -343,6 +360,8 @@ namespace AbyssKingdom.Client.UI
                 case "TooManyMarches": return "同時最多 3 支行軍";
                 case "AlreadyThere": return "已經在這裡了";
                 case "Sieging": return "正在攻城，戰鬥結算完才能召回";
+                case "NotDone": return "任務還沒完成";
+                case "NoQuest": return "這一章的任務都完成了";
                 case "NotReady": return "修練值還沒滿，還不能挑戰印證試煉";
                 case "AlreadyMastered": return "這道印已經刻成";
                 case "StarsRequired": return "要先把對應的星色升滿，才能挑戰下一道印";

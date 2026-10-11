@@ -156,6 +156,9 @@ namespace AbyssKingdom.Client.Game
 
         public void RequestCities() => _conn.Send(MessageTypes.WorldCities);
 
+        /// <summary>領取目前新手任務的獎勵。</summary>
+        public void ClaimQuest() => _conn.Send(MessageTypes.QuestClaim);
+
         /// <summary>目前被擊敗、還沒重生的怪物營地（大地圖讓營地前的怪物消失）。</summary>
         public List<DefeatedCamp> DefeatedCamps { get; private set; } = new List<DefeatedCamp>();
 

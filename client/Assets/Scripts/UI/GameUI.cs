@@ -272,6 +272,15 @@ namespace AbyssKingdom.Client.UI
             // 左側：隊列；右側：功能按鈕
             var hud = Pass(El("hud"));
             var left = Pass(El("hud-left"));
+            _quest = new QuestPanel();
+            _quest.GoRequested += GoToQuest;
+            _quest.ClaimRequested += () =>
+            {
+                var q = QuestLogic.Current(G.Predicted());
+                G.ClaimQuest();
+                if (q != null) ShowToast("任務完成！" + string.Join("、", new[] { DisplayNames.CarryText(q.Resources), DisplayNames.ItemsText(q.Items) }.Where(s => !string.IsNullOrEmpty(s))), false);
+            };
+            left.Add(_quest.Root);
             var buildPanel = El("panel", "hud-panel");
             buildPanel.Add(Lbl("建築隊列", "panel-title"));
             _buildQueue = new QueueView(QueueType.Building, OpenSpeedupDialog);
@@ -433,6 +442,55 @@ namespace AbyssKingdom.Client.UI
             return quad;
         }
 
+        private QuestPanel _quest;
+
+        /// <summary>任務的「前往」：帶玩家到該去的地方（城內選取建築、打開面板、或在大地圖選最近的資源田／營地）。</summary>
+        private void GoToQuest(QuestDef q)
+        {
+            var city = G.Predicted();
+            if (city == null) return;
+            switch (q.Goal)
+            {
+                case QuestGoal.BuildingLevel:
+                case QuestGoal.ProducersLevel:
+                    if (_world.Current != WorldScene.Mode.City) ToggleHome();
+                    ClosePage();
+                    // 四座生產建築：選最低的那一座
+                    _selBuilding = q.Goal == QuestGoal.BuildingLevel ? q.Building
+                        : new[] { BuildingType.Sawmill, BuildingType.Quarry, BuildingType.Farm, BuildingType.CrystalMine }.OrderBy(b => city.GetLevel(b)).First();
+                    break;
+                case QuestGoal.TroopsTrained:
+                    OpenPage(PageBarracks);
+                    break;
+                case QuestGoal.HeroLevel:
+                    OpenPage(PageHeroes);
+                    break;
+                case QuestGoal.ExpeditionCleared:
+                    OpenPage(PageExpedition);
+                    break;
+                case QuestGoal.GatherTrips:
+                case QuestGoal.CampsWon:
+                {
+                    if (!city.Surface.Placed) break;
+                    if (_world.Current != WorldScene.Mode.Surface) ToggleHome();
+                    ClosePage();
+                    var (hx, hy) = SurfaceLogic.CityCenter(city.Surface);
+                    var type = q.Goal == QuestGoal.GatherTrips ? FeatureType.ResourceField : FeatureType.MonsterCamp;
+                    var f = SurfaceLogic.Features()
+                        .Where(x => x.Type == type && SurfaceLogic.Zone(x.X, x.Y) == SurfaceLogic.Zone(hx, hy) && (type != FeatureType.MonsterCamp || x.Level == 1))
+                        .OrderBy(x => SurfaceLogic.Dist2(hx, hy, x.X, x.Y)).FirstOrDefault();
+                    if (f == null) break;
+                    _continent.Select(f.X, f.Y);
+                    _continent.FocusTile(f.X, f.Y);
+                    ShowToast(type == FeatureType.ResourceField ? "選好最近的資源田了，按「出征」派部隊去採集" : "選好最近的魔物營地了，按「出征」派部隊去打", false);
+                    break;
+                }
+                case QuestGoal.Power:
+                    ShowToast("升級建築、訓練部隊、培養主將都會提高總戰力", false);
+                    break;
+            }
+        }
+
         private void ToggleHome()
         {
             bool toSurface = _world.Current == WorldScene.Mode.City;
@@ -515,6 +573,7 @@ namespace AbyssKingdom.Client.UI
                 _continent.Refresh(city, now);
             }
 
+            _quest.Refresh(city);
             _buildQueue.Refresh(city, now);
             _hudTrainQueue.Refresh(city, now);
             _hudHealQueue.Refresh(city, now);

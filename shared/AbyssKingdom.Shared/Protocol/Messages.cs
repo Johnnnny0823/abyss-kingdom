@@ -37,6 +37,8 @@ namespace AbyssKingdom.Shared.Protocol
         public const string WorldCamps = "world.camps";
         public const string CityAttacked = "city.attacked";
         public const string HealingCompleted = "city.healingCompleted";
+        /// <summary>領取目前新手任務的獎勵（沒有資料；條件由伺服器檢查）。</summary>
+        public const string QuestClaim = "quest.claim";
         public const string Ping = "ping";
 
         // 伺服器 → 客戶端
@@ -69,6 +71,7 @@ namespace AbyssKingdom.Shared.Protocol
         public const string MapRejected = "map_rejected";
         public const string MoveRejected = "move_rejected";
         public const string HealRejected = "heal_rejected";
+        public const string QuestRejected = "quest_rejected";
     }
 
     public class LoginRequest
