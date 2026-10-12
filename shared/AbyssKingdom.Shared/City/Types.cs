@@ -31,6 +31,7 @@ namespace AbyssKingdom.Shared.City
         KeepLevelTooLow = 3,
         NotEnoughResources = 4,
         UnknownBuilding = 5,
+        KeepPrerequisiteMissing = 6,
     }
 
     /// <summary>

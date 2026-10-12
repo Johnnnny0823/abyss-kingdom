@@ -355,7 +355,7 @@ namespace AbyssKingdom.Client.UI
             _buildingSel.Add(selRow);
             selHost.Add(_buildingSel);
             game.Add(selHost);
-            foreach (var b in CityConfig.AllBuildings) _cards[b] = new BuildingCard(b);
+            foreach (var b in CityConfig.AllBuildings) _cards[b] = new BuildingCard(b, FocusBuilding);
 
             _world.City.BuildingClicked += t => _selBuilding = (int)t < 0 ? (BuildingType?)null : t;
             _world.City.MoveRequested += (t, x, y) => G.MoveBuilding(t, x, y);
@@ -718,6 +718,14 @@ namespace AbyssKingdom.Client.UI
             if (_overviewModal != null && _overviewModal.panel != null) _overview.Refresh(city, G.Cities, now, _continent.Selected, SurfaceViewQuad(), G.TerritoryFlags, G.Alliance?.MyAllianceId);
         }
 
+        private void FocusBuilding(BuildingType type)
+        {
+            _world.City.CancelMove();
+            _selBuilding = type;
+            _world.SetMode(WorldScene.Mode.City);
+            _world.FocusOn(WorldScene.Mode.City, _world.City.PositionOf(type));
+        }
+
         private void RefreshItems(CityState city)
         {
             var owned = ItemConfig.AllItems.Where(i => city.GetItemCount(i) > 0).ToList();
@@ -847,11 +855,21 @@ namespace AbyssKingdom.Client.UI
             private readonly Label _level, _desc, _time;
             private readonly CostRow _cost;
             private readonly Button _button;
+            private readonly VisualElement _prerequisites;
+            private readonly Action<BuildingType> _focusBuilding;
+            private readonly List<(BuildingType building, int level, Button button)> _requirements = new List<(BuildingType, int, Button)>();
+            private int _prerequisiteTarget = -1;
 
-            public BuildingCard(BuildingType type)
+            public BuildingCard(BuildingType type, Action<BuildingType> focusBuilding)
             {
                 _type = type;
+                _focusBuilding = focusBuilding;
                 Root = El("building-card");
+                if (type == BuildingType.Keep)
+                {
+                    Root.style.height = StyleKeyword.Auto;
+                    Root.style.minHeight = 162;
+                }
                 var head = El("row");
                 head.Add(Lbl(DisplayNames.Buildings[type], "building-name"));
                 _level = Lbl("", "level-badge");
@@ -861,6 +879,10 @@ namespace AbyssKingdom.Client.UI
                 Root.Add(_desc);
                 _cost = new CostRow();
                 Root.Add(_cost.Root);
+                _prerequisites = El();
+                _prerequisites.style.flexShrink = 0;
+                _prerequisites.style.marginBottom = 8;
+                Root.Add(_prerequisites);
                 Root.Add(El("spacer"));
                 var footer = El("building-footer");
                 _time = Lbl("", "muted", "grow");
@@ -883,6 +905,31 @@ namespace AbyssKingdom.Client.UI
                 Root.EnableInClassList("upgrading", city.Upgrade != null && city.Upgrade.Building == _type);
 
                 bool maxed = level >= CityConfig.MaxLevel;
+                if (_type == BuildingType.Keep)
+                {
+                    int target = maxed ? 0 : level + 1;
+                    if (_prerequisiteTarget != target)
+                    {
+                        _prerequisiteTarget = target;
+                        _prerequisites.Clear(); _requirements.Clear();
+                        var requirements = CityConfig.KeepPrerequisites(target);
+                        if (requirements.Count > 0) _prerequisites.Add(Lbl(DisplayNames.KeepPrerequisiteHeading(target), "muted"));
+                        foreach (var (building, required) in requirements)
+                        {
+                            var captured = building;
+                            var button = Btn("", () => _focusBuilding(captured), "btn-small");
+                            button.tooltip = DisplayNames.Buildings[building] + "：" + DisplayNames.BuildingDescriptions[building];
+                            _prerequisites.Add(button);
+                            _requirements.Add((building, required, button));
+                        }
+                    }
+                    foreach (var requirement in _requirements)
+                    {
+                        int current = city.GetLevel(requirement.building);
+                        requirement.button.text = DisplayNames.KeepPrerequisiteLine(requirement.building, requirement.level, current);
+                        requirement.button.style.color = current < requirement.level ? new Color(.95f, .35f, .3f) : new Color(.57f, .84f, 1f);
+                    }
+                }
                 Show(_cost.Root, !maxed);
                 if (!maxed)
                 {

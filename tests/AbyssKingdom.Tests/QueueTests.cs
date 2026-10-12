@@ -14,6 +14,8 @@ public static class QueueTests
         var c = CityState.CreateNew(T0);
         c.Buildings[BuildingType.Keep] = 5;
         c.Buildings[BuildingType.Barracks] = 5;
+        c.Buildings[BuildingType.Quarry] = 5;
+        c.Buildings[BuildingType.Hospital] = 5;
         foreach (var r in CityConfig.AllResources) c.Resources[r] = Rich;
         return c;
     }

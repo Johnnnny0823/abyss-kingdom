@@ -11,6 +11,24 @@ namespace AbyssKingdom.Shared.City
     {
         public const int MaxLevel = 10;
 
+        private static readonly IReadOnlyList<(BuildingType building, int level)> NoKeepPrerequisites =
+            Array.AsReadOnly(Array.Empty<(BuildingType, int)>());
+        private static readonly Dictionary<int, IReadOnlyList<(BuildingType building, int level)>> KeepRequirements =
+            new Dictionary<int, IReadOnlyList<(BuildingType, int)>>
+            {
+                [3] = Array.AsReadOnly(new[] { (BuildingType.Barracks, 1), (BuildingType.Warehouse, 1) }),
+                [4] = Array.AsReadOnly(new[] { (BuildingType.Sawmill, 3), (BuildingType.Farm, 3) }),
+                [5] = Array.AsReadOnly(new[] { (BuildingType.Warehouse, 4), (BuildingType.Barracks, 4) }),
+                [6] = Array.AsReadOnly(new[] { (BuildingType.Quarry, 5), (BuildingType.Hospital, 5) }),
+                [7] = Array.AsReadOnly(new[] { (BuildingType.CrystalMine, 6), (BuildingType.Barracks, 6) }),
+                [8] = Array.AsReadOnly(new[] { (BuildingType.Warehouse, 7), (BuildingType.Farm, 7) }),
+                [9] = Array.AsReadOnly(new[] { (BuildingType.Hospital, 8), (BuildingType.Sawmill, 8) }),
+                [10] = Array.AsReadOnly(new[] { (BuildingType.Barracks, 9), (BuildingType.Warehouse, 9) }),
+            };
+
+        public static IReadOnlyList<(BuildingType building, int level)> KeepPrerequisites(int targetLevel) =>
+            KeepRequirements.TryGetValue(targetLevel, out var requirements) ? requirements : NoKeepPrerequisites;
+
         /// <summary>新帳號的初始資源。</summary>
         public const long StartingResource = 8000;
 

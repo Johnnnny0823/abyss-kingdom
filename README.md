@@ -117,4 +117,4 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | ← | `city.attacked` | `{ attackerName, defenderWon, wounded, dead, plundered }`（你的主城被攻打，伺服器主動推播） |
 | ← | `world.cities` | `{ cities: [{ x, y, name, power, mine, allied, shielded, keepLevel }] }`（`allied` 由伺服器依盟籍判定；自己／同盟淺藍，非同盟紅色，不公開帳號 ID） |
 | ← | `world.camps` | `{ camps: [{ x, y, backAt }] }`（`backAt` = 重生時間，伺服器 Unix 毫秒） |
-| ← | `error` | `{ code, detail }` |
+| ← | `error` | `{ code, detail }`（`city.upgrade` 前置不足：`detail = KeepPrerequisiteMissing`，共用 `UpgradeResult` 附加值 6；不扣資源、不新增升級隊列） |

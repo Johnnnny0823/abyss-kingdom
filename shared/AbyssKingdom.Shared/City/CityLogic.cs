@@ -97,6 +97,10 @@ namespace AbyssKingdom.Shared.City
             int target = current + 1;
             if (building != BuildingType.Keep && target > state.GetLevel(BuildingType.Keep))
                 return UpgradeResult.KeepLevelTooLow;
+            if (building == BuildingType.Keep)
+                foreach (var prerequisite in CityConfig.KeepPrerequisites(target))
+                    if (state.GetLevel(prerequisite.building) < prerequisite.level)
+                        return UpgradeResult.KeepPrerequisiteMissing;
             foreach (var r in CityConfig.AllResources)
             {
                 if (state.GetResource(r) < CityConfig.UpgradeCost(building, target, r))

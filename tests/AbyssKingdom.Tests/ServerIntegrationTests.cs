@@ -23,6 +23,28 @@ public static class ServerIntegrationTests
 {
     const long T0 = 1_700_000_000_000;
 
+    [Test]
+    public static async Task KeepUpgrade_MissingPrerequisiteRejectsClientIntentWithoutDebit()
+    {
+        await using var server = new TestServer(); await server.StartAsync();
+        await using var client = new TestClient(); await client.ConnectAsync(server.WsUri);
+        await client.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:keep-prereq-test" });
+        await client.ExpectAsync(MessageTypes.CityState);
+        await server.Sessions.ModifyCityAsync("dev-keep-prereq-test", c =>
+        {
+            c.Buildings[BuildingType.Keep] = 2; c.Buildings[BuildingType.Barracks] = 1;
+            c.Buildings[BuildingType.Warehouse] = 0;
+        }, CancellationToken.None, saveNow: true);
+        var before = await FreshCity(client);
+        int req = await client.SendAsync(MessageTypes.CityUpgrade, new UpgradeRequest { Building = BuildingType.Keep });
+        var error = await client.ExpectAsync(MessageTypes.Error);
+        Assert.Equal(req, error.GetProperty("reqId").GetInt32());
+        Assert.Equal("KeepPrerequisiteMissing", error.GetProperty("data").GetProperty("detail").GetString());
+        var after = await FreshCity(client);
+        Assert.Equal(2, after.GetLevel(BuildingType.Keep)); Assert.True(after.Upgrade == null, "No rejected upgrade queue");
+        foreach (var r in CityConfig.AllResources) Assert.Equal(before.GetResource(r), after.GetResource(r));
+    }
+
     sealed class TestServer : IAsyncDisposable
     {
         public WebApplication App { get; }

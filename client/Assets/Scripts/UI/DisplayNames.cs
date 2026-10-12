@@ -415,6 +415,7 @@ namespace AbyssKingdom.Client.UI
                 case "NotEnoughResources": return "資源不足";
                 case "QueueBusy": return "隊列忙碌中";
                 case "KeepLevelTooLow": return "需要先升級主堡";
+                case "KeepPrerequisiteMissing": return "主堡升級前置未達成，請先升級指定建築";
                 case "AlreadyMaxLevel": return "已達最高等級";
                 case "BarracksRequired": return "需要先建造兵營";
                 case "ExceedsBatchLimit": return "超過單批訓練上限";
@@ -511,6 +512,7 @@ namespace AbyssKingdom.Client.UI
                 case UpgradeResult.AlreadyMaxLevel: return "已滿級";
                 case UpgradeResult.QueueBusy: return "隊列忙碌";
                 case UpgradeResult.KeepLevelTooLow: return "需升級主堡";
+                case UpgradeResult.KeepPrerequisiteMissing: return "前置建築未達成";
                 case UpgradeResult.NotEnoughResources: return "資源不足";
                 default: return "無法升級";
             }
@@ -519,6 +521,10 @@ namespace AbyssKingdom.Client.UI
         public const string WorldFriendlyLegend = "● 自己／同盟（淺藍）";
         public const string WorldOtherLegend = "● 非同盟（紅）";
         public const string AlliedCityDescription = "同聯盟的主城，可以從聯盟頁派援軍協防，不能互相攻城。";
+
+        public static string KeepPrerequisiteHeading(int target) => $"主堡 Lv.{target} 前置（點擊前往）";
+        public static string KeepPrerequisiteLine(BuildingType building, int required, int current) =>
+            $"{(current >= required ? "✓" : "未達成")} {Buildings[building]} Lv.{required}（目前 Lv.{current}）";
 
         public static string Duration(long ms)
         {

@@ -31,6 +31,7 @@ var starved = new int[buckets];
 var produced = new long[buckets];
 var gathered = new long[buckets];
 var log = new List<string>();
+int keepBlockedSeconds = 0;
 
 long ResourceSum() => CityConfig.AllResources.Sum(r => city.GetResource(r));
 
@@ -55,6 +56,7 @@ for (long s = 0; s < Minutes * 60; s++)
     // 1. 建築
     if (city.Upgrade == null)
     {
+        if (CityLogic.CanUpgrade(city, BuildingType.Keep) == UpgradeResult.KeepPrerequisiteMissing) keepBlockedSeconds++;
         bool started = false;
         foreach (var t in order.OrderBy(t => t == BuildingType.Barracks && city.GetLevel(t) == 0 ? -1 : city.GetLevel(t)))
         {
@@ -113,6 +115,9 @@ for (int i = 0; i < buckets; i++)
     sb.AppendLine($"| {i * Bucket:00}–{(i + 1) * Bucket:00} 分 | {actions[i]} | {freeTaps[i]} | {starved[i]} | {produced[i]:N0} | {gathered[i]:N0} |");
 sb.AppendLine();
 sb.AppendLine("30 分鐘後的建築等級：" + string.Join("、", CityConfig.AllBuildings.Select(t => $"{t} {city.GetLevel(t)}")));
+sb.AppendLine($"總操作：{actions.Sum()}；主堡前置未達成觀測秒數：{keepBlockedSeconds}（不等於建築隊列空等，仍可升級其他建築）。");
+sb.AppendLine("下一級主堡前置：" + string.Join("、", CityConfig.KeepPrerequisites(city.GetLevel(BuildingType.Keep) + 1)
+    .Select(p => $"{p.building} {p.level}（目前 {city.GetLevel(p.building)}）")));
 sb.AppendLine();
 sb.AppendLine($"兵力：磐盾衛 {city.GetTroops(TroopType.Shield) + trips.Count * MarchSize:N0}（含在外採集的）；資源：" +
     string.Join("、", CityConfig.AllResources.Select(r => $"{r} {city.GetResource(r):N0}")));
