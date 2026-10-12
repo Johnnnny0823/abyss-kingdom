@@ -359,6 +359,7 @@ namespace AbyssKingdom.Client.UI
 
             _world.City.BuildingClicked += t => _selBuilding = (int)t < 0 ? (BuildingType?)null : t;
             _world.City.MoveRequested += (t, x, y) => G.MoveBuilding(t, x, y);
+            _world.City.FrontierClicked += OpenFrontierInfo;
 
             // 右下角：回城／出城
             _homeBtn = Btn("", ToggleHome, "home-btn");
@@ -476,6 +477,43 @@ namespace AbyssKingdom.Client.UI
                 box.Add(Lbl($"被掠奪時保護：{PvpConfig.Protected(warehouse):N0}", "res-info-stat"));
             }
             box.Add(Lbl("取得方式：城內生產建築、大地圖資源田採集、擊敗怪物營地、任務獎勵。倉庫滿了就停止生產；採集與戰利品帶回城不受上限限制。", "muted", "res-info-desc"));
+            overlay = OpenModal(box);
+        }
+
+        /// <summary>點城內核心區外：懸崖、擴張區的霧或荒地，說明是什麼、什麼時候開放。</summary>
+        private void OpenFrontierInfo(int x, int y)
+        {
+            var zone = CityZones.ZoneAt(x, y);
+            string title, desc, status;
+            if (y < 0)
+            {
+                title = "深淵崖邊";
+                desc = "主城北側往下就是深淵。霧從崖下升起，蓋住了主城外圍。";
+                status = "懸崖，不能建造。";
+            }
+            else if (zone == null)
+            {
+                title = "深淵之霧";
+                desc = "霧後還有沒開拓的荒地，主堡升級後會逐步驅散。";
+                status = "之後的版本開放。";
+            }
+            else
+            {
+                int keep = G.Predicted()?.GetLevel(BuildingType.Keep) ?? 0;
+                title = DisplayNames.CityZones[zone.Id];
+                desc = DisplayNames.CityZoneDescriptions[zone.Id];
+                status = CityZones.IsOpen(zone, keep) ? "已開放。"
+                    : !zone.FeatureReady ? $"需要主堡 Lv.{zone.MinKeepLevel}（功能開發中，尚未開放）。"
+                    : $"需要主堡 Lv.{zone.MinKeepLevel}（目前 Lv.{keep}）。";
+            }
+            VisualElement overlay = null;
+            var box = El("dialog", "res-info");
+            var head = El("row");
+            head.Add(Lbl(title, "panel-title", "grow", "res-info-name"));
+            head.Add(Btn("關閉", () => overlay?.RemoveFromHierarchy(), "btn-small"));
+            box.Add(head);
+            box.Add(Lbl(desc, "res-info-desc"));
+            box.Add(Lbl(status, "res-info-stat"));
             overlay = OpenModal(box);
         }
 

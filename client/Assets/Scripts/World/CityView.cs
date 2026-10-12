@@ -44,7 +44,11 @@ namespace AbyssKingdom.Client.World
         private BuildingType? _selected;
         private Cell _hoverCell;
 
-        public Vector2 Bounds => new Vector2(CityLayout.GridSize * CellSize / 2f, CityLayout.GridSize * CellSize / 2f);
+        /// <summary>點到核心區外（霧、懸崖）：參數是格子座標，可能是負的。</summary>
+        public event Action<int, int> FrontierClicked;
+
+        /// <summary>鏡頭可以移動的範圍：核心區再往外一些，看得到擴張區的霧和北側懸崖。</summary>
+        public Vector2 Bounds => new Vector2(CityLayout.GridSize * CellSize / 2f + 5f, CityLayout.GridSize * CellSize / 2f + 2f);
 
         public CityView(WorldScene w)
         {
@@ -52,27 +56,8 @@ namespace AbyssKingdom.Client.World
             Root = w.Group("City", w.transform, Vector3.zero);
             float size = CityLayout.GridSize * CellSize;
 
-            // 城外草地、城內地面、城牆
-            var meadow = w.Prim(PrimitiveType.Cube, Color.white, new Vector3(0, -0.03f, 0), new Vector3(size + 14, 0.02f, size + 14), Root);
-            meadow.GetComponent<Renderer>().sharedMaterial = GroundTextures.Material(w.BaseMaterial, GroundTextures.Style.Meadow, (size + 14) / 5f);
-            var yard = w.Prim(PrimitiveType.Cube, Color.white, new Vector3(0, -0.01f, 0), new Vector3(size, 0.02f, size), Root);
-            yard.GetComponent<Renderer>().sharedMaterial = GroundTextures.Material(w.BaseMaterial, GroundTextures.Style.Courtyard, size / 4f);
-            var wall = new Color32(130, 120, 104, 255);
-            for (int side = 0; side < 4; side++)
-            {
-                bool horizontal = side < 2;
-                float off = (side % 2 == 0 ? -1 : 1) * (size / 2f + 0.15f);
-                var pos = horizontal ? new Vector3(0, 0.2f, off) : new Vector3(off, 0.2f, 0);
-                var scale = horizontal ? new Vector3(size + 0.6f, 0.4f, 0.3f) : new Vector3(0.3f, 0.4f, size + 0.6f);
-                w.Prim(PrimitiveType.Cube, wall, pos, scale, Root);
-            }
-            for (int i = 0; i < 4; i++)
-            {
-                var c = new Vector3((i % 2 == 0 ? -1 : 1) * (size / 2f + 0.15f), 0.35f, (i / 2 == 0 ? -1 : 1) * (size / 2f + 0.15f));
-                w.Prim(PrimitiveType.Cylinder, wall, c, new Vector3(0.6f, 0.35f, 0.6f), Root);
-            }
-            // 城門（南側）
-            w.Prim(PrimitiveType.Cube, new Color32(90, 70, 50, 255), new Vector3(0, 0.2f, -(size / 2f + 0.15f)), new Vector3(1.2f, 0.42f, 0.34f), Root);
+            // 地面、北側深淵懸崖、外圍的霧（取代原本的方形城牆）
+            CityFrontier.Build(w, Root);
 
             // 格線（只在移動建築時顯示）
             _gridLines = w.Group("Grid", Root, Vector3.zero).gameObject;
@@ -398,6 +383,9 @@ namespace AbyssKingdom.Client.World
                 }
             }
             BuildingClicked?.Invoke((BuildingType)(-1)); // 點空地：取消選取
+            float half2 = CityLayout.GridSize / 2f;
+            int cx = Mathf.FloorToInt(hit.x / CellSize + half2), cy = Mathf.FloorToInt(-hit.z / CellSize + half2);
+            if (cx < 0 || cy < 0 || cx >= CityLayout.GridSize || cy >= CityLayout.GridSize) FrontierClicked?.Invoke(cx, cy);
         }
     }
 }

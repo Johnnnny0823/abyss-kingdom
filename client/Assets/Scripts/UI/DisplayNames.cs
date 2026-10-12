@@ -59,6 +59,19 @@ namespace AbyssKingdom.Client.UI
             { BuildingType.Hospital, "醫館" },
         };
 
+        /// <summary>城內擴張區（GDD 5.9「城內區域擴張」）。</summary>
+        public static readonly Dictionary<CityZoneId, string> CityZones = new Dictionary<CityZoneId, string>
+        {
+            { CityZoneId.Housing, "民居區" },
+            { CityZoneId.Research, "研究區" },
+        };
+
+        public static readonly Dictionary<CityZoneId, string> CityZoneDescriptions = new Dictionary<CityZoneId, string>
+        {
+            { CityZoneId.Housing, "探窟者居住的地方。蓋好民居，居民才能入城，被安排到各建築裡工作。" },
+            { CityZoneId.Research, "研究所蓋在這裡，研究發展、經濟與戰鬥的長期加成。" },
+        };
+
         public static readonly Dictionary<BuildingType, string> BuildingDescriptions = new Dictionary<BuildingType, string>
         {
             { BuildingType.Keep, "裂口邊的要塞核心。其他建築等級不可超過主堡。" },
