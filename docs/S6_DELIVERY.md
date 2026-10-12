@@ -1,10 +1,10 @@
 # S6 聯盟交付與驗證（2026-10-12）
 
-本輪完成本機 S6 範圍，尚未提交或部署。使用者與 Claude 負責最後驗收與提交；不寫入 `.git`。本文件取代 HANDOFF-S6-1～5 的過程狀態，正式玩法細則見 `design/S6_ALLIANCE.md`。
+本輪完成本機 S6 範圍，尚未提交或部署。使用者與 Claude 負責最後驗收與提交；不寫入 `.git`。本文件取代已刪除的 HANDOFF-S6-1～5 過程紀錄，正式玩法細則見 `design/S6_ALLIANCE.md`。
 
 ## 已實作功能
 
-1. **盟籍與權限**：創盟、搜尋／加入、申請與審核、退盟與踢人、三階權限、幹部、盟主轉讓、解散、公告。創盟主堡三級、根材／層岩各五千；加入主堡二級；上限三十人、四位幹部，離盟冷卻二十四小時。同盟不能互相攻城。
+1. **盟籍與權限**：創盟、搜尋／加入、申請與審核、退盟與踢人、三階權限、幹部、盟主轉讓、解散、公告。創盟主堡三級、根材／層岩各五千；加入主堡二級；上限四十人（2026-10-12 由三十人調高）、四位幹部，離盟冷卻二十四小時。同盟不能互相攻城。
 2. **聊天與幫助**：聯盟聊天、歷史與重連補查、輸入限制；建築升級與治療隊列的幫助請求、同一人一次、重試防重複、失效請求清理。可被幫助次數為 `min(10, 2 + 主堡等級)`；每次縮短原工期 1%（至少一秒、最多六十秒），合計不超過原工期 20%。
 3. **援軍城防**：一支援軍駐守盟友，每人一位主將，可混合全部三種兵。雙方主堡三級解鎖，派遣上限 `100 × min(派出方主堡等級, 接收方主堡等級)`，佔用實際部隊、主將及行軍位；召回、傷亡歸屬、返城、攻城凍結快照及斷線／重啟復原。最多七支防守戰鬥小隊；不重複主將加成。
 4. **盟旗領地**：三個槽位，各根材／層岩一萬、二萬、三萬，五分鐘建成；同區四向可通行半徑十二格，領地連接、跨盟不得重疊。撤旗不退款、不拆斷連接、槽位冷卻二十四小時；不阻擋定居／行軍。領地採集速度 +10%、城防防禦 +5%，皆快照且不疊加；旗幟預覽、建造／冷卻及費用確認介面。
@@ -38,7 +38,7 @@
 - Server：`Game/Alliance*.cs`、`SessionManager.cs`、`SessionManager.Alliance*.cs`、`SessionManager.Camps.cs`、`WorldService.cs`、`WorldService.Territory.cs`；`Persistence/Alliance*.cs`、`CampSettlementRecord.cs`；`Net/WebSocketHandler.cs`、`Admin/AdminEndpoints.cs`、`GameServer.cs`、`db/002_alliances.sql`。
 - Client：`Game/GameClient.cs`、`UI/AlliancePanel.cs`、`ContinentPage.cs`、`DisplayNames.cs`、`GameUI.cs`、`WorldOverview.cs`；`World/SurfaceView.cs`、`SurfaceView.Territory.cs`、`WorldModelCapture.cs`，`Resources/UI/Game.uss` 與新腳本 meta。
 - Tests：`Alliance*Tests.cs`、`RallyBattleTests.cs`、`BattleTests.cs`、`ServerIntegrationTests.cs`；隔離視覺工具 `tools/S6VisualHost/`。
-- Docs：本文件、`HANDOFF-S6-1~5.md`、`design/S6_ALLIANCE.md`、`design/GDD.md`、`HANDOFF-CODEX.md`、README。
+- Docs：本文件、`design/S6_ALLIANCE.md`、`design/GDD.md`、`HANDOFF-CODEX.md`、README。
 - Claude 同期加入 `CityFrontier`／`CityZones`／區域點擊資訊等內容，不是本輪 S6 新增；目前 `GameUI` 的 `FrontierClicked`／`OpenFrontierInfo` 和 `DisplayNames.CityZones` 仍保留。未整檔回寫或撤銷 Claude 的改動，仍請 Claude 最後核對。
 
 ## 正式上線前限制

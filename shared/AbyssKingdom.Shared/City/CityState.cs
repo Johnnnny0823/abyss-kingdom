@@ -70,9 +70,6 @@ namespace AbyssKingdom.Shared.City
         /// <summary>地表：主城位置。</summary>
         public SurfaceState Surface { get; set; } = new SurfaceState();
 
-        /// <summary>舊存檔的深淵狀態（已停用）；登入時把行軍中的部隊還給兵營後清成 null。</summary>
-        public LegacyMapState Map { get; set; }
-
         /// <summary>新手任務線：目前做到第幾個（索引，從 0 開始；等於任務數 = 這一章都領完）。</summary>
         public int QuestIndex { get; set; }
 

@@ -471,28 +471,6 @@ public static class ServerIntegrationTests
     }
 
     [Test]
-    public static async Task Login_ReturnsTroopsFromLegacyAbyssMarches()
-    {
-        await using var server = new TestServer();
-        await server.StartAsync();
-        await using (var c1 = new TestClient())
-        {
-            await c1.ConnectAsync(server.WsUri);
-            await c1.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:oldsave" });
-            await c1.ExpectAsync(MessageTypes.CityState);
-            await server.Sessions.ModifyCityAsync("dev-oldsave", c =>
-                c.Map = new LegacyMapState { Marches = { new LegacyMarch { Troops = { [TroopType.Shield] = 70 } } } }, CancellationToken.None);
-        }
-        await server.Sessions.SaveAllAsync(true, CancellationToken.None);
-        await using var c2 = new TestClient();
-        await c2.ConnectAsync(server.WsUri);
-        await c2.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:oldsave" });
-        var city = City(await c2.ExpectAsync(MessageTypes.CityState));
-        Assert.Equal(70L, city.GetTroops(TroopType.Shield), "舊深淵行軍的部隊回到兵營");
-        Assert.True(city.Map == null, "舊狀態清掉");
-    }
-
-    [Test]
     public static async Task Gather_OneMarchPerField_FullReturnsWithResources()
     {
         await using var server = new TestServer();

@@ -120,18 +120,18 @@ public static class AllianceTests
     }
 
     [Test]
-    public static async Task ConcurrentJoin_StopsAtThirtyAndOfficerLimitIsFour()
+    public static async Task ConcurrentJoin_StopsAtMemberCapAndOfficerLimitIsFour()
     {
         var store = new InMemoryAllianceStore(Json.Options);
         var alliance = Seed("a1", "A1");
         alliance.Members.Add(new AllianceMemberRecord { PlayerId = "leader", Role = AllianceRole.Leader });
         await store.SaveAsync(new AllianceDirectory { Alliances = new() { alliance } }, CancellationToken.None);
         var service = new AllianceService(store, new ManualClock(1000));
-        var results = await Task.WhenAll(Enumerable.Range(0, 35).Select(i =>
+        var results = await Task.WhenAll(Enumerable.Range(0, AllianceConfig.MaxMembers + 5).Select(i =>
             service.JoinAsync("p" + i, "P" + i, 2, "a1", CancellationToken.None)));
-        Assert.Equal(29, results.Count(x => x == AllianceResult.Ok));
+        Assert.Equal(AllianceConfig.MaxMembers - 1, results.Count(x => x == AllianceResult.Ok));
         Assert.Equal(6, results.Count(x => x == AllianceResult.Full));
-        Assert.Equal(30, (await store.LoadAsync(CancellationToken.None)).Alliances.Single().Members.Count);
+        Assert.Equal(AllianceConfig.MaxMembers, (await store.LoadAsync(CancellationToken.None)).Alliances.Single().Members.Count);
         for (int i = 0; i < 4; i++)
             Assert.Equal(AllianceResult.Ok, await service.SetOfficerAsync("leader", "p" + i, true, CancellationToken.None));
         Assert.Equal(AllianceResult.OfficerLimit, await service.SetOfficerAsync("leader", "p4", true, CancellationToken.None));

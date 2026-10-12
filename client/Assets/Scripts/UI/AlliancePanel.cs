@@ -70,7 +70,7 @@ namespace AbyssKingdom.Client.UI
             foreach (var alliance in state.Alliances)
             {
                 var row = El("row", "panel");
-                row.Add(Lbl($"[{alliance.Tag}] {alliance.Name}　{alliance.Members}/30", "grow"));
+                row.Add(Lbl($"[{alliance.Tag}] {alliance.Name}　{alliance.Members}/{AllianceConfig.MaxMembers}", "grow"));
                 bool apply = alliance.JoinMode == AllianceJoinMode.Approval;
                 row.Add(Btn(apply ? "申請" : "加入", () => G.JoinAlliance(alliance.Id, apply), "btn-small"));
                 _root.Add(row);

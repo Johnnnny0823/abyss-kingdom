@@ -195,7 +195,6 @@ public sealed partial class SessionManager : BackgroundService
         if (CityLayout.EnsureLayout(record.City)) session.Dirty = true;
         if (HeroLogic.EnsureStarterHeroes(record.City)) session.Dirty = true;
         if (GearLogic.EnsureStarterGear(record.City)) session.Dirty = true;
-        if (LegacyMigration.Run(record.City)) session.Dirty = true; // 舊深淵行軍的部隊還給兵營
         if (PvpLogic.GrantNewbieShieldOnce(record.City, _clock.NowMs)) session.Dirty = true; // 功能上線前的舊帳號也有一次新手護盾
         if (await _world.EnsureSiteAsync(record, ct)) session.Dirty = true; // 地表主城位置
         // 上次攻城結算到一半伺服器就停了（存檔裡卡在城下、又沒有在結算）：用同一個戰鬥 ID 接著結算

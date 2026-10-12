@@ -16,7 +16,7 @@ public static class AllianceConfig
     public const int CreateKeepLevel = 3;
     public const long CreateWood = 5_000;
     public const long CreateStone = 5_000;
-    public const int MaxMembers = 30;
+    public const int MaxMembers = 40;
     public const int MaxOfficers = 4;
     public const int MaxApplications = 3;
     public const long ApplicationDurationMs = 24L * 60 * 60 * 1000;
