@@ -22,11 +22,26 @@ namespace AbyssKingdom.Shared.Map
         public bool Stationed { get; set; }
         /// <summary>召回中：回到主城後解散，部隊回兵營。</summary>
         public bool Returning { get; set; }
+        /// <summary>Server-authorized reinforcement destination; never interpreted as an attack.</summary>
+        public string ReinforcementTarget { get; set; }
+        /// <summary>Cross-store dispatch identity, assigned by the server.</summary>
+        public string ReinforcementOperationId { get; set; }
+        /// <summary>Frozen until the server durably applies the garrison battle outcome.</summary>
+        public string GarrisonSettlementId { get; set; }
+        public string RallyId { get; set; }
+        public string RallyJoinId { get; set; }
+        public bool RallyLeader { get; set; }
+        public long RallyTotalTroops { get; set; }
+        public HeroId RallyLeaderHero { get; set; }
+        public TroopType RallyMainTroop { get; set; }
+        public bool CampPending { get; set; }
+        public List<Battle.SquadInput> CampInputs { get; set; }
 
         // ───── 採集（駐紮在資源田時） ─────
         /// <summary>開始採集的時間；0 = 沒有在採集。</summary>
         public long GatherStartMs { get; set; }
         public long GatherRatePerMin { get; set; }
+        public int GatherBonusBasisPoints { get; set; } = 10_000;
         /// <summary>這次最多能採多少（載重與存量取小）。</summary>
         public long GatherCap { get; set; }
         public ResourceType GatherResource { get; set; }
@@ -91,6 +106,8 @@ namespace AbyssKingdom.Shared.Map
         public bool Shielded;    // 攻城：對方有護盾，沒有開打
         /// <summary>攻城：抵達敵方主城（伺服器接著要在守方身上結算）。值是守方的玩家 ID。</summary>
         public string AttackTarget;
+        public string ReinforcementTarget;
+        public int? CampTarget;
         /// <summary>攻城：抵達當下的攻方陣容（在攻方的鎖內算好）。</summary>
         public List<(Battle.SquadInput squad, TroopType troop)> AttackSquads;
     }
@@ -332,7 +349,7 @@ namespace AbyssKingdom.Shared.Map
             if (march == null) return MarchResult.UnknownMarch;
             if (march.Returning) return MarchResult.Ok;
             // 守方可能已經扣兵：攻方的結果還沒套用前不能撤，否則攻方就免除了戰損
-            if (march.Sieging) return MarchResult.Sieging;
+            if (march.Sieging || march.CampPending || (march.RallyId != null && !march.Returning) || !string.IsNullOrEmpty(march.GarrisonSettlementId)) return MarchResult.Sieging;
             if (march.Gathering && StopGathering(march, nowMs, fields, owner) > 0) city.Stats.GatherTrips++;
             TurnBack(city, march, nowMs);
             return MarchResult.Ok;
@@ -421,7 +438,8 @@ namespace AbyssKingdom.Shared.Map
                 return false;
             }
             m.GatherStartMs = m.ArriveAt;
-            m.GatherRatePerMin = GatherConfig.RatePerMinute(f.Level);
+            m.GatherBonusBasisPoints = (fields as ITerritoryRegistry)?.GatherBonusBasisPoints(owner, m.Destination, m.ArriveAt) ?? 10_000;
+            m.GatherRatePerMin = GatherConfig.RatePerMinute(f.Level) * m.GatherBonusBasisPoints / 10_000;
             m.GatherResource = f.Resource;
             m.GatherCap = Math.Min(stock, GatherConfig.Load(m.Troops));
             return true;
@@ -450,6 +468,14 @@ namespace AbyssKingdom.Shared.Map
             for (int i = state.Marches.Count - 1; i >= 0; i--)
             {
                 var m = state.Marches[i];
+                if (m.RallyId != null && !m.Returning) continue;
+                if (m.CampPending) continue;
+                if (!string.IsNullOrEmpty(m.ReinforcementTarget))
+                {
+                    var reinforcementEvent = AdvanceReinforcement(city, m.Id, nowMs);
+                    if (reinforcementEvent != null) events.Add(reinforcementEvent);
+                    continue;
+                }
 
                 // 採滿：從採滿的那一刻起往回走
                 if (m.Gathering && fields != null && nowMs >= m.GatherEndMs)
@@ -463,11 +489,7 @@ namespace AbyssKingdom.Shared.Map
                 if (m.Stationed || nowMs < m.ArriveAt) continue;
                 if (m.Returning)
                 {
-                    foreach (var kv in m.Troops) city.Troops[kv.Key] = city.GetTroops(kv.Key) + kv.Value;
-                    foreach (var kv in m.Carry) city.Resources[kv.Key] = city.GetResource(kv.Key) + kv.Value;
-                    foreach (var kv in m.LootItems) city.Items[kv.Key] = city.GetItemCount(kv.Key) + kv.Value;
-                    state.Marches.RemoveAt(i);
-                    events.Add(new MarchEvent { MarchId = m.Id, Hero = m.Hero, Tile = m.Destination, Disbanded = true, Carry = m.Carry, LootItems = m.LootItems });
+                    events.Add(CompleteReturn(city, m));
                     continue;
                 }
                 var cityOwner = fields?.CityOwnerAt(m.Destination);
@@ -484,6 +506,15 @@ namespace AbyssKingdom.Shared.Map
                 var feature = SurfaceLogic.FeatureAt(fx, fy);
                 if (fields != null && feature != null && feature.Type == FeatureType.MonsterCamp)
                 {
+                    if (fields is IControlledCamps)
+                    {
+                        m.Stationed = true; m.CampPending = true;
+                        m.CampInputs = new List<Battle.SquadInput>();
+                        foreach (var squad in Squads(city, m)) m.CampInputs.Add(squad.squad);
+                        events.Add(new MarchEvent { MarchId = m.Id, Hero = m.Hero, Tile = m.Destination, CampTarget = m.Destination,
+                            AttackSquads = Squads(city, m) });
+                        continue;
+                    }
                     events.Add(FightCamp(city, m, feature, fields, owner));
                     if (m.Returning) i++; // 打完立刻回城：同一次推進裡可能已經到家
                     continue;
@@ -496,6 +527,17 @@ namespace AbyssKingdom.Shared.Map
                 if (gathering && nowMs >= m.GatherEndMs) i++;
             }
             return events;
+        }
+
+        private static MarchEvent CompleteReturn(CityState city, March march)
+        {
+            foreach (var kv in march.Troops) city.Troops[kv.Key] = city.GetTroops(kv.Key) + kv.Value;
+            foreach (var kv in march.Carry) city.Resources[kv.Key] = city.GetResource(kv.Key) + kv.Value;
+            foreach (var kv in march.LootItems) city.Items[kv.Key] = city.GetItemCount(kv.Key) + kv.Value;
+            city.Surface.Marches.Remove(march);
+            return new MarchEvent { MarchId = march.Id, Hero = march.Hero, Tile = march.Destination,
+                Disbanded = true, Carry = march.Carry, LootItems = march.LootItems,
+                ReinforcementTarget = march.ReinforcementTarget };
         }
     }
 }

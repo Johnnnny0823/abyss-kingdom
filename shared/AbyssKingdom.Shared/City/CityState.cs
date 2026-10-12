@@ -24,6 +24,9 @@ namespace AbyssKingdom.Shared.City
         /// <summary>目前的升級工程（MVP 只有一條建築隊列）；null 代表空閒。</summary>
         public UpgradeJob Upgrade { get; set; }
 
+        /// <summary>下一個城市內的固定隊列編號；與玩家 ID 組合後全服唯一。</summary>
+        public long NextAllianceQueueId { get; set; } = 1;
+
         /// <summary>已訓練完成的部隊數量。</summary>
         public Dictionary<TroopType, long> Troops { get; set; } = new Dictionary<TroopType, long>();
 
@@ -59,6 +62,10 @@ namespace AbyssKingdom.Shared.City
         /// 伺服器在兩段結算之間停機時，靠它讓重試拿到同一個結果，守方不會被打兩次。
         /// </summary>
         public Dictionary<string, Map.PvpOutcome> SiegeLog { get; set; } = new Dictionary<string, Map.PvpOutcome>();
+
+        /// <summary>已持久化的社交操作收據；重試創盟等跨存檔操作時避免重複扣款。</summary>
+        public HashSet<string> SocialReceipts { get; set; } = new HashSet<string>();
+        public bool AcceptReinforcements { get; set; } = true;
 
         /// <summary>地表：主城位置。</summary>
         public SurfaceState Surface { get; set; } = new SurfaceState();
@@ -133,6 +140,7 @@ namespace AbyssKingdom.Shared.City
         public int TargetLevel { get; set; }
         public long StartedAtMs { get; set; }
         public long FinishAtMs { get; set; }
+        public AllianceHelpProgress Help { get; set; }
     }
 
     public class TrainingJob

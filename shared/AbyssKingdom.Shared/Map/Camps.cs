@@ -43,10 +43,7 @@ namespace AbyssKingdom.Shared.Map
         public static List<(SquadInput squad, TroopType troop)> Squads(CityState city, March m)
         {
             var list = new List<(SquadInput, TroopType)>();
-            TroopType main = TroopType.Shield;
-            long most = -1;
-            foreach (var kv in m.Troops)
-                if (kv.Value > most) { most = kv.Value; main = kv.Key; }
+            TroopType main = MainTroop(m.Troops);
             HeroConfig.TryGet(m.Hero, out var def);
 
             var hero = DomainLogic.HeroSquad(city, m.Hero);
@@ -63,6 +60,16 @@ namespace AbyssKingdom.Shared.Map
                 }, t));
             }
             return list;
+        }
+        public static TroopType MainTroop(IReadOnlyDictionary<TroopType, long> troops)
+        {
+            TroopType main = TroopType.Shield; long most = -1;
+            foreach (var t in CityConfig.AllTroops)
+            {
+                long count = troops.TryGetValue(t, out var n) ? n : 0;
+                if (count > most) { most = count; main = t; }
+            }
+            return main;
         }
 
         /// <summary>抵達怪物營地：開打。部隊損失依比例變成傷兵或陣亡；打贏拿戰利品。打完都自動回城。</summary>

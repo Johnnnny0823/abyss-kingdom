@@ -38,15 +38,24 @@ public static class GameServer
         // 存檔：Memory / InMemory（本機開發，關掉就沒了）或 Supabase（正式）
         var storeMode = config["Storage:Mode"] ?? "Memory";
         if (storeMode.Equals("Supabase", StringComparison.OrdinalIgnoreCase))
+        {
             services.AddSingleton<IPlayerStore, SupabasePlayerStore>();
+            services.AddSingleton<IAllianceStore, SupabaseAllianceStore>();
+        }
         else if (storeMode.Equals("Memory", StringComparison.OrdinalIgnoreCase) || storeMode.Equals("InMemory", StringComparison.OrdinalIgnoreCase))
+        {
             services.AddSingleton<IPlayerStore, InMemoryPlayerStore>();
+            services.AddSingleton<IAllianceStore, InMemoryAllianceStore>();
+        }
         else
             throw new InvalidOperationException($"Unknown Storage:Mode '{storeMode}' (expected Supabase or Memory)");
 
         services.AddSingleton<WorldService>();
+        services.AddSingleton<AllianceSynchronization>();
+        services.AddSingleton<AllianceService>();
         services.AddSingleton<SessionManager>();
         services.AddHostedService(sp => sp.GetRequiredService<SessionManager>());
+        services.AddHostedService<AllianceMilitaryTicker>();
         services.AddSingleton<WebSocketHandler>();
 
         overrideServices?.Invoke(services);

@@ -122,6 +122,7 @@ namespace AbyssKingdom.Shared.City
                 TargetLevel = target,
                 StartedAtMs = nowMs,
                 FinishAtMs = nowMs + CityConfig.UpgradeDurationMs(building, target),
+                Help = NewHelpProgress(state, CityConfig.UpgradeDurationMs(building, target)),
             };
             return UpgradeResult.Ok;
         }

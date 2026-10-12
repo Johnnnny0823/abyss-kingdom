@@ -43,28 +43,41 @@ public sealed class PlayerSession
 /// <summary>
 /// 管理所有上線玩家：登入載入存檔、背景每秒推進城市（完成升級時推播）、定時存檔、下線存檔。
 /// </summary>
-public sealed class SessionManager : BackgroundService
+public sealed partial class SessionManager : BackgroundService
 {
     public static readonly TimeSpan TickInterval = TimeSpan.FromSeconds(1);
     public static readonly TimeSpan SaveInterval = TimeSpan.FromSeconds(30);
 
     private readonly ConcurrentDictionary<string, PlayerSession> _online = new();
     private readonly IPlayerStore _store;
+    private readonly IAllianceStore _allianceStore;
     private readonly WorldService _world;
     private readonly IClock _clock;
     private readonly ILogger<SessionManager> _log;
     private readonly JsonSerializerOptions _json;
 
-    public SessionManager(IPlayerStore store, IClock clock, JsonSerializerOptions json, ILogger<SessionManager> log, WorldService world)
+    private readonly SemaphoreSlim _allianceGate;
+
+    public SessionManager(IPlayerStore store, IClock clock, JsonSerializerOptions json, ILogger<SessionManager> log, WorldService world, IAllianceStore allianceStore,
+        AllianceSynchronization? synchronization = null)
     {
         _json = json;
         _world = world;
         _store = store;
+        var sync = synchronization ?? new AllianceSynchronization();
+        _allianceStore = sync.BindStore(allianceStore);
         _clock = clock;
         _log = log;
+        _allianceGate = sync.Operations;
     }
 
     public int OnlineCount => _online.Count;
+
+    public int CountOnline(IEnumerable<string> playerIds) => playerIds.Count(id => _online.ContainsKey(id));
+
+    public Task PushToPlayersAsync(IEnumerable<string> playerIds, string type, object data) =>
+        Task.WhenAll(playerIds.Select(id => _online.TryGetValue(id, out var session)
+            ? SafeSend(session, type, data) : Task.CompletedTask));
 
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, SemaphoreSlim> _loadLocks = new();
     private SemaphoreSlim LoadLock(string playerId) => _loadLocks.GetOrAdd(playerId, _ => new SemaphoreSlim(1, 1));
@@ -82,6 +95,8 @@ public sealed class SessionManager : BackgroundService
     private List<MarchEvent> ResumeSieges(CityState city, string playerId, long nowMs)
     {
         var events = MarchLogic.ResumeSieges(city, nowMs, id => _sieging.ContainsKey((playerId, id)));
+        foreach (var m in city.Surface.Marches.Where(m => m.CampPending && m.RallyId == null && !_sieging.ContainsKey((playerId, m.Id))))
+            events.Add(new MarchEvent { MarchId = m.Id, Hero = m.Hero, Tile = m.Destination, CampTarget = m.Destination });
         foreach (var ev in events) _sieging[(playerId, ev.MarchId)] = 0;
         return events;
     }
@@ -95,7 +110,7 @@ public sealed class SessionManager : BackgroundService
         var now = _clock.NowMs;
         foreach (var session in _online.Values)
         {
-            if (session.Record.City.Surface.Marches.All(m => !m.Sieging)) continue;
+            if (session.Record.City.Surface.Marches.All(m => !m.Sieging && !m.CampPending)) continue;
             List<MarchEvent> events;
             await session.Gate.WaitAsync(ct);
             try
@@ -116,7 +131,7 @@ public sealed class SessionManager : BackgroundService
     {
         var events = MarchLogic.Advance(city, nowMs, _world, playerId);
         foreach (var ev in events)
-            if (ev.AttackTarget != null) _sieging[(playerId, ev.MarchId)] = 0;
+            if (ev.AttackTarget != null || ev.CampTarget != null) _sieging[(playerId, ev.MarchId)] = 0;
         return events;
     }
 
@@ -305,7 +320,7 @@ public sealed class SessionManager : BackgroundService
 
     private async Task SendMarchArrivalsAsync(PlayerSession session, List<MarchEvent> events)
     {
-        foreach (var ev in events.Where(e => e.AttackTarget == null))
+        foreach (var ev in events.Where(e => e.AttackTarget == null && e.CampTarget == null))
             await SafeSend(session, MessageTypes.MarchArrived, new MarchArrivedMessage
             {
                 March = ev.MarchId, Hero = ev.Hero, Tile = ev.Tile, Disbanded = ev.Disbanded,
@@ -319,6 +334,8 @@ public sealed class SessionManager : BackgroundService
     {
         foreach (var ev in events.Where(e => e.AttackTarget != null))
             await ResolveAttackAsync(attacker.PlayerId, attacker.Record.DisplayName, ev, ct);
+        foreach (var ev in events.Where(e => e.CampTarget != null))
+            await ResolveCampEventAsync(attacker.PlayerId, ev, ct);
     }
 
     /// <summary>
@@ -337,11 +354,15 @@ public sealed class SessionManager : BackgroundService
             var now = _clock.NowMs;
             ulong seed = _world.NextSeed();
             PvpOutcome? outcome = null;
+            bool alliedRetreat = false;
             bool found;
             try
             {
-                found = await ModifyCityAsync(ev.AttackTarget!, def => outcome = PvpLogic.ResolveOnDefender(def, ev.AttackSquads, seed, now, battleId), ct,
-                    saveNow: true);
+                var resolution = await ResolveAllianceDefenseAsync(attackerId, ev.AttackTarget!, ev.AttackSquads,
+                    seed, now, battleId, ct);
+                found = resolution.Saved;
+                outcome = resolution.Outcome;
+                alliedRetreat = resolution.AlliedRetreat;
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -349,12 +370,15 @@ public sealed class SessionManager : BackgroundService
                 _log.LogError(ex, "Siege {Battle} failed on defender {Def}; will retry", battleId, ev.AttackTarget);
                 return;
             }
-            if (!found || outcome == null)
+            if (!found) return;
+            if (outcome == null)
             {
                 outcome = new PvpOutcome { Shielded = true };
                 foreach (var a in ev.AttackSquads) outcome.AttackerSurvivors[a.troop] = a.squad.Count;
             }
             string targetName = _world.NameOf(ev.AttackTarget!);
+            if (outcome.Garrison != null)
+                await PushToPlayersAsync(new[] { outcome.Garrison.OwnerId, ev.AttackTarget! }, MessageTypes.AllianceMilitaryChanged, new { });
 
             if (!outcome.Shielded && _online.TryGetValue(ev.AttackTarget!, out var defender))
                 await SafeSend(defender, MessageTypes.CityAttacked, new CityAttackedMessage
@@ -364,15 +388,15 @@ public sealed class SessionManager : BackgroundService
                 });
 
             MarchEvent? done = null;
-            await ModifyCityAsync(attackerId, city => done = PvpLogic.FinishAttack(city, ev.MarchId, outcome, now), ct,
+            bool attackerSaved = await ModifyCityAsync(attackerId, city => done = PvpLogic.FinishAttack(city, ev.MarchId, outcome, now), ct,
                 beforePush: s => done == null ? Task.CompletedTask : SafeSend(s, MessageTypes.MarchArrived, new MarchArrivedMessage
                 {
                     March = done.MarchId, Hero = done.Hero, Tile = done.Tile, BattleWon = done.BattleWon, BattleLost = done.BattleLost,
-                    Shielded = done.Shielded, Carry = done.Carry, Wounded = done.Wounded, Dead = done.Dead, TargetName = targetName,
+                    Shielded = done.Shielded, Allied = alliedRetreat, Carry = done.Carry, Wounded = done.Wounded, Dead = done.Dead, TargetName = targetName,
                 }), saveNow: true);
 
             // 攻方已經存好：守方的這筆紀錄可以刪了（失敗也沒關係，30 天後會自動清掉）
-            if (found && !outcome.Shielded)
+            if (attackerSaved && !outcome.Shielded)
             {
                 try { await ModifyCityAsync(ev.AttackTarget!, def => PvpLogic.ForgetSiege(def, battleId), ct); }
                 catch (Exception ex) when (ex is not OperationCanceledException) { _log.LogWarning(ex, "Could not clear siege log {Battle}", battleId); }
@@ -491,7 +515,7 @@ public sealed class SessionManager : BackgroundService
                     CityLogic.Advance(session.Record.City, now);
                     apply(session.Record.City);
                     session.Dirty = true;
-                    if (saveNow) await SaveLockedAsync(session, force: true, ct);
+                    if (saveNow && !await SaveLockedAsync(session, force: true, ct)) return false;
                     snapshot = JsonSerializer.SerializeToUtf8Bytes(session.Record.City, _json);
                 }
             }
@@ -531,6 +555,40 @@ public sealed class SessionManager : BackgroundService
         {
             loadLock?.Release();
         }
+    }
+
+    /// <summary>Returns an isolated authoritative snapshot without marking the player dirty or pushing UI.</summary>
+    public async Task<CityState?> ReadCityAsync(string playerId, CancellationToken ct)
+    {
+        if (_online.TryGetValue(playerId, out var session))
+        {
+            await session.Gate.WaitAsync(ct);
+            try
+            {
+                if (!session.Closed)
+                {
+                    var snapshot = JsonSerializer.Deserialize<CityState>(JsonSerializer.SerializeToUtf8Bytes(session.Record.City, _json), _json)!;
+                    CityLogic.Advance(snapshot, _clock.NowMs);
+                    return snapshot;
+                }
+            }
+            finally { session.Gate.Release(); }
+        }
+        var loadLock = LoadLock(playerId);
+        await loadLock.WaitAsync(ct);
+        try
+        {
+            if (_online.ContainsKey(playerId))
+            {
+                loadLock.Release();
+                loadLock = null;
+                return await ReadCityAsync(playerId, ct);
+            }
+            var city = (await _store.LoadAsync(playerId, ct))?.City;
+            if (city != null) CityLogic.Advance(city, _clock.NowMs);
+            return city;
+        }
+        finally { loadLock?.Release(); }
     }
 
     private async Task SafeSend(PlayerSession session, string type, object data)

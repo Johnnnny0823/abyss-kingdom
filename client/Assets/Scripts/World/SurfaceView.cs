@@ -12,7 +12,7 @@ namespace AbyssKingdom.Client.World
     /// 資源田、怪物營地、各領主的主城，以及自己的行軍（虛線＋移動中的部隊）。
     /// 沒有道路；空的主城位置平常不顯示。物件分區塊，只顯示鏡頭附近的區塊。
     /// </summary>
-    public sealed class SurfaceView
+    public sealed partial class SurfaceView
     {
         public const float S = 0.2f;          // 1 格 = 0.2 世界單位
 
@@ -28,9 +28,10 @@ namespace AbyssKingdom.Client.World
 
         private readonly WorldScene _w;
         private readonly Transform[,] _chunks = new Transform[Chunks, Chunks];
-        private readonly Dictionary<int, (GameObject castle, TextMesh name, bool mine, int tier)> _castles = new Dictionary<int, (GameObject, TextMesh, bool, int)>();
+        private readonly Dictionary<int, (GameObject castle, TextMesh name, bool mine, bool allied, int tier)> _castles = new Dictionary<int, (GameObject, TextMesh, bool, bool, int)>();
         private readonly GameObject _select;
         private readonly Dictionary<int, GameObject> _shields = new Dictionary<int, GameObject>();
+        private Material _shieldMaterial;
         private readonly List<GameObject> _dots = new List<GameObject>();
         private readonly List<Transform> _troops = new List<Transform>();
         private float _nextCull;
@@ -465,7 +466,10 @@ namespace AbyssKingdom.Client.World
                 }
         }
 
-        private GameObject Castle(Transform parent, Vector3 pos, bool mine, int tier)
+        public static Color CityColor(CityPin pin) => pin.Mine || pin.Allied
+            ? new Color32(145, 215, 255, 255) : new Color32(220, 90, 80, 255);
+
+        private GameObject Castle(Transform parent, Vector3 pos, bool mine, bool allied, int tier)
         {
             var root = _w.Group("Castle", parent, pos).gameObject;
             var t = root.transform;
@@ -480,13 +484,13 @@ namespace AbyssKingdom.Client.World
             }
             if (keep3D != null || ModelLibrary.Spawn("World/City", t, Vector3.zero, S * CityScale) != null)
             {
-                var ring = _w.Prim(PrimitiveType.Cylinder, mine ? new Color32(230, 190, 90, 255) : new Color32(190, 70, 60, 255), Vector3.up * 0.002f, new Vector3(0.88f, 0.002f, 0.88f), t);
+                var ring = _w.Prim(PrimitiveType.Cylinder, CityColor(new CityPin { Mine = mine, Allied = allied }), Vector3.up * 0.002f, new Vector3(0.88f, 0.002f, 0.88f), t);
                 ring.name = "OwnerRing";
                 return root;
             }
             t.localScale = Vector3.one * 1.25f;
             var wall = mine ? new Color32(226, 196, 130, 255) : new Color32(176, 150, 130, 255);
-            var roof = mine ? new Color32(70, 110, 190, 255) : new Color32(150, 60, 50, 255);
+            var roof = CityColor(new CityPin { Mine = mine, Allied = allied });
             _w.Prim(PrimitiveType.Cube, wall, new Vector3(0, 0.05f, 0), new Vector3(0.3f, 0.1f, 0.3f), t);
             for (int i = 0; i < 4; i++)
             {
@@ -530,24 +534,34 @@ namespace AbyssKingdom.Client.World
                 seen.Add(key);
                 _castles.TryGetValue(key, out var c);
                 int tier = ArtSettings.TierOf(pin.KeepLevel);
-                if (c.castle == null || c.mine != pin.Mine || c.tier != tier)
+                bool castleChanged = c.castle == null || c.mine != pin.Mine || c.allied != pin.Allied || c.tier != tier;
+                if (castleChanged)
                 {
                     if (c.castle != null) UnityEngine.Object.Destroy(c.castle);
-                    var castle = Castle(ChunkOf(pin.X, pin.Y), CityPos(pin.X, pin.Y), pin.Mine, tier);
-                    var name = _w.Text(castle.transform, new Vector3(0, 0.95f, 0), 0.03f, pin.Mine ? new Color(1f, 0.86f, 0.5f) : Color.white);
-                    c = (castle, name, pin.Mine, tier);
+                    var castle = Castle(ChunkOf(pin.X, pin.Y), CityPos(pin.X, pin.Y), pin.Mine, pin.Allied, tier);
+                    var name = _w.Text(castle.transform, new Vector3(0, 0.95f, 0), 0.03f, CityColor(pin));
+                    c = (castle, name, pin.Mine, pin.Allied, tier);
                     _castles[key] = c;
                 }
                 c.name.text = pin.Name;
 
-                // 護盾：主城外一圈發光的圓
+                // 護盾：以半透明青綠球體的上半部罩住主城；下半部埋入地面。
                 _shields.TryGetValue(key, out var shield);
                 if (pin.Shielded && shield == null)
                 {
-                    shield = _w.Prim(PrimitiveType.Cylinder, Color.white, CityPos(pin.X, pin.Y) + Vector3.up * 0.003f, new Vector3(1.15f, 0.003f, 1.15f), ChunkOf(pin.X, pin.Y));
-                    shield.GetComponent<Renderer>().sharedMaterial = _w.Mat(new Color32(110, 180, 255, 255));
+                    if (_shieldMaterial == null)
+                    {
+                        var shader = Shader.Find("Sprites/Default");
+                        _shieldMaterial = new Material(shader) { color = new Color(0.22f, 0.78f, 0.72f, 0.24f) };
+                        _shieldMaterial.renderQueue = 3000;
+                    }
+                    shield = _w.Prim(PrimitiveType.Sphere, Color.white, CityPos(pin.X, pin.Y),
+                        ShieldScale(c.castle), ChunkOf(pin.X, pin.Y));
+                    shield.name = "CityShieldDome";
+                    shield.GetComponent<Renderer>().sharedMaterial = _shieldMaterial;
                     _shields[key] = shield;
                 }
+                else if (pin.Shielded && shield != null && castleChanged) shield.transform.localScale = ShieldScale(c.castle);
                 else if (!pin.Shielded && shield != null)
                 {
                     UnityEngine.Object.Destroy(shield);
@@ -574,6 +588,18 @@ namespace AbyssKingdom.Client.World
         }
 
         /// <summary>自己的行軍：沿路徑的虛線＋目前位置的部隊（返回中為藍旗）。</summary>
+        private static Vector3 ShieldScale(GameObject castle)
+        {
+            var origin = castle.transform.position; var bounds = new Bounds(origin, Vector3.zero);
+            foreach (var renderer in castle.GetComponentsInChildren<MeshRenderer>(true))
+                if (renderer.GetComponent<TextMesh>() == null) bounds.Encapsulate(renderer.bounds);
+            float x = Mathf.Max(Mathf.Abs(bounds.min.x - origin.x), Mathf.Abs(bounds.max.x - origin.x));
+            float z = Mathf.Max(Mathf.Abs(bounds.min.z - origin.z), Mathf.Abs(bounds.max.z - origin.z));
+            float radius = Mathf.Max(.75f, Mathf.Sqrt(x * x + z * z) + .1f);
+            float height = Mathf.Max(.75f, bounds.max.y - origin.y + .1f);
+            return new Vector3(radius * 2, height * 2, radius * 2);
+        }
+
         public void SetMarches(List<March> marches, long nowMs)
         {
             // 停在同一格的小隊（例如兩支部隊到同一塊資源田）：繞著那一格錯開排列，依行軍編號排序，位置固定不會跳
@@ -617,6 +643,13 @@ namespace AbyssKingdom.Client.World
 
                 var troop = Troop(i);
                 troop.gameObject.SetActive(true);
+                var badge = troop.Find("RallyBadge");
+                if (m.RallyId != null && m.RallyTotalTroops > 0 && !m.Returning)
+                {
+                    if (badge == null) { badge = _w.Text(troop, Vector3.up * .85f, .022f, new Color(1f, .9f, .5f)).transform; badge.name = "RallyBadge"; }
+                    badge.gameObject.SetActive(true); badge.GetComponent<TextMesh>().text = "集結 " + m.RallyTotalTroops.ToString("N0");
+                }
+                else if (badge != null) badge.gameObject.SetActive(false);
                 var offset = Vector3.zero;
                 if (m.Stationed && stacked.TryGetValue(m.Destination, out var group) && group.Count > 1)
                 {
@@ -640,10 +673,8 @@ namespace AbyssKingdom.Client.World
         /// </summary>
         private void ApplyTroopArt(Transform troop, March m, Vector3 moveDir)
         {
-            TroopType main = TroopType.Shield;
-            long most = -1;
-            foreach (var kv in m.Troops)
-                if (kv.Value > most) { most = kv.Value; main = kv.Key; }
+            TroopType main = m.RallyId != null && m.RallyTotalTroops > 0 && !m.Returning
+                ? m.RallyMainTroop : MarchLogic.MainTroop(m.Troops);
             var tex = AbyssKingdom.Client.UI.ArtLibrary.Troop(main);
             var art = troop.Find("Art2D");
             if (tex == null)
@@ -671,7 +702,8 @@ namespace AbyssKingdom.Client.World
             if (anim.Moving) anim.FacingLeft = moveDir.x < -1e-3f; // 鏡頭朝北：畫面左右 = 世界 X
 
             // 3D 小隊（有 Units3D 模型時）：取代 2D 兵種圖，頭上的主將頭像與腳下的顏色圈照舊
-            string unitName = main.ToString(), heroName = m.Hero.ToString();
+            var displayHero = m.RallyId != null && m.RallyTotalTroops > 0 && !m.Returning ? m.RallyLeaderHero : m.Hero;
+            string unitName = main.ToString(), heroName = displayHero.ToString();
             var squadT = troop.Find($"Squad3D_{unitName}_{heroName}");
             foreach (Transform child in troop)
                 if (child.name.StartsWith("Squad3D_") && child != squadT) UnityEngine.Object.Destroy(child.gameObject);
@@ -684,7 +716,7 @@ namespace AbyssKingdom.Client.World
                 if (anim.Moving) squad.Direction = moveDir;
             }
             bodyT.GetComponent<SpriteRenderer>().enabled = squad == null;
-            var heroIcon = AbyssKingdom.Client.UI.ArtLibrary.HeroIcon(m.Hero);
+            var heroIcon = AbyssKingdom.Client.UI.ArtLibrary.HeroIcon(displayHero);
             var iconRenderer = art.Find("HeroIcon").GetComponent<SpriteRenderer>();
             iconRenderer.sprite = AbyssKingdom.Client.UI.ArtLibrary.SpriteOf(heroIcon, .32f);
             iconRenderer.enabled = heroIcon != null && (squad == null || !squad.HasHeroModel); // 主將有 3D 模型走在隊伍最前面，就不用頭像
@@ -692,7 +724,7 @@ namespace AbyssKingdom.Client.World
             troop.Find("Shadow").GetComponent<Renderer>().sharedMaterial =
                 _w.Mat(m.Returning ? new Color32(60, 100, 160, 255) : new Color32(150, 116, 52, 255));
             foreach (Transform child in troop)
-                if (child != art && child.name != "Shadow" && !child.name.StartsWith("Squad3D_")) child.gameObject.SetActive(false);
+                if (child != art && child.name != "Shadow" && child.name != "RallyBadge" && !child.name.StartsWith("Squad3D_")) child.gameObject.SetActive(false);
         }
 
         private GameObject Dot(int i)
@@ -767,9 +799,9 @@ namespace AbyssKingdom.Client.World
         }
 
         /// <summary>只顯示鏡頭附近的區塊（每 0.3 秒更新一次）。</summary>
-        public void Cull(Vector3 focus, float viewDist)
+        public void Cull(Vector3 focus, float viewDist, bool force = false)
         {
-            if (Time.unscaledTime < _nextCull) return;
+            if (!force && Time.unscaledTime < _nextCull) return;
             _nextCull = Time.unscaledTime + 0.3f;
             _lastFocus = focus;
             float radius = viewDist * 1.4f + ChunkTiles * S;

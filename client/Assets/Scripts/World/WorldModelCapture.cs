@@ -4,6 +4,9 @@ using System.IO;
 using System.Linq;
 using AbyssKingdom.Client.Game;
 using AbyssKingdom.Shared.Map;
+using AbyssKingdom.Shared.Protocol;
+using AbyssKingdom.Shared.City;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace AbyssKingdom.Client.World
@@ -15,11 +18,31 @@ namespace AbyssKingdom.Client.World
 
         private void CaptureFrame(string name)
         {
+            // Opt-in offscreen capture remains usable when Windows hides the player swap chain.
+            bool offscreen = Array.IndexOf(Environment.GetCommandLineArgs(), "-artcapture-offscreen") >= 0;
+            var camera = WorldScene.Instance.Cam;
+            var previousTarget = camera.targetTexture;
+            var previousActive = RenderTexture.active;
+            RenderTexture target = null;
+            if (offscreen)
+            {
+                target = new RenderTexture(Screen.width, Screen.height, 24);
+                camera.targetTexture = target;
+                camera.Render();
+                RenderTexture.active = target;
+            }
             var image = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
             image.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
             image.Apply();
             File.WriteAllBytes(Path.Combine(_output, name), image.EncodeToPNG());
             Destroy(image);
+            if (offscreen)
+            {
+                camera.targetTexture = previousTarget;
+                RenderTexture.active = previousActive;
+                target.Release();
+                Destroy(target);
+            }
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -46,16 +69,84 @@ namespace AbyssKingdom.Client.World
             }
             yield return new WaitForSecondsRealtime(5);
             var world = WorldScene.Instance;
+            world.EndCinematic();
+            world.SetVisible(true);
             world.SetMode(WorldScene.Mode.Surface);
             var city = GameClient.Instance.City;
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-artcapture-offscreen") >= 0)
+            {
+                // Hidden windows may pause UI Toolkit repainting; apply the real server snapshot explicitly.
+                var pins = GameClient.Instance.Cities;
+                if (pins.Count == 0) pins = new List<CityPin> { new CityPin
+                {
+                    X = city.Surface.X, Y = city.Surface.Y, Name = GameClient.Instance.PlayerName, Mine = true,
+                    KeepLevel = city.GetLevel(BuildingType.Keep), Shielded = PvpLogic.IsShielded(city, GameClient.Instance.ServerNowMs)
+                } };
+                world.Surface.SetCities(pins, null, false);
+                world.Surface.SetMarches(city.Surface.Marches, GameClient.Instance.ServerNowMs);
+            }
             var own = SurfaceView.CityPos(city.Surface.X, city.Surface.Y);
             var camera = world.GetComponentInChildren<Camera>();
             world.FocusOn(WorldScene.Mode.Surface, own);
             yield return new WaitForSecondsRealtime(1);
             camera.transform.position = own - camera.transform.forward * 3.3f;
             yield return new WaitForEndOfFrame();
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-artcapture-offscreen") >= 0)
+            {
+                world.EndCinematic();
+                world.SetMode(WorldScene.Mode.Surface);
+                world.Surface.Cull(own, 3.3f, force: true);
+                camera.transform.rotation = Quaternion.Euler(52, 0, 0);
+                camera.transform.position = own - camera.transform.forward * 3.3f;
+            }
             CaptureFrame("world-city.png");
             yield return null;
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-artcapture-offscreen") >= 0)
+            {
+                world.Surface.SetTerritories(GameClient.Instance.TerritoryFlags, GameClient.Instance.Alliance?.MyAllianceId,
+                    GameClient.Instance.ServerNowMs);
+                world.Surface.Cull(own, 3.3f, force: true);
+                camera.transform.rotation = Quaternion.Euler(52, 0, 0);
+                camera.transform.position = own - camera.transform.forward * 3.3f;
+                CaptureFrame("world-territory.png");
+                // Real authority-provided city pins, including allied and foreign fixture accounts.
+                var pins = GameClient.Instance.Cities;
+                if (pins.Count > 1)
+                {
+                    var visible = pins.Where(p => SurfaceLogic.Dist2(p.X, p.Y, city.Surface.X, city.Surface.Y) < 2000).ToList();
+                    if (visible.Count > 1)
+                    {
+                        var center = Vector3.zero;
+                        foreach (var pin in visible) center += SurfaceView.CityPos(pin.X, pin.Y);
+                        center /= visible.Count;
+                        float distance = Mathf.Max(3.3f, visible.Max(p => Vector3.Distance(center, SurfaceView.CityPos(p.X, p.Y))) * 2.5f);
+                        world.Surface.SetCities(pins, null, false);
+                        world.FocusOn(WorldScene.Mode.Surface, center);
+                        yield return new WaitForSecondsRealtime(1);
+                        world.EndCinematic(); world.SetMode(WorldScene.Mode.Surface);
+                        world.Surface.Cull(center, distance, force: true);
+                        camera.transform.rotation = Quaternion.Euler(52, 0, 0);
+                        camera.transform.position = center - camera.transform.forward * distance;
+                        CaptureFrame("world-alliance-colors.png");
+                        foreach (var pin in visible)
+                            Debug.Log($"S6_CITY_COLOR name={pin.Name} mine={pin.Mine} allied={pin.Allied} color={ColorUtility.ToHtmlStringRGB(SurfaceView.CityColor(pin))}");
+                    }
+                }
+                var rallyMarch = city.Surface.Marches.FirstOrDefault(m => m.RallyId != null && m.RallyTotalTroops > 0 && !m.Returning);
+                if (rallyMarch != null)
+                {
+                    var tile = MarchLogic.CurrentTile(rallyMarch, GameClient.Instance.ServerNowMs);
+                    var rallyPos = SurfaceView.TilePos(tile.x, tile.y);
+                    world.FocusOn(WorldScene.Mode.Surface, rallyPos);
+                    yield return new WaitForSecondsRealtime(1);
+                    world.EndCinematic(); world.SetMode(WorldScene.Mode.Surface);
+                    world.Surface.SetMarches(city.Surface.Marches, GameClient.Instance.ServerNowMs);
+                    world.Surface.Cull(rallyPos, 3.3f, force: true);
+                    camera.transform.rotation = Quaternion.Euler(52, 0, 0);
+                    camera.transform.position = rallyPos - camera.transform.forward * 3.3f;
+                    CaptureFrame("world-rally.png");
+                }
+            }
 
             // Real map features at the production tile scale, after normal chunk culling.
             foreach (var type in new[] { FeatureType.ResourceField, FeatureType.MonsterCamp, FeatureType.AbyssGate })

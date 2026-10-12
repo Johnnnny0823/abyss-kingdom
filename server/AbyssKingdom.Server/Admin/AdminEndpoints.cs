@@ -23,6 +23,8 @@ public sealed class AdminGrant
     }
 }
 
+public sealed class AdminAllianceRetry { public string? Reason { get; set; } }
+
 /// <summary>
 /// 開發者用的 GM 工具（測試補資源、道具、部隊）。
 /// 只有設定了 Admin:Token（環境變數 Admin__Token）才會開啟；請求必須帶 X-Admin-Token 標頭。
@@ -43,6 +45,24 @@ public static class AdminEndpoints
             var found = await sessions.ModifyCityAsync(playerId, grant.ApplyTo, ctx.RequestAborted);
             app.Logger.LogInformation("Admin grant to {Id}: found={Found}", playerId, found);
             return found ? Results.Ok(new { ok = true }) : Results.NotFound(new { error = "player not found" });
+        });
+        app.MapGet("/admin/alliance", async (HttpContext ctx, AllianceService alliances) =>
+        {
+            if (!Authorized(ctx, token)) return Results.Unauthorized();
+            return Results.Json(await alliances.SnapshotAsync(ctx.RequestAborted), AbyssKingdom.Server.Infrastructure.Json.Options);
+        });
+        app.MapPost("/admin/alliance/retry", async (AdminAllianceRetry request, HttpContext ctx, AllianceService alliances, SessionManager sessions) =>
+        {
+            if (!Authorized(ctx, token)) return Results.Unauthorized();
+            string reason = request.Reason?.Trim() ?? "";
+            if (reason.Length == 0 || reason.Length > 200 || reason.Any(char.IsControl)) return Results.BadRequest(new { error = "reason required, maximum 200 characters" });
+            await alliances.RecordAdminRetryAsync(reason, ctx.RequestAborted);
+            await alliances.RecoverFlagPaymentsAsync(ctx.RequestAborted);
+            await alliances.AdvanceReinforcementsAsync(ctx.RequestAborted);
+            await sessions.RecoverCampSettlementsAsync(ctx.RequestAborted);
+            await sessions.RecoverAllianceDefensesAsync(ctx.RequestAborted);
+            await alliances.AdvanceRalliesAsync(ctx.RequestAborted);
+            return Results.Ok(new { ok = true });
         });
     }
 

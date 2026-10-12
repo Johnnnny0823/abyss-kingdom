@@ -24,6 +24,7 @@ namespace AbyssKingdom.Client.UI
         private readonly SurfaceView _view;
         private readonly Label _title, _sub, _desc, _owner;
         private readonly Button _marchBtn;
+        private readonly Button _rallyBtn;
         private (int x, int y)? _selected;
         private bool _centered;
         private float _nextFetch;
@@ -31,10 +32,12 @@ namespace AbyssKingdom.Client.UI
         private string _targetName;
         private float _nextTile;
         private Feature _feature;
+        private FlagMapView _flag;
         private (int x, int y) _target;
 
         /// <summary>按下「出征」：目標格子與名稱。</summary>
         public event Action<int, int, string> MarchRequested;
+        public event Action<int, int> RallyRequested;
 
         public ContinentPage(SurfaceView view)
         {
@@ -47,6 +50,8 @@ namespace AbyssKingdom.Client.UI
             head.Add(_title);
             _marchBtn = Btn("出征", () => { if (_selected.HasValue) MarchRequested?.Invoke(_target.x, _target.y, _targetName); }, "btn-primary", "btn-small");
             head.Add(_marchBtn);
+            _rallyBtn = Btn("集結", () => { if (_feature != null) RallyRequested?.Invoke(_feature.X, _feature.Y); }, "btn-primary", "btn-small");
+            head.Add(_rallyBtn); Show(_rallyBtn, false);
             head.Add(Btn("✕", () => { _selected = null; _sig = null; }, "btn-small"));
             Root.Add(head);
             _sub = Lbl("", "muted");
@@ -104,6 +109,7 @@ namespace AbyssKingdom.Client.UI
                 _nextFetch = Time.unscaledTime + RefreshCitiesSeconds;
                 G.RequestCities();
                 G.RequestCamps();
+                G.RequestTerritory();
             }
             if (!_centered && city.Surface.Placed)
             {
@@ -111,7 +117,10 @@ namespace AbyssKingdom.Client.UI
                 _centered = true;
             }
             _view.SetMarches(city.Surface.Marches, now);
+            _view.SetTerritories(G.TerritoryFlags, G.Alliance?.MyAllianceId, now);
             _view.SetDefeatedCamps(G.DefeatedCamps, now);
+            if (_flag != null) _owner.text = _flag.Paid && now >= _flag.CompletesAtMs ? "領地已生效" :
+                !_flag.Paid ? "建造付款待完成" : "施工 " + DisplayNames.Duration(_flag.CompletesAtMs - now);
             if (_feature != null && _feature.Type == FeatureType.MonsterCamp)
             {
                 if (Time.unscaledTime >= _nextTile)
@@ -121,7 +130,10 @@ namespace AbyssKingdom.Client.UI
                 }
                 var info = G.Tile;
                 if (info != null && info.X == _feature.X && info.Y == _feature.Y)
+                {
                     _owner.text = info.CampBackAt > now ? $"已被擊敗，{DisplayNames.Duration(info.CampBackAt - now)} 後重生" : $"魔物 {CampConfig.Lineup(_feature.Level, 0).Count} 支小隊";
+                    _rallyBtn.SetEnabled(info.CampBackAt <= now);
+                }
             }
             if (_feature != null && _feature.Type == FeatureType.ResourceField)
             {
@@ -136,15 +148,20 @@ namespace AbyssKingdom.Client.UI
             }
 
             var pins = G.Cities;
-            string sig = pins.Count + ":" + _selected + ":" + city.Surface.X + "," + city.Surface.Y + ":" + PinsHash(pins);
+            string sig = pins.Count + ":" + _selected + ":" + city.Surface.X + "," + city.Surface.Y + ":" + PinsHash(pins) + ":" + G.TerritoryVersion;
             if (sig == _sig) return;
             _sig = sig;
 
             CityPin pin = _selected.HasValue ? PinAt(pins, _selected.Value.x, _selected.Value.y) : null;
             Feature feature = _selected.HasValue && pin == null ? FeatureNear(_selected.Value.x, _selected.Value.y) : null;
+            FlagMapView flag = null;
+            if (_selected.HasValue && pin == null && feature == null)
+                foreach (var f in G.TerritoryFlags)
+                    if (SurfaceLogic.Dist2(f.X, f.Y, _selected.Value.x, _selected.Value.y) <= 2) { flag = f; break; }
+            _flag = flag;
             if (feature != _feature) _nextTile = 0;
             _feature = feature;
-            (int x, int y)? mark = pin != null ? (pin.X, pin.Y) : feature != null ? (feature.X, feature.Y) : _selected;
+            (int x, int y)? mark = pin != null ? (pin.X, pin.Y) : feature != null ? (feature.X, feature.Y) : flag != null ? (flag.X, flag.Y) : _selected;
             _view.SetCities(pins, mark, pin != null);
 
             Show(Root, _selected.HasValue);
@@ -156,27 +173,32 @@ namespace AbyssKingdom.Client.UI
 
             _title.text = pin != null ? $"{pin.Name} 的主城"
                 : feature != null ? DisplayNames.FeatureName(feature)
+                : flag != null ? "[" + flag.Tag + "] 盟旗"
                 : wall ? "山脈" : pass ? "關隘" : zone == SurfaceZone.Pit ? "深淵" : zone == SurfaceZone.Edge ? "地圖邊緣" : "空地";
             _sub.text = $"{DisplayNames.Zones[zone]} · X:{sx} Y:{sy}";
+            _title.style.color = pin != null ? SurfaceView.CityColor(pin) : Color.white;
             _owner.text = pin != null ? (pin.Mine ? "這是你的主城" : $"總戰力 {pin.Power:N0}" + (pin.Shielded ? "　護盾中" : "")) : "";
-            _desc.text = pin != null ? (pin.Mine ? "" : pin.Shielded ? "有護盾的主城不能攻打。" : "可以出兵攻打：打贏能掠奪基礎資源。出兵攻城會解除你自己的護盾。")
+            _desc.text = pin != null ? (pin.Mine ? "" : pin.Allied ? DisplayNames.AlliedCityDescription : pin.Shielded ? "有護盾的主城不能攻打。" : "可以出兵攻打：打贏能掠奪基礎資源。出兵攻城會解除你自己的護盾。")
                 : feature != null ? DisplayNames.FeatureDescriptions[feature.Type]
+                : flag != null ? DisplayNames.FlagDescription
                 : wall ? "分區之間的山脈，部隊無法翻越，只能從關隘通過。"
                 : pass ? "山脈中的關隘，是分區之間唯一的通道。聯盟會爭奪這裡。"
-                : zone == SurfaceZone.Pit ? "永暗之喉。每個賽季結束後，下一層的大陸會開放。"
+                : zone == SurfaceZone.Pit ? DisplayNames.AbyssWorldDescription
                 : zone == SurfaceZone.Edge ? "大陸的盡頭。" : "什麼都沒有的空地。部隊可以駐紮在這裡。";
 
             bool mine = pin != null && pin.Mine;
             _targetName = _title.text;
             _target = (sx, sy);
-            Show(_marchBtn, !mine && !(pin != null && pin.Shielded) && SurfaceLogic.Walkable(sx, sy) && feature?.Type != FeatureType.AbyssGate);
+            Show(_marchBtn, !mine && !(pin != null && (pin.Shielded || pin.Allied)) && SurfaceLogic.Walkable(sx, sy) && feature?.Type != FeatureType.AbyssGate);
             _marchBtn.text = pin != null ? "攻城" : "出征";
+            Show(_rallyBtn, feature?.Type == FeatureType.MonsterCamp && feature.Level >= 2 && !string.IsNullOrEmpty(G.Alliance?.MyAllianceId));
+            if (feature?.Type == FeatureType.MonsterCamp) _rallyBtn.SetEnabled(G.Tile == null || G.Tile.X != feature.X || G.Tile.Y != feature.Y || G.Tile.CampBackAt <= now);
         }
 
         private static int PinsHash(List<CityPin> pins)
         {
             int h = 17;
-            foreach (var p in pins) h = h * 31 + p.X * 7 + p.Y * 13 + (p.Name?.GetHashCode() ?? 0) + (p.Mine ? 1 : 0);
+            foreach (var p in pins) h = h * 31 + p.X * 7 + p.Y * 13 + (p.Name?.GetHashCode() ?? 0) + (p.Mine ? 1 : 0) + (p.Allied ? 2 : 0) + (p.Shielded ? 4 : 0) + p.KeepLevel * 17;
             return h;
         }
     }

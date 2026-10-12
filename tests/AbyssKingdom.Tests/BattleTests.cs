@@ -11,6 +11,27 @@ public static class BattleTests
     static List<SquadInput> Side(params SquadInput[] s) => s.ToList();
 
     [Test]
+    public static void AllianceScenarios_ExpandOnlyTheirAuthorizedSide()
+    {
+        List<SquadInput> Group(int count) => Enumerable.Range(0, count)
+            .Select(_ => Squad(TroopType.Shield, 10)).ToList();
+        Assert.Throws<ArgumentException>(() => BattleEngine.Run(Group(1), Group(6), 1));
+        Assert.Throws<ArgumentException>(() => BattleEngine.Run(Group(6), Group(1), 1,
+            BattleScenario.GarrisonDefense));
+        Assert.Equal(7, BattleEngine.Run(Group(1), Group(7), 1,
+            BattleScenario.GarrisonDefense).Defenders.Count);
+        Assert.Throws<ArgumentException>(() => BattleEngine.Run(Group(1), Group(8), 1,
+            BattleScenario.GarrisonDefense));
+        Assert.Throws<ArgumentException>(() => BattleEngine.Run(Group(6), Group(1), 1));
+        Assert.Equal(15, BattleEngine.Run(Group(15), Group(1), 1,
+            BattleScenario.PveRally).Attackers.Count);
+        Assert.Throws<ArgumentException>(() => BattleEngine.Run(Group(16), Group(1), 1,
+            BattleScenario.PveRally));
+        Assert.Throws<ArgumentException>(() => BattleEngine.Run(Group(1), Group(6), 1,
+            BattleScenario.PveRally));
+    }
+
+    [Test]
     public static void SameSeed_SameReport()
     {
         BattleResult Run() => BattleEngine.Run(

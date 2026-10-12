@@ -44,9 +44,10 @@ namespace AbyssKingdom.Client.UI
         private QueueView _buildQueue, _hudTrainQueue, _trainQueue;
 
         // 彈出面板（主將、遠征、兵營、背包；出征面板從大地圖的資訊卡打開）
-        private const int PageHeroes = 0, PageExpedition = 1, PageBarracks = 2, PageBag = 3, PageMarch = 4, PageHospital = 5;
+        private const int PageHeroes = 0, PageExpedition = 1, PageBarracks = 2, PageBag = 3, PageMarch = 4, PageHospital = 5, PageAlliance = 6;
         private const int HudPages = 4;
-        private static readonly string[] PageNames = { "主將", "遠征", "兵營", "背包", "出征", "醫館" };
+        private static readonly string[] PageNames = { "主將", "遠征", "兵營", "背包", "出征", "醫館", "聯盟" };
+        private AlliancePanel _alliance;
         private HospitalPanel _hospital;
         private QueueView _hudHealQueue, _healQueue;
         private VisualElement _healPanel;
@@ -119,6 +120,7 @@ namespace AbyssKingdom.Client.UI
             if (Array.IndexOf(args, "-continent") >= 0) _world.SetMode(WorldScene.Mode.Surface);
             if (Array.IndexOf(args, "-heroes") >= 0) OpenPage(PageHeroes);
             if (Array.IndexOf(args, "-expedition") >= 0) OpenPage(PageExpedition);
+            if (Array.IndexOf(args, "-alliance") >= 0) OpenPage(PageAlliance);
             int bi = Array.IndexOf(args, "-building");
             if (bi >= 0 && bi + 1 < args.Length && Enum.TryParse<BuildingType>(args[bi + 1], out var bt)) _selBuilding = bt;
             // 測試用：-movetest <建築> <x> <y> 走一次「移動 → 放下」流程（和滑鼠操作同一段程式）
@@ -325,6 +327,7 @@ namespace AbyssKingdom.Client.UI
                 right.Add(Btn(PageNames[i], () => OpenPage(idx), "hud-btn"));
             }
             right.Add(Btn("全圖", OpenOverview, "hud-btn", "hud-btn-map"));
+            right.Add(Btn("聯盟", () => { G.RequestAlliance(); OpenPage(PageAlliance); }, "hud-btn"));
             hud.Add(right);
             game.Add(hud);
 
@@ -335,6 +338,7 @@ namespace AbyssKingdom.Client.UI
             _surfaceSel = Pass(El());
             _continent = new ContinentPage(_world.Surface);
             _continent.MarchRequested += (x, y, title) => { _march.SetTarget(x, y, title); OpenPage(PageMarch); };
+            _continent.RallyRequested += (x, y) => _alliance.OpenCreateRally(x, y);
             _surfaceSel.Add(_continent.Root);
             selHost.Add(_surfaceSel);
             _buildingSel = El("panel", "sel-card");
@@ -388,7 +392,8 @@ namespace AbyssKingdom.Client.UI
             bag.Add(_itemList);
             _healQueue = new QueueView(QueueType.Healing, OpenSpeedupDialog);
             _hospital = new HospitalPanel(_healQueue);
-            _pageRoots = new[] { _heroPage.Root, _expPage.Root, _training.Root, bag, _march.Root, _hospital.Root };
+            _alliance = new AlliancePanel();
+            _pageRoots = new[] { _heroPage.Root, _expPage.Root, _training.Root, bag, _march.Root, _hospital.Root, _alliance.Root };
 
             _pageOverlay = El("page-overlay");
             var window = El("page-window");
@@ -445,7 +450,7 @@ namespace AbyssKingdom.Client.UI
             box.Add(_overview.Root);
             _overviewModal = OpenModal(box);
             var city = G.Predicted();
-            if (city != null) _overview.Refresh(city, G.Cities, G.ServerNowMs, _continent.Selected, SurfaceViewQuad());
+            if (city != null) _overview.Refresh(city, G.Cities, G.ServerNowMs, _continent.Selected, SurfaceViewQuad(), G.TerritoryFlags, G.Alliance?.MyAllianceId);
             G.RequestCities();
         }
 
@@ -669,9 +674,10 @@ namespace AbyssKingdom.Client.UI
                 case PageBag: RefreshItems(city); break;
                 case PageMarch: _march.Refresh(city, now); break;
                 case PageHospital: _hospital.Refresh(city, now); break;
+                case PageAlliance: _alliance.Refresh(); break;
             }
             if (_dialog != null) RefreshDialog(city, now);
-            if (_overviewModal != null && _overviewModal.panel != null) _overview.Refresh(city, G.Cities, now, _continent.Selected, SurfaceViewQuad());
+            if (_overviewModal != null && _overviewModal.panel != null) _overview.Refresh(city, G.Cities, now, _continent.Selected, SurfaceViewQuad(), G.TerritoryFlags, G.Alliance?.MyAllianceId);
         }
 
         private void RefreshItems(CityState city)

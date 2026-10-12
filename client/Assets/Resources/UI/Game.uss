@@ -551,7 +551,7 @@
 .overview-canvas { margin-top: 8px; border-radius: 8px; overflow: hidden; }
 .overview-legend { margin-top: 8px; flex-wrap: wrap; }
 .overview-legend Label { margin-right: 14px; font-size: 12px; }
-.ov-mine { color: rgb(255, 214, 110); }
+.ov-mine { color: rgb(145, 215, 255); }
 .ov-other { color: rgb(220, 90, 80); }
 .ov-gate { color: rgb(110, 240, 215); }
 .ov-march { color: rgb(255, 226, 140); }

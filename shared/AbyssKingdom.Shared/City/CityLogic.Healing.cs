@@ -18,6 +18,7 @@ namespace AbyssKingdom.Shared.City
         public Dictionary<TroopType, long> Troops { get; set; } = new Dictionary<TroopType, long>();
         public long StartedAtMs { get; set; }
         public long FinishAtMs { get; set; }
+        public AllianceHelpProgress Help { get; set; }
 
         public long Total()
         {
@@ -116,6 +117,7 @@ namespace AbyssKingdom.Shared.City
             foreach (var r in CityConfig.AllResources)
                 state.Resources[r] = state.GetResource(r) - HealCost(job.Troops, r);
             job.FinishAtMs = nowMs + HealDurationMs(job.Troops);
+            job.Help = NewHelpProgress(state, job.FinishAtMs - nowMs);
             state.Healing = job;
             return HealResult.Ok;
         }

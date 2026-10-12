@@ -26,6 +26,7 @@ namespace AbyssKingdom.Client.Game
         private readonly GameConnection _conn = new GameConnection();
         private long _serverOffsetMs;
         private bool _urlFromArgs; // 命令列指定的網址不寫回玩家設定
+        private bool _nameFromArgs;
 
         public string ServerUrl { get; set; }
         public string PlayerName { get; set; }
@@ -35,6 +36,13 @@ namespace AbyssKingdom.Client.Game
 
         /// <summary>伺服器最後送來的權威城市狀態。</summary>
         public CityState City { get; private set; }
+        public AllianceStateMessage Alliance { get; private set; }
+        public List<AllianceChatView> AllianceChat { get; private set; } = new List<AllianceChatView>();
+        public int AllianceChatVersion { get; private set; }
+        private string _chatAllianceId;
+        private bool _fullChatRefreshPending;
+        private string _allianceCreateOperationId;
+        private string _allianceCreateKey;
 
         /// <summary>最近一次遠征結果與當時的編隊（介面用來顯示戰報）。</summary>
         public ExpeditionResult LastExpedition { get; private set; }
@@ -66,6 +74,7 @@ namespace AbyssKingdom.Client.Game
             for (int i = 0; i < args.Length; i++)
             {
                 if (args[i] == "-server" && i + 1 < args.Length) { ServerUrl = args[i + 1]; _urlFromArgs = true; }
+                if (args[i] == "-devname" && i + 1 < args.Length) { PlayerName = args[i + 1]; _nameFromArgs = true; }
                 if (args[i] == "-autologin") Invoke(nameof(AutoLogin), 0.5f);
                 if (args[i] == "-devlogin") Invoke(nameof(DevLogin), 0.5f);
             }
@@ -83,6 +92,7 @@ namespace AbyssKingdom.Client.Game
             {
                 PlayerId = null;
                 City = null;
+                Alliance = null;
                 Notice?.Invoke("與伺服器的連線中斷：" + _conn.LastError, true);
             }
         }
@@ -99,7 +109,7 @@ namespace AbyssKingdom.Client.Game
             {
                 ServerUrl = (ServerUrl ?? "").Trim();
                 if (!_urlFromArgs) PlayerPrefs.SetString(PrefServerUrl, ServerUrl);
-                PlayerPrefs.SetString(PrefName, PlayerName ?? "");
+                if (!_nameFromArgs) PlayerPrefs.SetString(PrefName, PlayerName ?? "");
                 PlayerPrefs.Save();
 
                 string token = "dev:" + PlayerName;
@@ -158,6 +168,76 @@ namespace AbyssKingdom.Client.Game
 
         /// <summary>領取目前新手任務的獎勵。</summary>
         public void ClaimQuest() => _conn.Send(MessageTypes.QuestClaim);
+
+        public void RequestAlliance()
+        {
+            _fullChatRefreshPending = true;
+            _conn.Send(MessageTypes.AllianceGet);
+        }
+        public void CreateAlliance(string name, string tag)
+        {
+            string key = (name ?? "").Trim() + "|" + (tag ?? "").Trim().ToUpperInvariant();
+            if (_allianceCreateKey != key)
+            {
+                _allianceCreateKey = key;
+                _allianceCreateOperationId = Guid.NewGuid().ToString();
+            }
+            _conn.Send(MessageTypes.AllianceCreate, new AllianceCreateRequest
+            { Name = name, Tag = tag, OperationId = _allianceCreateOperationId });
+        }
+        public void JoinAlliance(string id, bool apply) =>
+            _conn.Send(apply ? MessageTypes.AllianceApply : MessageTypes.AllianceJoin, new AllianceIdRequest { AllianceId = id });
+        public void ReviewAlliance(string playerId, bool accept) =>
+            _conn.Send(MessageTypes.AllianceReview, new AllianceReviewRequest { PlayerId = playerId, Accept = accept });
+        public void LeaveAlliance() => _conn.Send(MessageTypes.AllianceLeave);
+        public void KickAllianceMember(string playerId) =>
+            _conn.Send(MessageTypes.AllianceKick, new AllianceTargetRequest { PlayerId = playerId });
+        public void SetAllianceOfficer(string playerId, bool officer) =>
+            _conn.Send(MessageTypes.AllianceOfficer, new AllianceOfficerRequest { PlayerId = playerId, Officer = officer });
+        public void TransferAlliance(string playerId) =>
+            _conn.Send(MessageTypes.AllianceTransfer, new AllianceTargetRequest { PlayerId = playerId });
+        public void DissolveAlliance() => _conn.Send(MessageTypes.AllianceDissolve);
+        public void SetAllianceJoinMode(AbyssKingdom.Shared.Social.AllianceJoinMode mode) =>
+            _conn.Send(MessageTypes.AllianceJoinMode, new AllianceJoinModeRequest { Mode = mode });
+        public void PostAllianceChat(string text) => _conn.Send(MessageTypes.AllianceChatPost,
+            new AllianceChatPostRequest { Text = text, OperationId = Guid.NewGuid().ToString() });
+        public void RequestAllianceChat(long afterSequence = 0) => _conn.Send(MessageTypes.AllianceChatHistory,
+            new AllianceChatHistoryRequest { AfterSequence = afterSequence });
+        public void ReportAllianceChat(long sequence) => _conn.Send(MessageTypes.AllianceChatReport,
+            new AllianceChatTargetRequest { Sequence = sequence });
+        public void HideAllianceChat(long sequence)
+        {
+            _fullChatRefreshPending = true;
+            _conn.Send(MessageTypes.AllianceChatHide, new AllianceChatTargetRequest { Sequence = sequence });
+        }
+        public void MuteAllianceChat(string playerId, int hours) => _conn.Send(MessageTypes.AllianceChatMute,
+            new AllianceChatMuteRequest { PlayerId = playerId, Hours = hours });
+        public void SetAllianceAnnouncement(string text) => _conn.Send(MessageTypes.AllianceAnnouncement,
+            new AllianceAnnouncementRequest { Text = text });
+        public void RequestAllianceHelp(QueueType queue) => _conn.Send(MessageTypes.AllianceHelpRequest,
+            new AllianceHelpRequestMessage { Queue = queue });
+        public void HelpAllAlliance() => _conn.Send(MessageTypes.AllianceHelpAll);
+        public void CreateRally(HeroId hero, Dictionary<TroopType, long> troops, int x, int y, int seconds, string operationId) =>
+            _conn.Send(MessageTypes.AllianceRallyCreate, new AllianceRallyCreateRequest
+            { Hero = hero, Troops = troops, X = x, Y = y, Seconds = seconds, OperationId = operationId });
+        public void JoinRally(string id, HeroId hero, Dictionary<TroopType, long> troops, string operationId) =>
+            _conn.Send(MessageTypes.AllianceRallyJoin, new AllianceRallyJoinRequest { Id = id, Hero = hero, Troops = troops, OperationId = operationId });
+        public void RecallRally(string id) => _conn.Send(MessageTypes.AllianceRallyRecall, new AllianceRallyRecallRequest { Id = id });
+        public List<FlagMapView> TerritoryFlags { get; private set; } = new List<FlagMapView>();
+        public int TerritoryVersion { get; private set; }
+        private long _territoryRevision = -1;
+        public void RequestTerritory() => _conn.Send(MessageTypes.WorldTerritory);
+        public void PlaceAllianceFlag(int slot, int x, int y, string operationId) => _conn.Send(MessageTypes.AllianceFlagPlace,
+            new AllianceFlagPlaceRequest { Slot = slot, X = x, Y = y, OperationId = operationId });
+        public void RemoveAllianceFlag(int slot) => _conn.Send(MessageTypes.AllianceFlagRemove,
+            new AllianceFlagRemoveRequest { Slot = slot });
+        public void SendReinforcement(string playerId, HeroId hero, Dictionary<TroopType, long> troops, string operationId) =>
+            _conn.Send(MessageTypes.AllianceReinforcementSend, new AllianceReinforcementSendRequest
+            { PlayerId = playerId, Hero = hero, Troops = troops, OperationId = operationId });
+        public void ReturnReinforcement(string id) => _conn.Send(MessageTypes.AllianceReinforcementReturn,
+            new AllianceReinforcementReturnRequest { Id = id });
+        public void SetReinforcementAcceptance(bool accept) => _conn.Send(MessageTypes.AllianceReinforcementAccept,
+            new AllianceReinforcementAcceptRequest { Accept = accept });
 
         /// <summary>目前被擊敗、還沒重生的怪物營地（大地圖讓營地前的怪物消失）。</summary>
         public List<DefeatedCamp> DefeatedCamps { get; private set; } = new List<DefeatedCamp>();
@@ -220,8 +300,11 @@ namespace AbyssKingdom.Client.Game
                     var ok = msg.DataAs<LoginOk>();
                     PlayerId = ok.PlayerId;
                     PlayerName = ok.DisplayName;
+                    Alliance = null; _fullChatRefreshPending = true;
+                    _territoryRevision = -1; TerritoryFlags.Clear(); TerritoryVersion++;
                     SyncClock(ok.ServerTimeMs);
                     Notice?.Invoke($"歡迎回來，{ok.DisplayName} 領主", false);
+                    _conn.Send(MessageTypes.AllianceGet);
                     break;
                 case MessageTypes.CityState:
                     var state = msg.DataAs<CityStateMessage>();
@@ -248,6 +331,71 @@ namespace AbyssKingdom.Client.Game
                     break;
                 case MessageTypes.WorldCities:
                     Cities = msg.DataAs<WorldCitiesMessage>().Cities ?? new List<CityPin>();
+                    break;
+                case MessageTypes.AllianceState:
+                    var incomingAlliance = msg.DataAs<AllianceStateMessage>();
+                    if (Alliance != null && incomingAlliance.Version < Alliance.Version) break;
+                    Alliance = incomingAlliance;
+                    RequestCities();
+                    if (Alliance.ServerTimeMs > 0) SyncClock(Alliance.ServerTimeMs);
+                    RequestTerritory();
+                    if (_chatAllianceId != Alliance?.MyAllianceId)
+                    {
+                        _chatAllianceId = Alliance?.MyAllianceId;
+                        AllianceChat.Clear();
+                        AllianceChatVersion++;
+                        _fullChatRefreshPending = true;
+                    }
+                    if (!string.IsNullOrEmpty(_chatAllianceId))
+                    {
+                        long after = _fullChatRefreshPending || AllianceChat.Count == 0
+                            ? 0 : AllianceChat[AllianceChat.Count - 1].Sequence;
+                        RequestAllianceChat(after);
+                        _fullChatRefreshPending = false;
+                    }
+                    if (!string.IsNullOrEmpty(Alliance?.PendingCreateOperationId))
+                    {
+                        _allianceCreateOperationId = Alliance.PendingCreateOperationId;
+                        _allianceCreateKey = Alliance.PendingCreateName + "|" + Alliance.PendingCreateTag;
+                    }
+                    if (!string.IsNullOrEmpty(Alliance?.MyAllianceId)) _allianceCreateOperationId = null;
+                    break;
+                case MessageTypes.AllianceChat:
+                case MessageTypes.AllianceChatMessages:
+                    var chat = msg.DataAs<AllianceChatMessagesMessage>();
+                    if (chat.AllianceId != _chatAllianceId) break;
+                    if (chat.FullSnapshot)
+                    {
+                        var newer = AllianceChat.FindAll(m => m.Sequence > chat.LatestSequence);
+                        AllianceChat.Clear();
+                        AllianceChat.AddRange(newer);
+                    }
+                    else if (chat.OldestSequence > 0)
+                        AllianceChat.RemoveAll(m => m.Sequence < chat.OldestSequence);
+                    foreach (var entry in chat.Messages)
+                    {
+                        int index = AllianceChat.FindIndex(m => m.Sequence == entry.Sequence);
+                        if (index >= 0) AllianceChat[index] = entry;
+                        else AllianceChat.Add(entry);
+                    }
+                    AllianceChat.Sort((a, b) => a.Sequence.CompareTo(b.Sequence));
+                    if (AllianceChat.Count > 100) AllianceChat.RemoveRange(0, AllianceChat.Count - 100);
+                    AllianceChatVersion++;
+                    break;
+                case MessageTypes.AllianceHelpResult:
+                    var helped = msg.DataAs<AllianceHelpResultMessage>();
+                    Notice?.Invoke($"聯盟幫助成功 {helped.Applied} 件，失效 {helped.Expired} 件", false);
+                    break;
+                case MessageTypes.AllianceHelpChanged:
+                case MessageTypes.AllianceMilitaryChanged:
+                    if (IsLoggedIn) RequestAlliance();
+                    break;
+                case MessageTypes.WorldTerritory:
+                    var territory = msg.DataAs<WorldTerritoryMessage>();
+                    if (territory.Version < _territoryRevision) break;
+                    _territoryRevision = territory.Version;
+                    TerritoryFlags = territory.Flags ?? new List<FlagMapView>();
+                    TerritoryVersion++;
                     break;
                 case MessageTypes.WorldCamps:
                     DefeatedCamps = msg.DataAs<WorldCampsMessage>().Camps ?? new List<DefeatedCamp>();
@@ -277,7 +425,8 @@ namespace AbyssKingdom.Client.Game
                         + (DisplayNames.TroopsText(ma.Dead) is var d && d != "" ? $"　陣亡 {d}" : "");
                     if (ma.TargetName != null)
                     {
-                        Notice?.Invoke(ma.Shielded ? $"{ma.TargetName} 的主城有護盾，{hero} 的部隊撤回"
+                        Notice?.Invoke(ma.Allied ? $"{ma.TargetName} 已是盟友，{hero} 的部隊撤回"
+                            : ma.Shielded ? $"{ma.TargetName} 的主城有護盾，{hero} 的部隊撤回"
                             : ma.BattleWon ? $"{hero} 攻破了 {ma.TargetName} 的主城！掠奪 {(carry != "" ? carry : "（對方沒有可掠奪的資源）")}。{losses}"
                             : $"{hero} 攻打 {ma.TargetName} 的主城失敗，倖存的部隊撤回。{losses}", ma.BattleLost);
                         break;

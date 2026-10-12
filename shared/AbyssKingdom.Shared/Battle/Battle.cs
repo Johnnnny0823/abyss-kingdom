@@ -31,6 +31,9 @@ namespace AbyssKingdom.Shared.Battle
 
     public enum BattleSide { Attacker = 0, Defender = 1 }
 
+    /// <summary>Only the authoritative server chooses an expanded alliance battle scenario.</summary>
+    public enum BattleScenario { Standard = 0, GarrisonDefense = 1, PveRally = 2 }
+
     public enum BattleOutcome { AttackerWins = 0, DefenderWins = 1, Draw = 2 }
 
     /// <summary>一支參戰小隊：領軍者（主將或魔物首領）＋同一種部隊。</summary>
@@ -49,6 +52,13 @@ namespace AbyssKingdom.Shared.Battle
         public long AttackPercent { get; set; } = 100;
         /// <summary>錨索：承受傷害百分比（100 = 無加成，85 = 少受 15%）。</summary>
         public long DamageTakenPercent { get; set; } = 100;
+        public int DefenseBasisPoints { get; set; } = 10_000;
+        public SquadInput WithDefenseBonus(int basisPoints)
+        {
+            var copy = (SquadInput)MemberwiseClone();
+            copy.DefenseBasisPoints = basisPoints;
+            return copy;
+        }
         /// <summary>墜索：出手速度加成。</summary>
         public int SpeedBonus { get; set; }
         /// <summary>結索：克制倍率加成；被克制時也減少同樣的懲罰。</summary>
@@ -100,6 +110,8 @@ namespace AbyssKingdom.Shared.Battle
     {
         public const int MaxRounds = 20;
         public const int MaxSquadsPerSide = 5;
+        public const int MaxGarrisonDefenders = 7;
+        public const int MaxRallyAttackers = 15;
         public const int CounterBonusPercent = 130;
         public const int CounteredPercent = 80;
         public const int RandomMinPercent = 90;
@@ -151,10 +163,14 @@ namespace AbyssKingdom.Shared.Battle
             public bool Alive => LeaderHp > 0;
         }
 
-        public static BattleResult Run(IList<SquadInput> attackers, IList<SquadInput> defenders, ulong seed)
+        public static BattleResult Run(IList<SquadInput> attackers, IList<SquadInput> defenders, ulong seed,
+            BattleScenario scenario = BattleScenario.Standard)
         {
-            Validate(attackers, nameof(attackers));
-            Validate(defenders, nameof(defenders));
+            if (!Enum.IsDefined(typeof(BattleScenario), scenario)) throw new ArgumentException("unknown battle scenario");
+            Validate(attackers, nameof(attackers), scenario == BattleScenario.PveRally
+                ? BattleConfig.MaxRallyAttackers : BattleConfig.MaxSquadsPerSide);
+            Validate(defenders, nameof(defenders), scenario == BattleScenario.GarrisonDefense
+                ? BattleConfig.MaxGarrisonDefenders : BattleConfig.MaxSquadsPerSide);
 
             var rng = new DeterministicRandom(seed);
             var result = new BattleResult { Seed = seed };
@@ -187,13 +203,14 @@ namespace AbyssKingdom.Shared.Battle
             return result;
         }
 
-        private static void Validate(IList<SquadInput> side, string name)
+        private static void Validate(IList<SquadInput> side, string name, int maximum)
         {
-            if (side == null || side.Count == 0 || side.Count > BattleConfig.MaxSquadsPerSide)
-                throw new ArgumentException($"{name} 需要 1~{BattleConfig.MaxSquadsPerSide} 支小隊");
+            if (side == null || side.Count == 0 || side.Count > maximum)
+                throw new ArgumentException($"{name} 需要 1~{maximum} 支小隊");
             foreach (var s in side)
             {
-                if (s.Count < 0 || s.LeaderHp <= 0 || s.LeaderAttack < 0 || s.LeaderDefense < 0)
+                if (s.Count < 0 || s.LeaderHp <= 0 || s.LeaderAttack < 0 || s.LeaderDefense < 0 ||
+                    s.DefenseBasisPoints < 10_000 || s.DefenseBasisPoints > 10_500)
                     throw new ArgumentException($"{name} 有不合法的小隊數值");
                 if (!Enum.IsDefined(typeof(TroopType), s.Troop))
                     throw new ArgumentException($"{name} 有未知兵種");
@@ -261,7 +278,11 @@ namespace AbyssKingdom.Shared.Battle
             long roll = rng.Range(BattleConfig.RandomMinPercent, BattleConfig.RandomMaxPercent);
             long defense = BattleConfig.TroopDefense(target.In.Troop) + target.In.LeaderDefense / 10;
             int element = Elements.Percent(actor.In.Element, actor.In.Polarity, target.In.Element, target.In.Polarity);
-            long damage = power * counter / 100 * element / 100 * roll / 100 * 100 / (100 + defense) * target.In.DamageTakenPercent / 100;
+            long baseDamage = power * counter / 100 * element / 100 * roll / 100;
+            long damage = target.In.DefenseBasisPoints == 10_000
+                ? baseDamage * 100 / (100 + defense)
+                : baseDamage * 1_000_000 / (1_000_000 + defense * target.In.DefenseBasisPoints);
+            damage = damage * target.In.DamageTakenPercent / 100;
             if (damage < 1) damage = 1;
 
             long before = target.Troops;

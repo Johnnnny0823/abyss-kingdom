@@ -2,6 +2,7 @@ using AbyssKingdom.Shared.City;
 using System.Collections.Generic;
 using AbyssKingdom.Shared.Expedition;
 using AbyssKingdom.Shared.Heroes;
+using AbyssKingdom.Shared.Social;
 
 namespace AbyssKingdom.Shared.Protocol
 {
@@ -35,11 +36,39 @@ namespace AbyssKingdom.Shared.Protocol
         public const string WorldTile = "world.tile";
         /// <summary>目前被擊敗、還沒重生的怪物營地（大地圖讓營地前的怪物消失）。</summary>
         public const string WorldCamps = "world.camps";
+        public const string WorldTerritory = "world.territory";
         public const string CityAttacked = "city.attacked";
         public const string HealingCompleted = "city.healingCompleted";
         /// <summary>領取目前新手任務的獎勵（沒有資料；條件由伺服器檢查）。</summary>
         public const string QuestClaim = "quest.claim";
         public const string Ping = "ping";
+        public const string AllianceGet = "alliance.get";
+        public const string AllianceCreate = "alliance.create";
+        public const string AllianceJoin = "alliance.join";
+        public const string AllianceApply = "alliance.apply";
+        public const string AllianceReview = "alliance.review";
+        public const string AllianceLeave = "alliance.leave";
+        public const string AllianceKick = "alliance.kick";
+        public const string AllianceOfficer = "alliance.officer";
+        public const string AllianceTransfer = "alliance.transfer";
+        public const string AllianceDissolve = "alliance.dissolve";
+        public const string AllianceJoinMode = "alliance.joinMode";
+        public const string AllianceChatPost = "alliance.chat.post";
+        public const string AllianceChatHistory = "alliance.chat.history";
+        public const string AllianceChatReport = "alliance.chat.report";
+        public const string AllianceChatHide = "alliance.chat.hide";
+        public const string AllianceChatMute = "alliance.chat.mute";
+        public const string AllianceAnnouncement = "alliance.announcement";
+        public const string AllianceHelpRequest = "alliance.help.request";
+        public const string AllianceHelpAll = "alliance.help.all";
+        public const string AllianceReinforcementSend = "alliance.reinforcement.send";
+        public const string AllianceReinforcementReturn = "alliance.reinforcement.return";
+        public const string AllianceReinforcementAccept = "alliance.reinforcement.accept";
+        public const string AllianceFlagPlace = "alliance.flag.place";
+        public const string AllianceFlagRemove = "alliance.flag.remove";
+        public const string AllianceRallyCreate = "alliance.rally.create";
+        public const string AllianceRallyJoin = "alliance.rally.join";
+        public const string AllianceRallyRecall = "alliance.rally.recall";
 
         // 伺服器 → 客戶端
         public const string LoginOk = "login.ok";
@@ -52,6 +81,12 @@ namespace AbyssKingdom.Shared.Protocol
         public const string MarchArrived = "map.marchArrived";
         public const string Error = "error";
         public const string Pong = "pong";
+        public const string AllianceState = "alliance.state";
+        public const string AllianceChat = "alliance.chat";
+        public const string AllianceChatMessages = "alliance.chat.messages";
+        public const string AllianceHelpResult = "alliance.help.result";
+        public const string AllianceHelpChanged = "alliance.help.changed";
+        public const string AllianceMilitaryChanged = "alliance.military.changed";
     }
 
     public static class ErrorCodes
@@ -72,6 +107,174 @@ namespace AbyssKingdom.Shared.Protocol
         public const string MoveRejected = "move_rejected";
         public const string HealRejected = "heal_rejected";
         public const string QuestRejected = "quest_rejected";
+        public const string AllianceRejected = "alliance_rejected";
+    }
+
+    public class AllianceCreateRequest
+    {
+        public string Name { get; set; }
+        public string Tag { get; set; }
+        public string OperationId { get; set; }
+    }
+
+    public class AllianceIdRequest { public string AllianceId { get; set; } }
+    public class AllianceTargetRequest { public string PlayerId { get; set; } }
+    public class AllianceReviewRequest { public string PlayerId { get; set; } public bool Accept { get; set; } }
+    public class AllianceOfficerRequest { public string PlayerId { get; set; } public bool Officer { get; set; } }
+    public class AllianceJoinModeRequest { public AllianceJoinMode Mode { get; set; } }
+    public class AllianceChatPostRequest { public string OperationId { get; set; } public string Text { get; set; } }
+    public class AllianceChatHistoryRequest { public long AfterSequence { get; set; } }
+    public class AllianceChatTargetRequest { public long Sequence { get; set; } }
+    public class AllianceChatMuteRequest { public string PlayerId { get; set; } public int Hours { get; set; } }
+    public class AllianceAnnouncementRequest { public string Text { get; set; } }
+    public class AllianceHelpRequestMessage { public QueueType Queue { get; set; } }
+    public class AllianceHelpResultMessage { public int Applied { get; set; } public int Expired { get; set; } }
+    public class AllianceReinforcementSendRequest
+    {
+        public string PlayerId { get; set; }
+        public string OperationId { get; set; }
+        public HeroId Hero { get; set; }
+        public Dictionary<TroopType, long> Troops { get; set; }
+    }
+    public class AllianceReinforcementReturnRequest { public string Id { get; set; } }
+    public class AllianceReinforcementAcceptRequest { public bool Accept { get; set; } }
+    public class AllianceFlagPlaceRequest { public int Slot { get; set; } public int X { get; set; }
+        public int Y { get; set; } public string OperationId { get; set; } }
+    public class AllianceFlagRemoveRequest { public int Slot { get; set; } }
+    public class AllianceRallyCreateRequest { public HeroId Hero { get; set; } public Dictionary<TroopType, long> Troops { get; set; }
+        public int X { get; set; } public int Y { get; set; } public int Seconds { get; set; } public string OperationId { get; set; } }
+    public class AllianceRallyJoinRequest { public string Id { get; set; } public HeroId Hero { get; set; }
+        public Dictionary<TroopType, long> Troops { get; set; } public string OperationId { get; set; } }
+    public class AllianceRallyRecallRequest { public string Id { get; set; } }
+    public class RallyParticipantView
+    {
+        public string OwnerId { get; set; }
+        public string Name { get; set; }
+        public HeroId Hero { get; set; }
+        public long Count { get; set; }
+        public bool Paid { get; set; }
+        public bool Returned { get; set; }
+        public long Contribution { get; set; }
+        public string OperationId { get; set; }
+        public Dictionary<TroopType, long> Troops { get; set; } = new Dictionary<TroopType, long>();
+        public Dictionary<ResourceType, long> Resources { get; set; } = new Dictionary<ResourceType, long>();
+        public Dictionary<ItemType, long> Items { get; set; } = new Dictionary<ItemType, long>();
+        public Dictionary<TroopType, long> Losses { get; set; } = new Dictionary<TroopType, long>();
+    }
+    public class RallyView
+    {
+        public string Id { get; set; }
+        public string LeaderId { get; set; }
+        public string LeaderName { get; set; }
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int Level { get; set; }
+        public long Capacity { get; set; }
+        public long DepartAtMs { get; set; }
+        public long ArriveAtMs { get; set; }
+        public string State { get; set; }
+        public string Outcome { get; set; }
+        public int Seconds { get; set; }
+        public List<RallyParticipantView> Participants { get; set; } = new List<RallyParticipantView>();
+    }
+    public class FlagMapView
+    {
+        public string Id { get; set; }
+        public string AllianceId { get; set; }
+        public string Tag { get; set; }
+        public int X { get; set; }
+        public int Y { get; set; }
+        public bool Paid { get; set; }
+        public long CompletesAtMs { get; set; }
+    }
+    public class WorldTerritoryMessage { public long Version { get; set; } public long ServerTimeMs { get; set; }
+        public List<FlagMapView> Flags { get; set; } = new List<FlagMapView>(); }
+    public class AllianceReinforcementView
+    {
+        public string Id { get; set; }
+        public string SenderId { get; set; }
+        public string SenderName { get; set; }
+        public string ReceiverId { get; set; }
+        public string ReceiverName { get; set; }
+        public HeroId Hero { get; set; }
+        public Dictionary<TroopType, long> Troops { get; set; }
+        public ReinforcementState State { get; set; }
+        public long MarchId { get; set; }
+        public long ArriveAtMs { get; set; }
+        public bool ReturnRequested { get; set; }
+        public bool BattleFrozen { get; set; }
+    }
+    public class AllianceHelpView
+    {
+        public string OwnerId { get; set; }
+        public string OwnerName { get; set; }
+        public QueueType Queue { get; set; }
+        public long QueueId { get; set; }
+        public int MaxCount { get; set; }
+        public int UsedCount { get; set; }
+    }
+    public class AllianceChatView
+    {
+        public long Sequence { get; set; }
+        public string PlayerId { get; set; }
+        public string DisplayName { get; set; }
+        public string Text { get; set; }
+        public long SentAtMs { get; set; }
+        public bool Hidden { get; set; }
+    }
+    public class AllianceChatMessagesMessage
+    {
+        public string AllianceId { get; set; }
+        public List<AllianceChatView> Messages { get; set; } = new List<AllianceChatView>();
+        public bool FullSnapshot { get; set; }
+        public long OldestSequence { get; set; }
+        public long LatestSequence { get; set; }
+    }
+
+    public class AllianceSummary
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Tag { get; set; }
+        public int Members { get; set; }
+        public AllianceJoinMode JoinMode { get; set; }
+    }
+
+    public class AllianceMemberView
+    {
+        public string PlayerId { get; set; }
+        public string DisplayName { get; set; }
+        public AllianceRole Role { get; set; }
+        public int KeepLevel { get; set; }
+    }
+
+    public class AllianceApplicationView
+    {
+        public string PlayerId { get; set; }
+        public string DisplayName { get; set; }
+        public long ExpiresAtMs { get; set; }
+    }
+
+    public class AllianceStateMessage
+    {
+        public long Version { get; set; }
+        public long ServerTimeMs { get; set; }
+        public int GuideProgress { get; set; }
+        public List<AllianceSummary> Alliances { get; set; } = new List<AllianceSummary>();
+        public string MyAllianceId { get; set; }
+        public AllianceRole? MyRole { get; set; }
+        public List<AllianceMemberView> Members { get; set; } = new List<AllianceMemberView>();
+        public List<AllianceApplicationView> Applications { get; set; } = new List<AllianceApplicationView>();
+        public long RejoinAfterMs { get; set; }
+        public string PendingCreateOperationId { get; set; }
+        public string PendingCreateName { get; set; }
+        public string PendingCreateTag { get; set; }
+        public string Announcement { get; set; }
+        public int OnlineMembers { get; set; }
+        public List<AllianceHelpView> HelpRequests { get; set; } = new List<AllianceHelpView>();
+        public List<AllianceReinforcementView> Reinforcements { get; set; } = new List<AllianceReinforcementView>();
+        public List<AllianceFlag> Flags { get; set; } = new List<AllianceFlag>();
+        public List<RallyView> Rallies { get; set; } = new List<RallyView>();
     }
 
     public class LoginRequest
@@ -195,6 +398,8 @@ namespace AbyssKingdom.Shared.Protocol
         public string Name { get; set; }
         public long Power { get; set; }
         public bool Mine { get; set; }
+        /// <summary>伺服器判定與查詢者同盟；無聯盟者彼此不算同盟。</summary>
+        public bool Allied { get; set; }
         /// <summary>護盾中（不能被攻打）。</summary>
         public bool Shielded { get; set; }
         /// <summary>主堡等級（大地圖上依等級顯示不同外觀的主城）。</summary>
@@ -273,6 +478,8 @@ namespace AbyssKingdom.Shared.Protocol
         public Dictionary<TroopType, long> Dead { get; set; }
         /// <summary>攻城：對方有護盾，沒有開打。</summary>
         public bool Shielded { get; set; }
+        /// <summary>抵達前雙方成為盟友，無戰鬥折返。</summary>
+        public bool Allied { get; set; }
         /// <summary>攻城：被攻打的領主名稱（不是攻城時為 null）。</summary>
         public string TargetName { get; set; }
     }

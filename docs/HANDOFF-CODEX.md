@@ -1,5 +1,7 @@
 # 交接給 Codex（2026-10-11，最新 commit `c224b4b`）
 
+> **2026-10-12 S6 收尾更新**：完整本機實作與驗證、改動清單、正式上線限制請先讀 `docs/S6_DELIVERY.md`。測試 268 全過，Unity 打包成功／0 errors；成員／聊天／幫助／援軍／盟旗／混兵集結／世界同盟辨識已實作，尚未提交或部署。實際本機截圖在 `artifacts/s6-alliance-final/`，38 模型檢查全過。下方 S6 未完成敘述為歷史狀態，不應再照舊重做。Claude 同期加入城內區域，保留其內容；仍請 Claude 最後核對共同修改的 GameUI.cs／DisplayNames.cs。
+
 使用者這週的 Claude 額度快用完，**美術優化與後續功能（聯盟等）交給你**。只寫對話裡才有、其他文件沒有的東西。開工前依序讀：`CLAUDE.md` → `docs/HANDOFF.md` → `docs/design/GDD.md`（**先讀 2.1.0、5.4、5.8、6 開發路線**，其他章節用到再查）→ 做美術時再讀 `docs/art/MODEL_SPEC.md`、`CHARACTER_SPEC.md`、`ICON_SPEC.md`。專案有 `.codegraph/` 索引，找程式碼先用 codegraph，不要整包讀檔（上次唯讀審查就用掉 91% 額度）。
 
 ## 1. 目前狀態

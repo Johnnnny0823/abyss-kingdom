@@ -31,6 +31,12 @@ namespace AbyssKingdom.Shared.Map
     /// 全服的世界狀態：資源田（誰在採、剩多少）、怪物營地（是否被打掉）、戰鬥種子。
     /// 伺服器的 WorldService 實作；測試可以用 SimpleFieldRegistry。
     /// </summary>
+    public interface ITerritoryRegistry
+    {
+        int GatherBonusBasisPoints(string owner, int tile, long nowMs);
+    }
+    public interface IControlledCamps { }
+
     public interface IFieldRegistry
     {
         /// <summary>怪物營地此刻是否存在（被打掉後要等重生）。</summary>

@@ -52,6 +52,8 @@ dotnet run --project server/AbyssKingdom.Server
 
 正式環境務必設定 `Auth__Mode=Firebase`，否則任何人都能用名字登入別人的帳號。`Auth__Mode`、`Storage__Mode` 填了不認得的值（例如拼錯）伺服器會拒絕啟動，不會默默退回 Dev 或記憶體存檔。
 
+啟用 S6 聯盟前，Supabase 需先套用 `db/002_alliances.sql`。目前聯盟資料由單一遊戲伺服器序列化寫入；不要以多個遊戲伺服器實例同時提供聯盟寫入。
+
 ## 連線協定（MVP）
 
 WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": { ... } }`
@@ -74,6 +76,27 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | → | `domain.trial` | `{ hero, domain: "Power" }`（修練值滿、且對應星色升滿才能挑戰） |
 | → | `hero.starUp` | `{ hero }`（消耗信物＋響晶升一顆星） |
 | → | `quest.claim` | —（領取目前新手任務的獎勵；成功回 `city.state`，任務進度在 `city.questIndex`、`city.stats`；失敗 `quest_rejected`：`NotDone`／`NoQuest`） |
+| → | `alliance.get` | —（列出聯盟及自己的盟籍、成員、可審核申請、創盟待完成操作） |
+| → | `alliance.create` | `{ name, tag, operationId }`（`operationId` 是重試時不變的 UUID；主堡 Lv.3、根材／層岩各 5,000） |
+| → | `alliance.join` / `alliance.apply` | `{ allianceId }`（主堡 Lv.2；自由加入或審核申請） |
+| → | `alliance.review` | `{ playerId, accept }`（盟主／幹部審核申請） |
+| → | `alliance.leave` / `alliance.dissolve` | —（離盟或僅剩盟主時解散） |
+| → | `alliance.kick` / `alliance.transfer` | `{ playerId }`（踢人／轉讓盟主） |
+| → | `alliance.officer` | `{ playerId, officer }`（任免幹部） |
+| → | `alliance.joinMode` | `{ mode: "Open" \| "Approval" }` |
+| → | `alliance.rally.create` | `{ hero, troops, x, y, seconds: 60\|180\|300, operationId }`（Lv.2／3 營地，最多五人自由混兵；至少兩人到齊） |
+| → | `alliance.rally.join` / `alliance.rally.recall` | `{ id, hero, troops, operationId }` / `{ id }`（準備期可退出；出發後僅隊長可整隊召回；結算中不能召回） |
+| → | `alliance.flag.place` / `alliance.flag.remove` | `{ slot: 1..3, x, y, operationId }` / `{ slot }`（盟主／幹部；付款重試 UUID 不變；撤旗不退款且槽位冷卻 24 小時） |
+| ↔ | `world.territory` | — → `{ flags: [{ id, allianceId, tag, x, y, paid, completesAtMs }] }`（公開領地；生效以伺服器時間為準） |
+| → | `alliance.chat.post` / `alliance.chat.history` | `{ operationId, text }` / `{ afterSequence }`（成員聊天，UUID 重試不變） |
+| → | `alliance.chat.report` / `alliance.chat.hide` / `alliance.chat.mute` | `{ sequence }` / `{ sequence }` / `{ playerId, hours: 1 \| 24 }` |
+| → | `alliance.announcement` | `{ text }`（盟主／幹部公告） |
+| → | `alliance.help.request` / `alliance.help.all` | `{ queue: "Building" \| "Healing" }` / — |
+| → | `alliance.reinforcement.send` | `{ playerId, hero, troops, operationId }`（一主將混兵，雙方主堡 Lv.3；在途預留唯一席位；UUID 重試不變） |
+| → | `alliance.reinforcement.return` / `alliance.reinforcement.accept` | `{ id }`（原主人召回／收援者遣返） / `{ accept }`（只關閉新派遣） |
+| ← | `alliance.chat` / `alliance.chat.messages` | `{ allianceId, messages, fullSnapshot, oldestSequence, latestSequence }` |
+| ← | `alliance.help.result` / `alliance.help.changed` | `{ applied, expired }` / `{}`（收到變更後重讀聯盟資料） |
+| ← | `alliance.military.changed` | `{}`（只推播援軍雙方；重讀 `alliance.get`，援軍狀態在 `reinforcements`） |
 | → | `map.march` | `{ hero, troops: { "Rider": 50 }, x, y }`（從主城出征到地表格子 (x, y)；直線行進，跨分區時自動繞經關隘；目標是資源田就採集、怪物營地就開打、別人的主城就攻城（會解除自己的護盾）；狀態在 `city.surface.marches`） |
 | → | `map.recall` | `{ march }`（召回行軍，路上或駐紮中都可以；回到主城後部隊歸營） |
 | → | `world.tile` | `{ x, y }`（查詢某一格的即時狀態：資源田的存量、誰在採集） |
@@ -87,10 +110,11 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | ← | `expedition.result` | `{ stage, win, reports: [戰報…], rewards }`，之後再送一次 `city.state` |
 | ← | `expedition.idleClaimed` | `{ resources, items }` |
 | ← | `domain.trialResult` | `{ hero, domain, success, report }`，之後再送一次 `city.state` |
-| ← | `map.marchArrived` | `{ march, hero, tile, disbanded, gathering, occupied, gatherDone, carry, lootItems, battleWon, battleLost, campGone, wounded, dead, shielded, targetName }`（tile = y × 800 + x；抵達、開始採集、資源田被佔用、採滿回城、打怪結果、回城解散都用這個；伺服器主動推播，reqId = 0） |
+| ← | `map.marchArrived` | `{ march, hero, tile, disbanded, gathering, occupied, gatherDone, carry, lootItems, battleWon, battleLost, campGone, wounded, dead, shielded, allied, targetName }`（tile = y × 800 + x；抵達、採集、打怪、攻城與同盟無戰鬥折返；伺服器主動推播，reqId = 0） |
+| ← | `alliance.state` | `{ version, serverTimeMs, alliances, myAllianceId, myRole, members, applications, rejoinAfterMs, guideProgress, helpRequests, reinforcements, flags, rallies, pendingCreateOperationId, pendingCreateName, pendingCreateTag }`（審核資料只給有權者；操作 UUID 與派兵原配置只給本人；舊版本快照不覆蓋新版本） |
 | ← | `world.tile` | `{ x, y, stock, max, occupant, mine, campBackAt }` |
 | ← | `city.healingCompleted` | `{ troops }`（治療完成，伺服器主動推播） |
 | ← | `city.attacked` | `{ attackerName, defenderWon, wounded, dead, plundered }`（你的主城被攻打，伺服器主動推播） |
-| ← | `world.cities` | `{ cities: [{ x, y, name, power, mine, shielded, keepLevel }] }` |
+| ← | `world.cities` | `{ cities: [{ x, y, name, power, mine, allied, shielded, keepLevel }] }`（`allied` 由伺服器依盟籍判定；自己／同盟淺藍，非同盟紅色，不公開帳號 ID） |
 | ← | `world.camps` | `{ camps: [{ x, y, backAt }] }`（`backAt` = 重生時間，伺服器 Unix 毫秒） |
 | ← | `error` | `{ code, detail }` |

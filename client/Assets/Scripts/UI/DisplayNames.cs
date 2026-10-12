@@ -13,6 +13,14 @@ namespace AbyssKingdom.Client.UI
     /// </summary>
     public static class DisplayNames
     {
+        public static readonly Dictionary<int, string> AllianceGuide = new Dictionary<int, string>
+        {
+            [1] = "加入聯盟：主堡 Lv.2 後尋找盟友",
+            [2] = "幫助一次：盟友有升級或治療隊列時，按幫助全部",
+            [4] = "參與集結：至少兩人到齊出發，無須強制建立聯盟或插旗"
+        };
+        public const string FlagDescription = "盟主與幹部使用根材、層岩建造盟旗。生效的同區領地內，盟友採集速度 +10%、城防防禦 +5%；不疊加，也不阻擋任何領主通行。";
+        public const string AbyssWorldDescription = "永暗之喉。深處的回聲預示著下一次深淵潮，異變將席捲地表。";
         public static readonly Dictionary<ResourceType, string> Resources = new Dictionary<ResourceType, string>
         {
             { ResourceType.Wood, "根材" },
@@ -382,6 +390,13 @@ namespace AbyssKingdom.Client.UI
         /// <summary>伺服器回傳的錯誤碼 → 給玩家看的說明。</summary>
         public static string Error(string code, string detail)
         {
+            if (detail != null && detail.StartsWith("Military:")) detail = detail.Substring(9);
+            if (detail != null && detail.StartsWith("Flag:"))
+            {
+                if (detail == "Flag:Cooldown") return "此盟旗槽位撤旗／取消後需冷卻 24 小時";
+                if (detail == "Flag:InsufficientResources") return "支付此槽盟旗所需的根材或層岩不足";
+                detail = detail.Substring(5);
+            }
             switch (detail)
             {
                 case "NotEnoughResources": return "資源不足";
@@ -426,9 +441,54 @@ namespace AbyssKingdom.Client.UI
                 case "NothingToHeal": return "至少選一名傷兵";
                 case "NotEnoughWounded": return "傷兵數量不足";
                 case "OutOfBounds": return "超出城牆範圍";
+                case "AlliedCity": return "不能攻擊同盟主城";
+                case "LevelTooLow": return "主堡等級不足";
+                case "Cooldown": return "退出或被移除後，需等待 24 小時才能加入或建立聯盟";
+                case "Full": return "聯盟已滿員";
+                case "AlreadyMember": return "你已加入聯盟";
+                case "ApprovalRequired": return "此聯盟需要申請審核，或可直接加入";
+                case "ApplicationLimit": return "最多同時申請三個聯盟";
+                case "NoApplication": return "申請已失效";
+                case "Forbidden": return "你的聯盟階級沒有此權限";
+                case "OfficerLimit": return "最多四名幹部";
+                case "LeaderMustTransfer": return "盟主須先轉讓職位，或在只剩自己時解散";
+                case "NameTaken": return "聯盟名稱或簡稱已有人使用";
+                case "InvalidName": return "名稱或簡稱格式不正確";
+                case "InsufficientResources": return "創盟所需資源不足";
+                case "PersistenceFailed": return "伺服器暫時無法存檔，請稍後重試";
+                case "NotMember": return "你目前不在聯盟中";
+                case "PendingOperations": return "仍有出發或戰鬥結算中的操作，請等待完成";
+                case "InvalidTarget": return "目標已失效，請重新整理聯盟頁";
+                case "InvalidMessage": return "訊息不可為空、包含控制字元或超過字數上限";
+                case "RateLimited": return "發言太頻繁，請稍後再試";
+                case "Muted": return "你目前被禁言";
+                case "HelpUnavailable": return "隊列已完成、取消，或不能請求幫助";
+                case "ReinforcementsClosed": return "盟友暫時關閉新援軍，請先與對方聯絡";
+                case "ReinforcementSlotBusy": return "此城已有駐軍或在途援軍，最多接收一支";
+                case "KeepLocked": return "派出與接收援軍雙方都需要主堡 Lv.3";
+                case "OverCapacity": return "兵種總人數超過派出或收援方的主堡容量";
+                case "EmptyTroops": return "至少派出一名士兵";
+                case "InvalidTroops": return "兵種或數量不正確";
+                case "ArrivesLate": return "預計抵達晚於集結出發，請選較長倒數或較近的集結";
+                case "InvalidSlot": return "只能使用三個盟旗槽位";
+                case "BlockedPoint": return "此處是主城候選位置、固定物件、山脈或關隘，不能建旗";
+                case "SlotBusy": return "此盟旗槽位已使用";
+                case "Conflict": return "領地與其他聯盟生效或施工中的領地重疊";
+                case "Disconnected": return "領地必須連接生效盟旗；第一旗須在同區盟友主城 10 格內。撤旗也不能斷開領地";
             }
             return $"{code}：{detail}";
         }
+
+        public static string RallyState(string state) => state switch
+        {
+            "Forming" => "等待集結", "Launching" => "出發準備中", "Traveling" => "遠征中",
+            "Settling" => "戰鬥結算中", "Returning" => "各自返城", _ => "已結束"
+        };
+        public static string RallyOutcome(string outcome) => outcome switch
+        {
+            "Victory" => "集結勝利，戰利品隨各隊返城入庫", "Defeat" => "集結戰敗，傷兵回各自醫館",
+            "CampGone" => "營地已被其他部隊擊敗，全隊無戰損、無獎勵返還", _ => "集結已取消，部隊返還"
+        };
 
         /// <summary>CanUpgrade 的結果 → 按鈕上的短說明。</summary>
         public static string UpgradeBlocker(UpgradeResult r)
@@ -442,6 +502,10 @@ namespace AbyssKingdom.Client.UI
                 default: return "無法升級";
             }
         }
+
+        public const string WorldFriendlyLegend = "● 自己／同盟（淺藍）";
+        public const string WorldOtherLegend = "● 非同盟（紅）";
+        public const string AlliedCityDescription = "同聯盟的主城，可以從聯盟頁派援軍協防，不能互相攻城。";
 
         public static string Duration(long ms)
         {

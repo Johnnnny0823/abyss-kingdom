@@ -13,7 +13,7 @@ namespace AbyssKingdom.Server.Game;
 /// 也負責資源田的即時狀態（誰在採、剩多少）。資源田狀態只在記憶體：伺服器重開後存量回滿，
 /// 但載入時會從存檔把「採集中」的行軍重新登記為佔用者。
 /// </summary>
-public sealed class WorldService : IFieldRegistry
+public sealed partial class WorldService : IFieldRegistry, ITerritoryRegistry, IControlledCamps
 {
     private sealed class Field
     {
@@ -35,6 +35,8 @@ public sealed class WorldService : IFieldRegistry
         public long Power;
         public long ShieldUntil;
         public int KeepLevel;
+        public int PendingKeepLevel;
+        public long KeepFinishesAtMs;
     }
 
     private readonly IPlayerStore _store;
@@ -45,10 +47,12 @@ public sealed class WorldService : IFieldRegistry
     private readonly Random _rng = new();
     private bool _loaded;
 
-    public WorldService(IPlayerStore store, ILogger<WorldService> log)
+    private readonly IAllianceStore? _territoryStore;
+    public WorldService(IPlayerStore store, ILogger<WorldService> log, IAllianceStore? territoryStore = null, AllianceSynchronization? synchronization = null)
     {
         _store = store;
         _log = log;
+        _territoryStore = territoryStore == null ? null : (synchronization ?? new AllianceSynchronization()).BindStore(territoryStore);
     }
 
     private async Task EnsureLoadedAsync(CancellationToken ct)
@@ -68,6 +72,11 @@ public sealed class WorldService : IFieldRegistry
             foreach (var r in all)
                 foreach (var m in r.City.Surface.Marches)
                     if (m.Gathering) _fields[m.Destination] = new Field { Stock = MaxStock(m.Destination), Owner = r.Id, March = m.Id, CheckAt = m.GatherEndMs };
+        if (_territoryStore != null)
+        {
+            var directory = await _territoryStore.LoadAsync(ct);
+            UpdateTerritory(directory); UpdateCampSnapshot(directory);
+        }
         _loaded = true;
         _log.LogInformation("World loaded: {Count} cities on the surface", _sites.Count);
     }
@@ -77,6 +86,11 @@ public sealed class WorldService : IFieldRegistry
     {
         if (_byPlayer.TryGetValue(r.Id, out var old) && old != site) _sites.Remove(old);
         _sites[site] = new Owner { PlayerId = r.Id, Name = r.DisplayName, Power = PowerLogic.TotalPower(r.City), ShieldUntil = r.City.ShieldUntilMs, KeepLevel = r.City.GetLevel(BuildingType.Keep) };
+        if (r.City.Upgrade?.Building == BuildingType.Keep)
+        {
+            _sites[site].PendingKeepLevel = r.City.Upgrade.TargetLevel;
+            _sites[site].KeepFinishesAtMs = r.City.Upgrade.FinishAtMs;
+        }
         _byPlayer[r.Id] = site;
     }
 
@@ -261,12 +275,15 @@ public sealed class WorldService : IFieldRegistry
     }
 
     /// <summary>地表所有主城（公開資訊；不包含其他玩家的帳號 ID）。</summary>
-    public List<CityPin> Pins(string viewerId, long nowMs)
+    public List<CityPin> Pins(string viewerId, long nowMs, Func<string, string?>? allianceTag = null, Func<string, bool>? allied = null)
     {
         lock (_sites)
             return _sites.Select(p => new CityPin
             {
-                X = p.Key % SurfaceConfig.Size, Y = p.Key / SurfaceConfig.Size, Name = p.Value.Name, Power = p.Value.Power,
+                X = p.Key % SurfaceConfig.Size, Y = p.Key / SurfaceConfig.Size,
+                Name = allianceTag?.Invoke(p.Value.PlayerId) is string tag ? $"[{tag}] {p.Value.Name}" : p.Value.Name,
+                Power = p.Value.Power,
+                Allied = allied?.Invoke(p.Value.PlayerId) == true,
                 Mine = p.Value.PlayerId == viewerId, Shielded = p.Value.ShieldUntil > nowMs, KeepLevel = p.Value.KeepLevel,
             }).ToList();
     }
@@ -280,6 +297,15 @@ public sealed class WorldService : IFieldRegistry
                 for (int dx = 0; dx < SurfaceConfig.CityFootprint; dx++)
                     if (x - dx >= 0 && y - dy >= 0 && _sites.TryGetValue(SurfaceLogic.Tile(x - dx, y - dy), out var o)) return o.PlayerId;
         return null;
+    }
+
+    public int KeepLevelOf(string playerId, long nowMs)
+    {
+        lock (_sites)
+        {
+            if (!_byPlayer.TryGetValue(playerId, out var site) || !_sites.TryGetValue(site, out var o)) return 0;
+            return o.KeepFinishesAtMs > 0 && nowMs >= o.KeepFinishesAtMs ? o.PendingKeepLevel : o.KeepLevel;
+        }
     }
 
     /// <summary>領主名稱（找不到回傳「某位領主」）。</summary>

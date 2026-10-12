@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using AbyssKingdom.Client.Game;
 using AbyssKingdom.Client.World;
 using AbyssKingdom.Shared.City;
 using AbyssKingdom.Shared.Map;
+using AbyssKingdom.Shared.Social;
 using AbyssKingdom.Shared.Protocol;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -33,8 +35,8 @@ namespace AbyssKingdom.Client.UI
             _canvas.Picked += (x, y) => TilePicked?.Invoke(x, y);
             Root.Add(_canvas);
             var legend = El("row", "overview-legend");
-            legend.Add(Lbl("● 你的主城", "ov-mine"));
-            legend.Add(Lbl("● 其他領主", "ov-other"));
+            legend.Add(Lbl(DisplayNames.WorldFriendlyLegend, "ov-mine"));
+            legend.Add(Lbl(DisplayNames.WorldOtherLegend, "ov-other"));
             legend.Add(Lbl("◆ 深淵入口", "ov-gate"));
             legend.Add(Lbl("◎ 關隘", "ov-pass"));
             legend.Add(Lbl("— 行軍", "ov-march"));
@@ -47,14 +49,18 @@ namespace AbyssKingdom.Client.UI
         /// 更新畫面。selected：大地圖上目前選取的格子（畫出從主城過去的路線）；
         /// view：大地圖鏡頭看到的範圍（四個角的格子座標，順時針），不在大地圖時為 null。
         /// </summary>
-        public void Refresh(CityState city, List<CityPin> pins, long now, (int x, int y)? selected = null, Vector2[] view = null) =>
-            _canvas.Set(city, pins, now, selected, view);
+        public void Refresh(CityState city, List<CityPin> pins, long now, (int x, int y)? selected = null, Vector2[] view = null,
+            List<FlagMapView> flags = null, string ownAlliance = null) =>
+            _canvas.Set(city, pins, now, selected, view, flags, ownAlliance);
 
         private sealed class Canvas : VisualElement
         {
             public event Action<int, int> Picked;
             private CityState _city;
             private List<CityPin> _pins = new List<CityPin>();
+            private List<FlagMapView> _flags = new List<FlagMapView>();
+            private string _ownAlliance;
+            private readonly Dictionary<string, HashSet<int>> _flagCells = new Dictionary<string, HashSet<int>>();
             private long _now;
             private float _nextRepaint;
             private (int x, int y)? _selected;
@@ -92,13 +98,17 @@ namespace AbyssKingdom.Client.UI
                 Add(l);
             }
 
-            public void Set(CityState city, List<CityPin> pins, long now, (int x, int y)? selected, Vector2[] view)
+            public void Set(CityState city, List<CityPin> pins, long now, (int x, int y)? selected, Vector2[] view,
+                List<FlagMapView> flags, string ownAlliance)
             {
                 _city = city;
                 _pins = pins ?? new List<CityPin>();
                 _now = now;
                 _selected = selected;
                 _view = view;
+                _flags = flags ?? new List<FlagMapView>(); _ownAlliance = ownAlliance;
+                var alive = new HashSet<string>(_flags.Select(f => f.Id));
+                foreach (var id in _flagCells.Keys.Where(id => !alive.Contains(id)).ToList()) _flagCells.Remove(id);
                 if (Time.unscaledTime < _nextRepaint) return;
                 _nextRepaint = Time.unscaledTime + .5f;
                 MarkDirtyRepaint();
@@ -228,6 +238,26 @@ namespace AbyssKingdom.Client.UI
                 Disc(p, SurfaceConfig.OuterRadius + 4, C(86, 124, 68));
                 Disc(p, SurfaceConfig.MiddleOuter, C(126, 128, 80));
                 Disc(p, SurfaceConfig.RimOuter, C(132, 106, 82));
+                foreach (var flag in _flags)
+                {
+                    bool active = flag.Paid && _now >= flag.CompletesAtMs;
+                    Color color = flag.AllianceId == _ownAlliance ? C(55, 188, 174, 130) : C(220, 95, 80, 100);
+                    if (active)
+                    {
+                        if (!_flagCells.TryGetValue(flag.Id, out var cells))
+                            _flagCells[flag.Id] = cells = AllianceTerritory.Coverage(flag.X, flag.Y);
+                        p.BeginPath();
+                        foreach (var tile in cells)
+                        {
+                            var t = SurfaceLogic.FromTile(tile);
+                            p.MoveTo(P(t.x, t.y)); p.LineTo(P(t.x + 1, t.y)); p.LineTo(P(t.x + 1, t.y + 1)); p.LineTo(P(t.x, t.y + 1)); p.ClosePath();
+                        }
+                        p.fillColor = color; p.Fill();
+                    }
+                    var c = P(flag.X, flag.Y); p.BeginPath();
+                    p.MoveTo(c + new Vector2(0, -4)); p.LineTo(c + new Vector2(4, 3)); p.LineTo(c + new Vector2(-4, 3)); p.ClosePath();
+                    p.fillColor = active ? color : C(246, 182, 71); p.Fill();
+                }
 
                 // 外圍山谷：兩排錯開的山峰（灰岩＋雪頂），整圈沒有缺口
                 for (int row = 1; row >= 0; row--)
@@ -283,7 +313,7 @@ namespace AbyssKingdom.Client.UI
                 {
                     p.BeginPath();
                     p.Arc(P(pin.X + 1, pin.Y + 1), pin.Mine ? 6 : 3.2f, Angle.Degrees(0), Angle.Degrees(360));
-                    p.fillColor = pin.Mine ? C(255, 214, 110) : C(220, 90, 80);
+                    p.fillColor = SurfaceView.CityColor(pin);
                     p.Fill();
                     if (pin.Mine)
                     {

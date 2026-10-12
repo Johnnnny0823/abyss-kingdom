@@ -11,6 +11,7 @@ using AbyssKingdom.Shared.City;
 using AbyssKingdom.Shared.Map;
 using AbyssKingdom.Shared.Heroes;
 using AbyssKingdom.Shared.Protocol;
+using AbyssKingdom.Shared.Social;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -853,6 +854,16 @@ public static class ServerIntegrationTests
         public Task<List<PlayerRecord>> ListAllAsync(CancellationToken ct) => _inner.ListAllAsync(ct);
     }
 
+    sealed class FlakyAllianceStore : IAllianceStore
+    {
+        readonly InMemoryAllianceStore _inner = new(Json.Options);
+        public int FailNextSave;
+        public Task<AllianceDirectory> LoadAsync(CancellationToken ct) => _inner.LoadAsync(ct);
+        public Task SaveAsync(AllianceDirectory directory, CancellationToken ct) =>
+            Interlocked.Exchange(ref FailNextSave, 0) == 1
+                ? throw new IOException("simulated alliance outage") : _inner.SaveAsync(directory, ct);
+    }
+
     [Test]
     public static async Task Logout_SaveFails_KeptOnlineAndRetried_NoProgressLost()
     {
@@ -884,6 +895,460 @@ public static class ServerIntegrationTests
         await again.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:unlucky" });
         var city = City(await again.ExpectAsync(MessageTypes.CityState));
         Assert.Equal(77L, city.GetTroops(TroopType.Rider), "進度沒有遺失");
+    }
+
+    [Test]
+    public static async Task ModifyCity_SaveNowFails_ReturnsFailureWithoutPushingSuccess()
+    {
+        var store = new FlakyStore();
+        await using var server = new TestServer(s => s.Replace(ServiceDescriptor.Singleton<IPlayerStore>(store)));
+        await server.StartAsync();
+
+        await using var client = new TestClient();
+        await client.ConnectAsync(server.WsUri);
+        await client.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:save-now" });
+        await client.ExpectAsync(MessageTypes.CityState);
+
+        store.FailSaves = true;
+        bool saved = await server.Sessions.ModifyCityAsync(
+            "dev-save-now",
+            city => city.Troops[TroopType.Rider] = 88,
+            CancellationToken.None,
+            saveNow: true);
+
+        Assert.True(!saved, "需要立即持久化的操作不可在存檔失敗時回報成功");
+        bool pushed = true;
+        try { await client.ExpectAsync(MessageTypes.CityState, 300); }
+        catch (Exception ex) when (ex is AssertException or TaskCanceledException) { pushed = false; }
+        Assert.True(!pushed, "存檔失敗時不可推播看似成功的城市狀態");
+    }
+
+    [Test]
+    public static async Task AllianceCreate_RetryDoesNotChargeTwice()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        await using var client = new TestClient();
+        await client.ConnectAsync(server.WsUri);
+        await client.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:founder" });
+        await client.ExpectAsync(MessageTypes.CityState);
+        await server.Sessions.ModifyCityAsync("dev-founder", city => city.Buildings[BuildingType.Keep] = 3, CancellationToken.None, saveNow: true);
+        await client.ExpectAsync(MessageTypes.CityState);
+        var alliances = server.App.Services.GetRequiredService<AllianceService>();
+        string operationId = Guid.NewGuid().ToString();
+        Assert.Equal(AllianceResult.Ok, await alliances.CreateAsync("dev-founder", "Founder", "淵契盟", "AK", operationId, CancellationToken.None));
+        Assert.Equal(AllianceResult.Ok, await alliances.CreateAsync("dev-founder", "Founder", "淵契盟", "AK", operationId, CancellationToken.None));
+        Assert.Equal(1, (await alliances.SnapshotAsync(CancellationToken.None)).Alliances.Count);
+        var city = await FreshCity(client);
+        Assert.Equal(CityConfig.StartingResource - AllianceConfig.CreateWood, city.GetResource(ResourceType.Wood));
+        Assert.Equal(CityConfig.StartingResource - AllianceConfig.CreateStone, city.GetResource(ResourceType.Stone));
+    }
+
+    [Test]
+    public static async Task AllianceProtocol_CreateJoinAndRejectUnauthorizedReview()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        await using var leader = new TestClient();
+        await leader.ConnectAsync(server.WsUri);
+        await leader.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:alliance-leader" });
+        await leader.ExpectAsync(MessageTypes.CityState);
+        await server.Sessions.ModifyCityAsync("dev-alliance-leader", city => city.Buildings[BuildingType.Keep] = 3, CancellationToken.None, saveNow: true);
+        await leader.ExpectAsync(MessageTypes.CityState);
+        int createReq = await leader.SendAsync(MessageTypes.AllianceCreate,
+            new AllianceCreateRequest { Name = "契印聯盟", Tag = "SEAL", OperationId = Guid.NewGuid().ToString() });
+        var created = await leader.ExpectAsync(MessageTypes.AllianceState);
+        Assert.Equal(createReq, created.GetProperty("reqId").GetInt32());
+        var allianceId = created.GetProperty("data").GetProperty("myAllianceId").GetString();
+        Assert.True(!string.IsNullOrEmpty(allianceId), "創盟後回傳盟籍");
+
+        await using var member = new TestClient();
+        await member.ConnectAsync(server.WsUri);
+        await member.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:alliance-member" });
+        await member.ExpectAsync(MessageTypes.CityState);
+        int blockedReq = await member.SendAsync(MessageTypes.AllianceJoin, new AllianceIdRequest { AllianceId = allianceId });
+        var blocked = await member.ExpectAsync(MessageTypes.Error);
+        Assert.Equal(blockedReq, blocked.GetProperty("reqId").GetInt32());
+        Assert.Equal("LevelTooLow", blocked.GetProperty("data").GetProperty("detail").GetString());
+        await server.Sessions.ModifyCityAsync("dev-alliance-member", city => city.Buildings[BuildingType.Keep] = 2, CancellationToken.None, saveNow: true);
+        await member.ExpectAsync(MessageTypes.CityState);
+        await member.SendAsync(MessageTypes.AllianceJoin, new AllianceIdRequest { AllianceId = allianceId });
+        var joined = await member.ExpectAsync(MessageTypes.AllianceState);
+        Assert.Equal(allianceId, joined.GetProperty("data").GetProperty("myAllianceId").GetString());
+        await leader.SendAsync(MessageTypes.WorldCities, null);
+        var world = await leader.ExpectAsync(MessageTypes.WorldCities);
+        var ownPin = world.GetProperty("data").GetProperty("cities").EnumerateArray().Single(x => x.GetProperty("mine").GetBoolean());
+        Assert.True(ownPin.GetProperty("name").GetString()!.StartsWith("[SEAL] "), "大地圖主城名牌顯示聯盟簡稱");
+        Assert.True(ownPin.GetProperty("allied").GetBoolean(), "同盟關係包含本人");
+        Assert.True(world.GetProperty("data").GetProperty("cities").EnumerateArray().All(x => x.GetProperty("allied").GetBoolean()), "盟友由伺服器標示");
+        await member.SendAsync(MessageTypes.AllianceReview, new AllianceReviewRequest { PlayerId = "dev:someone", Accept = true });
+        var denied = await member.ExpectAsync(MessageTypes.Error);
+        Assert.Equal("Forbidden", denied.GetProperty("data").GetProperty("detail").GetString());
+    }
+
+    [Test]
+    public static async Task WorldCities_AllianceIdentityIsAuthoritativeAndRefreshesAfterLeave()
+    {
+        await using var server = new TestServer(); await server.StartAsync();
+        var ids = new[] { "blue-owner", "blue-member", "red-owner", "neutral-owner" };
+        var clients = new List<TestClient>();
+        try
+        {
+            foreach (var id in ids)
+            {
+                var client = new TestClient(); clients.Add(client); await client.ConnectAsync(server.WsUri);
+                await client.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:" + id });
+                await client.ExpectAsync(MessageTypes.CityState);
+            }
+            var store = server.App.Services.GetRequiredService<IAllianceStore>();
+            await store.SaveAsync(new AllianceDirectory { Alliances = new()
+            {
+                new AllianceRecord { Id = "blue", Tag = "SAME", Members = new()
+                { new AllianceMemberRecord { PlayerId = "dev-blue-owner", Role = AllianceRole.Leader, Epoch = 1 },
+                  new AllianceMemberRecord { PlayerId = "dev-blue-member", Role = AllianceRole.Member, Epoch = 1 } } },
+                new AllianceRecord { Id = "red", Tag = "SAME", Members = new()
+                { new AllianceMemberRecord { PlayerId = "dev-red-owner", Role = AllianceRole.Leader, Epoch = 1 } } }
+            } }, CancellationToken.None);
+            await clients[0].SendAsync(MessageTypes.WorldCities, null);
+            var pins = (await clients[0].ExpectAsync(MessageTypes.WorldCities)).GetProperty("data").GetProperty("cities");
+            Assert.Equal(2, pins.EnumerateArray().Count(p => p.GetProperty("allied").GetBoolean()));
+            Assert.Equal(2, pins.EnumerateArray().Count(p => !p.GetProperty("allied").GetBoolean()));
+            Assert.True(pins.EnumerateArray().All(p => !p.TryGetProperty("playerId", out _)), "公開主城不外洩帳號 ID");
+            var service = server.App.Services.GetRequiredService<AllianceService>();
+            Assert.Equal(AllianceResult.Ok, await service.LeaveAsync("dev-blue-member", CancellationToken.None));
+            await clients[1].SendAsync(MessageTypes.WorldCities, null);
+            var after = (await clients[1].ExpectAsync(MessageTypes.WorldCities)).GetProperty("data").GetProperty("cities");
+            Assert.Equal(0, after.EnumerateArray().Count(p => p.GetProperty("allied").GetBoolean()));
+            Assert.Equal(1, after.EnumerateArray().Count(p => p.GetProperty("mine").GetBoolean()));
+        }
+        finally { foreach (var client in clients) await client.DisposeAsync(); }
+    }
+
+    [Test]
+    public static async Task AllianceRallyProtocol_FormTravelSettleAndReturn()
+    {
+        await using var server = new TestServer(); await server.StartAsync();
+        await using var leader = new TestClient(); await using var member = new TestClient();
+        await leader.ConnectAsync(server.WsUri); await member.ConnectAsync(server.WsUri);
+        await leader.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:rally-owner" });
+        await member.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:rally-member" });
+        await leader.ExpectAsync(MessageTypes.CityState); await member.ExpectAsync(MessageTypes.CityState);
+        var store = server.App.Services.GetRequiredService<IAllianceStore>();
+        await store.SaveAsync(new AllianceDirectory { Alliances = new() { new AllianceRecord { Id = "rally-a", Members = new()
+        { new AllianceMemberRecord { PlayerId = "dev-rally-owner", Role = AllianceRole.Leader, Epoch = 1 },
+          new AllianceMemberRecord { PlayerId = "dev-rally-member", Role = AllianceRole.Member, Epoch = 1 } } } } }, CancellationToken.None);
+        var own = await FreshCity(leader);
+        foreach (var id in new[] { "dev-rally-owner", "dev-rally-member" })
+            await server.Sessions.ModifyCityAsync(id, city =>
+            {
+                city.Buildings[BuildingType.Keep] = 3; city.Buildings[BuildingType.Hospital] = 10;
+                city.Heroes[HeroId.Hold].Level = 10; foreach (var t in CityConfig.AllTroops) city.Troops[t] = 1_000;
+                if (id.EndsWith("member")) { city.Surface.X = own.Surface.X + 4; city.Surface.Y = own.Surface.Y; }
+            }, CancellationToken.None, saveNow: true);
+        var target = SurfaceLogic.Features().First(f => f.Type == FeatureType.MonsterCamp && f.Level == 2);
+        var troops = CityConfig.AllTroops.ToDictionary(t => t, _ => 100L);
+        await leader.SendAsync(MessageTypes.AllianceRallyCreate, new AllianceRallyCreateRequest
+        { Hero = HeroId.Hold, Troops = troops, X = target.X, Y = target.Y, Seconds = 60, OperationId = Guid.NewGuid().ToString() });
+        var created = await leader.ExpectAsync(MessageTypes.AllianceState);
+        string rallyId = created.GetProperty("data").GetProperty("rallies")[0].GetProperty("id").GetString()!;
+        await member.SendAsync(MessageTypes.AllianceRallyJoin, new AllianceRallyJoinRequest
+        { Id = rallyId, Hero = HeroId.Hold, Troops = troops, OperationId = Guid.NewGuid().ToString() });
+        var joined = await member.ExpectAsync(MessageTypes.AllianceState);
+        Assert.Equal(2, joined.GetProperty("data").GetProperty("rallies")[0].GetProperty("participants").GetArrayLength());
+        var service = server.App.Services.GetRequiredService<AllianceService>();
+        server.Clock.Advance(60_000); await service.AdvanceRalliesAsync(CancellationToken.None);
+        await leader.SendAsync(MessageTypes.AllianceGet, null); var traveling = await leader.ExpectAsync(MessageTypes.AllianceState);
+        Assert.Equal("Traveling", traveling.GetProperty("data").GetProperty("rallies")[0].GetProperty("state").GetString());
+        Assert.True((traveling.GetProperty("data").GetProperty("guideProgress").GetInt32() & AllianceConfig.GuideRallied) != 0, "集結出發記錄入門檢核");
+        var city = await FreshCity(leader); Assert.True(city.ShieldUntilMs > server.Clock.NowMs, "PvE 集結保留盾");
+        server.Clock.Advance(city.Surface.Marches.Single().ArriveAt - server.Clock.NowMs);
+        await service.AdvanceRalliesAsync(CancellationToken.None);
+        await member.SendAsync(MessageTypes.AllianceGet, null); var outcome = await member.ExpectAsync(MessageTypes.AllianceState);
+        Assert.True(outcome.GetProperty("data").GetProperty("rallies")[0].GetProperty("outcome").ValueKind == JsonValueKind.String, "戰報結果與分配已送到介面");
+        server.Clock.Advance(10_000_000); await service.AdvanceRalliesAsync(CancellationToken.None);
+        Assert.Equal(0, (await FreshCity(leader)).Surface.Marches.Count);
+        Assert.Equal(0, (await FreshCity(member)).Surface.Marches.Count);
+    }
+
+    [Test]
+    public static async Task AdminAllianceDiagnostics_RequireTokenAndAuditRetryReason()
+    {
+        const string token = "local-test-admin-alliance-token-12345";
+        await using var server = new TestServer("--Admin:Token=" + token); await server.StartAsync();
+        using var http = new HttpClient { BaseAddress = server.HttpUri };
+        Assert.Equal(HttpStatusCode.Unauthorized, (await http.GetAsync("/admin/alliance")).StatusCode);
+        http.DefaultRequestHeaders.Add("X-Admin-Token", token);
+        Assert.Equal(HttpStatusCode.OK, (await http.GetAsync("/admin/alliance")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await http.PostAsync("/admin/alliance/retry", new StringContent("{}", Encoding.UTF8, "application/json"))).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await http.PostAsync("/admin/alliance/retry", new StringContent("{\"reason\":\"local recovery verification\"}", Encoding.UTF8, "application/json"))).StatusCode);
+        var d = await server.App.Services.GetRequiredService<AllianceService>().SnapshotAsync(CancellationToken.None);
+        Assert.Equal(1, d.AdminAudit.Count);
+        Assert.Equal("local recovery verification", d.AdminAudit[0].Reason);
+    }
+
+    [Test]
+    public static async Task AllianceFlagProtocol_PlaceRetryPublicMapAndRemoval()
+    {
+        await using var server = new TestServer(); await server.StartAsync();
+        await using var client = new TestClient(); await client.ConnectAsync(server.WsUri);
+        await client.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:flag-owner" });
+        await client.ExpectAsync(MessageTypes.CityState);
+        var store = server.App.Services.GetRequiredService<IAllianceStore>();
+        await store.SaveAsync(new AllianceDirectory { Alliances = new() { new AllianceRecord { Id = "flag-a", Tag = "FL",
+            Members = new() { new AllianceMemberRecord { PlayerId = "dev-flag-owner", Role = AllianceRole.Leader } } } } }, CancellationToken.None);
+        await server.Sessions.ModifyCityAsync("dev-flag-owner", city =>
+        {
+            foreach (var b in CityConfig.AllBuildings) city.Buildings[b] = 0;
+            city.Buildings[BuildingType.Keep] = 3;
+            city.Resources[ResourceType.Wood] = 50_000; city.Resources[ResourceType.Stone] = 50_000;
+        }, CancellationToken.None, saveNow: true);
+        var city = await FreshCity(client); var home = SurfaceLogic.CityCenter(city.Surface);
+        var point = AllianceTerritory.Coverage(home.x, home.y, 10).Select(SurfaceLogic.FromTile)
+            .First(p => AllianceTerritory.AllowedPoint(p.x, p.y));
+        var request = new AllianceFlagPlaceRequest { Slot = 1, X = point.x, Y = point.y, OperationId = Guid.NewGuid().ToString() };
+        await client.SendAsync(MessageTypes.AllianceFlagPlace, request);
+        var created = await client.ExpectAsync(MessageTypes.AllianceState);
+        Assert.True(created.GetProperty("data").GetProperty("flags")[0].GetProperty("paid").GetBoolean(), "付款成功");
+        await client.SendAsync(MessageTypes.AllianceFlagPlace, request); await client.ExpectAsync(MessageTypes.AllianceState);
+        Assert.Equal(40_000L, (await FreshCity(client)).GetResource(ResourceType.Wood));
+        await client.SendAsync(MessageTypes.WorldTerritory, null);
+        var map = await client.ExpectAsync(MessageTypes.WorldTerritory);
+        Assert.Equal("FL", map.GetProperty("data").GetProperty("flags")[0].GetProperty("tag").GetString());
+        server.Clock.Advance(AllianceTerritory.BuildMs);
+        await client.SendAsync(MessageTypes.AllianceFlagRemove, new AllianceFlagRemoveRequest { Slot = 1 });
+        await client.ExpectAsync(MessageTypes.AllianceState);
+        await client.SendAsync(MessageTypes.WorldTerritory, null);
+        map = await client.ExpectAsync(MessageTypes.WorldTerritory);
+        Assert.Equal(0, map.GetProperty("data").GetProperty("flags").GetArrayLength());
+        request.OperationId = Guid.NewGuid().ToString();
+        await client.SendAsync(MessageTypes.AllianceFlagPlace, request);
+        var denied = await client.ExpectAsync(MessageTypes.Error);
+        Assert.Equal("Flag:Cooldown", denied.GetProperty("data").GetProperty("detail").GetString());
+    }
+
+    [Test]
+    public static async Task AllianceReinforcementProtocol_DispatchGarrisonAndNormalRecall()
+    {
+        await using var server = new TestServer(); await server.StartAsync();
+        await using var sender = new TestClient(); await using var receiver = new TestClient();
+        await sender.ConnectAsync(server.WsUri); await receiver.ConnectAsync(server.WsUri);
+        await sender.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:reinforce-sender" });
+        await receiver.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:reinforce-receiver" });
+        await sender.ExpectAsync(MessageTypes.CityState); await receiver.ExpectAsync(MessageTypes.CityState);
+        var store = server.App.Services.GetRequiredService<IAllianceStore>();
+        await store.SaveAsync(new AllianceDirectory { Alliances = new()
+        {
+            new AllianceRecord { Id = "reinforcement-alliance", Members = new()
+            {
+                new AllianceMemberRecord { PlayerId = "dev-reinforce-sender", Role = AllianceRole.Leader, Epoch = 1 },
+                new AllianceMemberRecord { PlayerId = "dev-reinforce-receiver", Role = AllianceRole.Member, Epoch = 1 }
+            } }
+        } }, CancellationToken.None);
+        foreach (var id in new[] { "dev-reinforce-sender", "dev-reinforce-receiver" })
+            await server.Sessions.ModifyCityAsync(id, city =>
+            {
+                city.Buildings[BuildingType.Keep] = 3;
+                foreach (var t in CityConfig.AllTroops) city.Troops[t] = 1_000;
+            }, CancellationToken.None, saveNow: true);
+        var request = new AllianceReinforcementSendRequest { PlayerId = "dev-reinforce-receiver", Hero = HeroId.Hold,
+            OperationId = Guid.NewGuid().ToString(), Troops = new() { [TroopType.Shield] = 100,
+                [TroopType.Crossbow] = 120, [TroopType.Rider] = 80 } };
+        await sender.SendAsync(MessageTypes.AllianceReinforcementSend, request);
+        var sent = await sender.ExpectAsync(MessageTypes.AllianceState);
+        var view = sent.GetProperty("data").GetProperty("reinforcements")[0];
+        Assert.Equal("Traveling", view.GetProperty("state").GetString());
+        long marchId = view.GetProperty("marchId").GetInt64();
+        await sender.SendAsync(MessageTypes.AllianceReinforcementSend, request);
+        await sender.ExpectAsync(MessageTypes.AllianceState);
+        var city = await FreshCity(sender);
+        Assert.Equal(1, city.Surface.Marches.Count);
+        Assert.Equal(900L, city.GetTroops(TroopType.Shield));
+        Assert.True(city.ShieldUntilMs > server.Clock.NowMs, "派援保留護盾");
+        server.Clock.Advance(city.Surface.Marches.Single().ArriveAt - server.Clock.NowMs);
+        var alliances = server.App.Services.GetRequiredService<AllianceService>();
+        await alliances.AdvanceReinforcementsAsync(CancellationToken.None);
+        await receiver.SendAsync(MessageTypes.AllianceGet, null);
+        var arrived = await receiver.ExpectAsync(MessageTypes.AllianceState);
+        Assert.Equal("Garrisoned", arrived.GetProperty("data").GetProperty("reinforcements")[0].GetProperty("state").GetString());
+        await sender.SendAsync(MessageTypes.MapRecall, new MapRecallRequest { March = marchId });
+        await sender.ExpectAsync(MessageTypes.AllianceState);
+        city = await FreshCity(sender);
+        Assert.True(city.Surface.Marches.Single().Returning, "行軍列表召回走援軍存檔流程");
+        server.Clock.Advance(city.Surface.Marches.Single().ArriveAt - server.Clock.NowMs);
+        await alliances.AdvanceReinforcementsAsync(CancellationToken.None);
+        city = await FreshCity(sender);
+        Assert.Equal(0, city.Surface.Marches.Count);
+        Assert.Equal(1_000L, city.GetTroops(TroopType.Shield));
+        Assert.Equal(1_000L, (await FreshCity(receiver)).GetTroops(TroopType.Shield));
+    }
+
+    [Test]
+    public static async Task AllianceHelp_RequestAndRetryShortensOwnerQueueOnce()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        await using var owner = new TestClient();
+        await using var helper = new TestClient();
+        await owner.ConnectAsync(server.WsUri);
+        await helper.ConnectAsync(server.WsUri);
+        await owner.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:help-owner" });
+        await helper.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:help-helper" });
+        await owner.ExpectAsync(MessageTypes.CityState);
+        await helper.ExpectAsync(MessageTypes.CityState);
+        var store = server.App.Services.GetRequiredService<IAllianceStore>();
+        await store.SaveAsync(new AllianceDirectory { Alliances = new()
+        {
+            new AllianceRecord { Id = "help-alliance", Members = new()
+            {
+                new AllianceMemberRecord { PlayerId = "dev-help-owner", DisplayName = "Owner", Role = AllianceRole.Leader, Epoch = 1 },
+                new AllianceMemberRecord { PlayerId = "dev-help-helper", DisplayName = "Helper", Role = AllianceRole.Member, Epoch = 1 }
+            } }
+        } }, CancellationToken.None);
+        await server.Sessions.ModifyCityAsync("dev-help-owner", city => city.Upgrade = new UpgradeJob
+        {
+            Building = BuildingType.Keep, TargetLevel = 2, StartedAtMs = T0,
+            FinishAtMs = T0 + 600_000,
+            Help = new AllianceHelpProgress { QueueId = 42, OriginalDurationMs = 600_000, MaxCount = 10 }
+        }, CancellationToken.None, saveNow: true);
+
+        await owner.SendAsync(MessageTypes.AllianceHelpRequest, new AllianceHelpRequestMessage { Queue = QueueType.Building });
+        var requested = await owner.ExpectAsync(MessageTypes.AllianceState);
+        Assert.Equal(42L, requested.GetProperty("data").GetProperty("helpRequests")[0].GetProperty("queueId").GetInt64());
+        await helper.SendAsync(MessageTypes.AllianceHelpAll, null);
+        var helped = await helper.ExpectAsync(MessageTypes.AllianceHelpResult);
+        Assert.Equal(1, helped.GetProperty("data").GetProperty("applied").GetInt32());
+        await helper.SendAsync(MessageTypes.AllianceGet, null);
+        var guide = await helper.ExpectAsync(MessageTypes.AllianceState);
+        Assert.True((guide.GetProperty("data").GetProperty("guideProgress").GetInt32() & AllianceConfig.GuideHelped) != 0, "成功互助記錄入門檢核");
+        await helper.SendAsync(MessageTypes.AllianceGet, null);
+        Assert.Equal(1, (await helper.ExpectAsync(MessageTypes.AllianceState))
+            .GetProperty("data").GetProperty("helpRequests")[0].GetProperty("usedCount").GetInt32());
+        Assert.Equal(T0 + 594_000, (await FreshCity(owner)).Upgrade!.FinishAtMs);
+
+        await helper.SendAsync(MessageTypes.AllianceHelpAll, null);
+        var retry = await helper.ExpectAsync(MessageTypes.AllianceHelpResult);
+        Assert.Equal(0, retry.GetProperty("data").GetProperty("applied").GetInt32());
+        Assert.Equal(T0 + 594_000, (await FreshCity(owner)).Upgrade!.FinishAtMs);
+        await owner.SendAsync(MessageTypes.AllianceHelpAll, null);
+        Assert.Equal(0, (await owner.ExpectAsync(MessageTypes.AllianceHelpResult))
+            .GetProperty("data").GetProperty("applied").GetInt32());
+        await owner.SendAsync(MessageTypes.CityCancel, new CancelRequest { Queue = QueueType.Building });
+        await owner.ExpectAsync(MessageTypes.CityState);
+        int refresh = await owner.SendAsync(MessageTypes.AllianceGet, null);
+        while ((await owner.ExpectAsync(MessageTypes.AllianceState)).GetProperty("reqId").GetInt32() != refresh) { }
+        Assert.Equal(0, (await server.App.Services.GetRequiredService<AllianceService>()
+            .SnapshotAsync(CancellationToken.None)).Alliances.Single().HelpRequests.Count);
+    }
+
+    [Test]
+    public static async Task AllianceHelp_DirectorySaveFailure_RetryReconcilesWithoutDoubleHelp()
+    {
+        var allianceStore = new FlakyAllianceStore();
+        await using var server = new TestServer(s =>
+            s.Replace(ServiceDescriptor.Singleton<IAllianceStore>(allianceStore)));
+        await server.StartAsync();
+        await using var owner = new TestClient();
+        await using var helper = new TestClient();
+        await owner.ConnectAsync(server.WsUri);
+        await helper.ConnectAsync(server.WsUri);
+        await owner.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:failure-owner" });
+        await helper.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:failure-helper" });
+        await owner.ExpectAsync(MessageTypes.CityState);
+        await helper.ExpectAsync(MessageTypes.CityState);
+        await allianceStore.SaveAsync(new AllianceDirectory { Alliances = new()
+        {
+            new AllianceRecord { Id = "failure-alliance", Members = new()
+            {
+                new AllianceMemberRecord { PlayerId = "dev-failure-owner", DisplayName = "Owner", Role = AllianceRole.Leader, Epoch = 1 },
+                new AllianceMemberRecord { PlayerId = "dev-failure-helper", DisplayName = "Helper", Role = AllianceRole.Member, Epoch = 1 }
+            } }
+        } }, CancellationToken.None);
+        await server.Sessions.ModifyCityAsync("dev-failure-owner", city => city.Upgrade = new UpgradeJob
+        {
+            Building = BuildingType.Keep, TargetLevel = 2, StartedAtMs = T0, FinishAtMs = T0 + 600_000,
+            Help = new AllianceHelpProgress { QueueId = 17, OriginalDurationMs = 600_000, MaxCount = 10 }
+        }, CancellationToken.None, saveNow: true);
+        await owner.SendAsync(MessageTypes.AllianceHelpRequest, new AllianceHelpRequestMessage { Queue = QueueType.Building });
+        await owner.ExpectAsync(MessageTypes.AllianceState);
+
+        allianceStore.FailNextSave = 1;
+        await helper.SendAsync(MessageTypes.AllianceHelpAll, null);
+        var error = await helper.ExpectAsync(MessageTypes.Error);
+        Assert.Equal("PersistenceFailed", error.GetProperty("data").GetProperty("detail").GetString());
+        Assert.Equal(T0 + 594_000, (await FreshCity(owner)).Upgrade!.FinishAtMs);
+        await helper.SendAsync(MessageTypes.AllianceHelpAll, null);
+        var retry = await helper.ExpectAsync(MessageTypes.AllianceHelpResult);
+        Assert.Equal(0, retry.GetProperty("data").GetProperty("applied").GetInt32());
+        Assert.Equal(T0 + 594_000, (await FreshCity(owner)).Upgrade!.FinishAtMs);
+        Assert.Equal(1, (await allianceStore.LoadAsync(CancellationToken.None))
+            .Alliances.Single().HelpRequests.Single().UsedCount);
+    }
+
+    [Test]
+    public static async Task AllianceAttack_RejectsAtLaunchAndRetreatsIfAlliedBeforeArrival()
+    {
+        await using var server = new TestServer();
+        await server.StartAsync();
+        await using var attacker = new TestClient();
+        await attacker.ConnectAsync(server.WsUri);
+        await attacker.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:ally-attacker" });
+        await attacker.ExpectAsync(MessageTypes.CityState);
+        await using var defender = new TestClient();
+        await defender.ConnectAsync(server.WsUri);
+        await defender.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:ally-defender" });
+        var target = City(await defender.ExpectAsync(MessageTypes.CityState));
+        await server.Sessions.ModifyCityAsync("dev-ally-defender", c => c.ShieldUntilMs = 0, CancellationToken.None);
+        await defender.ExpectAsync(MessageTypes.CityState);
+        await server.Sessions.ModifyCityAsync("dev-ally-attacker", c => c.Troops[TroopType.Shield] = 250, CancellationToken.None);
+        await attacker.ExpectAsync(MessageTypes.CityState);
+        var store = server.App.Services.GetRequiredService<IAllianceStore>();
+        var alliance = new AllianceRecord { Id = "allied", Name = "Allied", Tag = "ALLY", Members = new()
+        {
+            new AllianceMemberRecord { PlayerId = "dev-ally-attacker", Role = AllianceRole.Leader },
+            new AllianceMemberRecord { PlayerId = "dev-ally-defender", Role = AllianceRole.Member }
+        } };
+        await store.SaveAsync(new AllianceDirectory { Alliances = new() { alliance } }, CancellationToken.None);
+        await attacker.SendAsync(MessageTypes.MapMarch, new MapMarchRequest { Hero = HeroId.Hold, Troops = new() { [TroopType.Shield] = 250 }, X = target.Surface.X, Y = target.Surface.Y });
+        var rejected = await attacker.ExpectAsync(MessageTypes.Error);
+        Assert.Equal("AlliedCity", rejected.GetProperty("data").GetProperty("detail").GetString());
+        Assert.Equal(250L, (await FreshCity(attacker)).GetTroops(TroopType.Shield));
+
+        await store.SaveAsync(new AllianceDirectory(), CancellationToken.None);
+        await attacker.SendAsync(MessageTypes.MapMarch, new MapMarchRequest { Hero = HeroId.Hold, Troops = new() { [TroopType.Shield] = 250 }, X = target.Surface.X, Y = target.Surface.Y });
+        var march = City(await attacker.ExpectAsync(MessageTypes.CityState)).Surface.Marches.Single();
+        await store.SaveAsync(new AllianceDirectory { Alliances = new() { alliance } }, CancellationToken.None);
+        server.Clock.Advance(march.ArriveAt - server.Clock.NowMs);
+        await server.Sessions.TickAsync(CancellationToken.None);
+        var arrival = (await attacker.ExpectAsync(MessageTypes.MarchArrived)).GetProperty("data");
+        Assert.True(arrival.GetProperty("allied").GetBoolean(), "抵達時重新確認盟籍並無戰鬥折返");
+        Assert.True(!arrival.GetProperty("battleWon").GetBoolean(), "盟友不能被掠奪");
+        Assert.Equal(250L, City(await attacker.ExpectAsync(MessageTypes.CityState)).Surface.Marches.Single().Troops[TroopType.Shield]);
+    }
+
+    [Test]
+    public static async Task AllianceCreate_SaveFailure_RetryUsesSameReceipt()
+    {
+        var playerStore = new FlakyStore();
+        await using var server = new TestServer(s => s.Replace(ServiceDescriptor.Singleton<IPlayerStore>(playerStore)));
+        await server.StartAsync();
+        await using var client = new TestClient();
+        await client.ConnectAsync(server.WsUri);
+        await client.SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:alliance-retry" });
+        await client.ExpectAsync(MessageTypes.CityState);
+        await server.Sessions.ModifyCityAsync("dev-alliance-retry", c => c.Buildings[BuildingType.Keep] = 3, CancellationToken.None, saveNow: true);
+        await client.ExpectAsync(MessageTypes.CityState);
+        var service = server.App.Services.GetRequiredService<AllianceService>();
+        string op = Guid.NewGuid().ToString();
+        playerStore.FailSaves = true;
+        Assert.Equal(AllianceResult.PersistenceFailed, await service.CreateAsync("dev-alliance-retry", "Retry", "重試之盟", "RE", op, CancellationToken.None));
+        Assert.True((await service.SnapshotAsync(CancellationToken.None)).Alliances.Single().PendingCreate, "失敗時預留仍可恢復");
+        playerStore.FailSaves = false;
+        Assert.Equal(AllianceResult.Ok, await service.CreateAsync("dev-alliance-retry", "Retry", "重試之盟", "RE", op, CancellationToken.None));
+        Assert.Equal(AllianceResult.Ok, await service.CreateAsync("dev-alliance-retry", "Retry", "重試之盟", "RE", op, CancellationToken.None));
+        var city = await FreshCity(client);
+        Assert.Equal(CityConfig.StartingResource - AllianceConfig.CreateWood, city.GetResource(ResourceType.Wood));
+        Assert.Equal(1, city.SocialReceipts.Count);
+        Assert.True(!(await service.SnapshotAsync(CancellationToken.None)).Alliances.Single().PendingCreate, "重試後聯盟生效");
     }
 
     [Test]

@@ -51,6 +51,8 @@ namespace AbyssKingdom.Shared.Map
         public Dictionary<TroopType, long> DefenderDead { get; set; } = new Dictionary<TroopType, long>();
         /// <summary>在守方身上結算的時間（攻城紀錄過期清理用）。</summary>
         public long AtMs { get; set; }
+        public GarrisonOutcome Garrison { get; set; }
+        public int DefenseBasisPoints { get; set; } = 10_000;
     }
 
     public static class PvpLogic
@@ -123,11 +125,13 @@ namespace AbyssKingdom.Shared.Map
         /// 攻方打贏就掠奪資源（受攻方倖存部隊的載重限制）。攻方的狀態不在這裡改，交給 FinishAttack。
         /// </summary>
         public static PvpOutcome ResolveOnDefender(CityState defender, List<(SquadInput squad, TroopType troop)> attackers, ulong seed, long nowMs,
-            string battleId = null)
+            string battleId = null, GarrisonDefenseInput garrison = null, int defenseBasisPoints = 10_000)
         {
             // 同一場仗重試（伺服器停機後接續）：直接拿回當初的結果，守方不會被打兩次
             if (battleId != null && defender.SiegeLog.TryGetValue(battleId, out var done)) return done;
-            var o = Fight(defender, attackers, seed, nowMs);
+            if (defenseBasisPoints != 10_000 && defenseBasisPoints != 10_500)
+                throw new ArgumentException("Invalid S6 territory defense bonus.");
+            var o = Fight(defender, attackers, seed, nowMs, garrison, defenseBasisPoints);
             if (battleId != null && !o.Shielded)
             {
                 o.AtMs = nowMs;
@@ -158,9 +162,10 @@ namespace AbyssKingdom.Shared.Map
             return c;
         }
 
-        static PvpOutcome Fight(CityState defender, List<(SquadInput squad, TroopType troop)> attackers, ulong seed, long nowMs)
+        static PvpOutcome Fight(CityState defender, List<(SquadInput squad, TroopType troop)> attackers, ulong seed, long nowMs,
+            GarrisonDefenseInput garrison, int defenseBasisPoints)
         {
-            var o = new PvpOutcome();
+            var o = new PvpOutcome { DefenseBasisPoints = defenseBasisPoints };
             if (IsShielded(defender, nowMs))
             {
                 o.Shielded = true;
@@ -172,8 +177,23 @@ namespace AbyssKingdom.Shared.Map
             var aIn = new List<SquadInput>();
             foreach (var a in attackers) aIn.Add(a.squad);
             var dIn = new List<SquadInput>();
-            foreach (var d in def) dIn.Add(d.squad);
-            var report = BattleEngine.Run(aIn, dIn, seed);
+            int ownSquads = def.Count - 1;
+            for (int i = 0; i < ownSquads; i++) dIn.Add(def[i].squad);
+            if (garrison != null)
+            {
+                if (garrison.Squads.Count > 3) throw new ArgumentException("One reinforcement has at most three troop squads.");
+                var types = new HashSet<TroopType>();
+                foreach (var squad in garrison.Squads)
+                {
+                    if (squad.Count <= 0 || !types.Add(squad.Troop)) throw new ArgumentException("Invalid reinforcement squads.");
+                    dIn.Add(squad);
+                }
+            }
+            dIn.Add(def[ownSquads].squad); // Wall always stands behind both owners' troops.
+            if (defenseBasisPoints != 10_000)
+                for (int i = 0; i < dIn.Count; i++) dIn[i] = dIn[i].WithDefenseBonus(defenseBasisPoints);
+            var report = BattleEngine.Run(aIn, dIn, seed,
+                garrison == null ? BattleScenario.Standard : BattleScenario.GarrisonDefense);
             o.Report = Compact(report);
             o.AttackerWon = report.Outcome == BattleOutcome.AttackerWins;
 
@@ -186,7 +206,7 @@ namespace AbyssKingdom.Shared.Map
             }
 
             var defLosses = new Dictionary<TroopType, long>();
-            for (int i = 0; i < def.Count; i++)
+            for (int i = 0; i < ownSquads; i++)
             {
                 if (!def[i].troop.HasValue) continue;
                 var t = def[i].troop.Value;
@@ -197,6 +217,18 @@ namespace AbyssKingdom.Shared.Map
             var (w, d2) = CityLogic.TakeCasualties(defender, defLosses);
             o.DefenderWounded = w;
             o.DefenderDead = d2;
+            if (garrison != null)
+            {
+                o.Garrison = new GarrisonOutcome { OwnerId = garrison.OwnerId,
+                    ReinforcementId = garrison.ReinforcementId, MarchId = garrison.MarchId };
+                for (int i = 0; i < garrison.Squads.Count; i++)
+                {
+                    var squad = garrison.Squads[i];
+                    long left = report.Defenders[ownSquads + i].TroopsLeft;
+                    o.Garrison.Survivors[squad.Troop] = left;
+                    o.Garrison.Losses[squad.Troop] = squad.Count - left;
+                }
+            }
 
             if (o.AttackerWon)
             {
@@ -220,6 +252,23 @@ namespace AbyssKingdom.Shared.Map
                 }
             }
             return o;
+        }
+
+        /// <summary>Apply only on the reinforcement owner's city, after the defender's outcome is durable.</summary>
+        public static bool FinishGarrison(CityState owner, GarrisonOutcome outcome, string battleId, long nowMs,
+            bool returnRequested)
+        {
+            if (outcome == null) return true;
+            string receipt = "alliance:garrison:" + outcome.ReinforcementId + ":" + battleId;
+            if (owner.SocialReceipts.Contains(receipt)) return true;
+            var march = owner.Surface.Marches.Find(m => m.Id == outcome.MarchId);
+            if (march == null || march.GarrisonSettlementId != battleId) return false;
+            foreach (var pair in outcome.Survivors) march.Troops[pair.Key] = pair.Value;
+            CityLogic.TakeCasualties(owner, outcome.Losses);
+            march.GarrisonSettlementId = null;
+            owner.SocialReceipts.Add(receipt);
+            if (returnRequested || march.TotalTroops() == 0) MarchLogic.RecallReinforcement(owner, march.Id, nowMs);
+            return true;
         }
 
         /// <summary>
