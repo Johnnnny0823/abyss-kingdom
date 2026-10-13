@@ -41,16 +41,20 @@ public static class GameServer
         {
             services.AddSingleton<IPlayerStore, SupabasePlayerStore>();
             services.AddSingleton<IAllianceStore, SupabaseAllianceStore>();
+            services.AddSingleton<IPlaytestStore, SupabasePlaytestStore>();
         }
         else if (storeMode.Equals("Memory", StringComparison.OrdinalIgnoreCase) || storeMode.Equals("InMemory", StringComparison.OrdinalIgnoreCase))
         {
             services.AddSingleton<IPlayerStore, InMemoryPlayerStore>();
             services.AddSingleton<IAllianceStore, InMemoryAllianceStore>();
+            services.AddSingleton<IPlaytestStore, InMemoryPlaytestStore>();
         }
         else
             throw new InvalidOperationException($"Unknown Storage:Mode '{storeMode}' (expected Supabase or Memory)");
 
         services.AddSingleton<WorldService>();
+        services.AddSingleton<PlaytestTelemetry>();
+        services.AddHostedService(sp => sp.GetRequiredService<PlaytestTelemetry>());
         services.AddSingleton<AllianceSynchronization>();
         services.AddSingleton<AllianceService>();
         services.AddSingleton<SessionManager>();

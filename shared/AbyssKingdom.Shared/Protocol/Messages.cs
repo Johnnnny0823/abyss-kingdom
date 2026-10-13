@@ -69,6 +69,9 @@ namespace AbyssKingdom.Shared.Protocol
         public const string AllianceRallyCreate = "alliance.rally.create";
         public const string AllianceRallyJoin = "alliance.rally.join";
         public const string AllianceRallyRecall = "alliance.rally.recall";
+        public const string ClientError = "client.error";
+        public const string FeedbackSend = "feedback.send";
+        public const string FeedbackReceived = "feedback.received";
 
         // 伺服器 → 客戶端
         public const string LoginOk = "login.ok";
@@ -294,6 +297,24 @@ namespace AbyssKingdom.Shared.Protocol
     public class UpgradeRequest
     {
         public BuildingType Building { get; set; }
+    }
+
+    public class ClientErrorRequest
+    {
+        public string Message { get; set; }
+        public string Stack { get; set; }
+    }
+
+    public class FeedbackRequest
+    {
+        public string Text { get; set; }
+        /// <summary>Client-reported display context, never trusted for gameplay.</summary>
+        public string Screen { get; set; }
+    }
+
+    public class FeedbackReceivedMessage
+    {
+        public bool Accepted { get; set; }
     }
 
     /// <summary>伺服器推播（給守方）：主城被攻打的結果。</summary>

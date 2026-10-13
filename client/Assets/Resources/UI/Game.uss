@@ -38,6 +38,11 @@
 .row { flex-direction: row; align-items: center; }
 .grow { flex-grow: 1; }
 .spacer { flex-grow: 1; }
+.feedback-input * {
+    background-image: none;
+    background-color: rgb(20, 29, 40);
+    color: rgb(220, 233, 238);
+}
 
 .btn {
     background-color: rgb(44, 58, 69);

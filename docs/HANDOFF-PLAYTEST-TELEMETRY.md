@@ -43,3 +43,93 @@
 - 本機 Dev（`Auth__Mode=Dev`、`Storage__Mode=InMemory`、5090 埠，**不要用使用者的訪客帳號**）：用專用 dev 帳號玩幾步、送一則回饋、觸發一次測試用錯誤，貼上三個 GM 端點的實際輸出與回饋視窗截圖。
 - Supabase 部分：`003` SQL 寫好即可，**不要在正式資料庫執行**；在交接裡寫清楚使用者要執行的步驟。
 - 交付說明寫在本文件末尾：改動檔案、測試數、端點輸出範例、截圖路徑。不 commit、不 push、不部署，交給 Claude 驗收。
+
+## 2026-10-13 實作交付
+
+- 完整測試 `artifacts/playtest-tests.log`：**276 passed、0 failed**。涵蓋記憶體事件副本、first.* 去重／重啟、回饋輸入／滑動限流／重連、錯誤去重與二十筆上限、文字遮蔽、真 WS 登入→升主堡→領任務→回饋→斷線／隔日登入、存檔故障下正常升級、四個 GM 的 token 保護、Supabase 假 HTTP 標頭／欄位／500 筆分頁。無新 NuGet。
+- 新訊息 `client.error`、`feedback.send`、`feedback.received` 已同步共用協定、WebSocket 與 README；沒有接受客戶端任意遊戲事件的 API。主堡、任務與時間快照使用伺服器狀態，screen 僅是 city/world 的客戶端畫面上下文。
+- 事件由伺服器記錄：session.start/end、quest.claim、building.upgrade.start、first.training/march/gather/camp/alliance、client.error、feedback。first.* 以穩定 ID 跨重啟去重，不覆寫初次時間；舊玩家不能重建部署前已遺失的行為歷史。
+- PlaytestTelemetry 的 1,024 筆背景佇列在遊戲路徑只 TryWrite，不等資料庫、不在玩家 Gate 內做事件儲存 I/O。背景寫入最多五秒，失敗只 warning 並放棄；accepted 是排隊確認，不保證故障時仍保存回饋文字。
+- 事件表無 IP、裝置序號、電腦名稱等欄位；Error／Exception 登入後自動上報，訊息 1,200 字＋stack 前五行／800 字，雙端同訊息六十秒去重、每次登入二十筆。共用工具遮蔽常見路徑、URL、IP、email 與帶標籤的 token／password，不上傳整份 Player.log。自由回饋也遮蔽常見私人內容，視窗提醒不要填個資。
+- 原生硬崩潰／未送達的例外不能保證上報；「開啟紀錄資料夾」只在玩家點擊時開本機 persistentDataPath，不傳路徑。既有 WebSocket 未處理例外 LogError，ASP.NET 例外進 console／Docker logs。
+- 回饋上限一千字、滑動六十秒每玩家三則，重新登入不重置限額；顯示收到確認或失敗／逾時，reqId 防止舊確認套到新回饋。HUD 使用文字按鈕，沒有不可點擊的新圖示。
+- 摘要包含內部玩家 ID、領主名、首次登入／最後上線、已結束＋當前 session 秒數、**UTC 日曆登入天數**、零起算任務索引、主堡級別、最後事件、online。正常斷線／連線取代只結束一次；硬殺伺服器缺 end 的段落可能漏計，不虛構離線時間。回饋 totalPlaySecondsKnown 表示啟動歷史載入成功；失敗時僅有本程序已知部分。
+- 實際 Dev 輸出：`artifacts/playtest-summary.json`、`playtest-events.json`、`playtest-errors.json`、`playtest-feedback.json`；專用帳號 `dev-PlaytestPreview`。已觀察主堡二級、任務索引一、一次回饋與一筆測試錯誤。
+- `artifacts/playtest-build.log` 第 770 行 Success、第 785 行 Succeeded／0 errors。`playtest-player.log` 第 31 行 PLAYTEST_CHECK PASS，`playtest-ui/validation.json` 為 true。`feedback-draft.png` 已開啟確認中文內容可讀，`feedback.png` 已確認「已收到，謝謝」。診斷走真 Upgrade／Speedup／Quest／Feedback API，透過 UI 所綁定 Send 方法送出，不冒稱 Windows 手動點擊。截圖由實際 UI Toolkit targetTexture 與場景相機合成；UI RenderTexture 使用含 stencil 的 24-bit depth，避免多行文字框遮罩顯示成白塊。
+
+### Supabase 啟用步驟（由使用者／Claude 操作）
+
+1. 先在獨立 Dev Supabase 的 SQL Editor 人工執行 `db/003_playtest_events.sql`，確認表、索引、RLS 與 anon/authenticated 撤權；不新增公開 policy。程式不自動 migration，本輪未碰正式資料庫。
+2. 沿用環境變數 `Storage__Mode=Supabase`、`Supabase__Url`、`Supabase__ServiceKey`、`Admin__Token`；正式 `Auth__Mode=Firebase`。不需新帳號、付費服務或新金鑰，秘密不可入檔。
+3. 獨立測試帳號登入／操作／回饋，用 token 查四個 GM GET；重啟確認事件、first.* 與總秒數仍在。真 Dev DB 驗證通過後，由使用者決定正式執行 003／部署。fake HTTP PASS 不等於真 Supabase 已驗證。
+4. 003 未建或 REST 故障時遊戲照常，但紀錄可能缺漏，朋友封測前需確認 GM 已有資料。正常關服會嘗試排空，佇列滿或寫入失敗的事件不重試。
+
+### 改動檔案
+
+- 新增 `server/AbyssKingdom.Server/Persistence/PlaytestStores.cs`、`Game/PlaytestTelemetry.cs`、`db/003_playtest_events.sql`。
+- 修改 `GameServer.cs`、`Game/SessionManager.cs`、`Net/WebSocketHandler.cs`、`Admin/AdminEndpoints.cs`。
+- 新增 `shared/AbyssKingdom.Shared/Protocol/PlaytestReports.cs` 與 meta；修改 `Protocol/Messages.cs`。
+- 新增 `client/Assets/Scripts/Game/ClientErrorReporter.cs`、`UI/FeedbackPanel.cs`、`Diagnostics/PlaytestCheck.cs` 與各 meta；修改 `Game/GameClient.cs`、`UI/GameUI.cs`、`UI/DisplayNames.cs`、`Resources/UI/Game.uss`。
+- 新增 `tests/AbyssKingdom.Tests/PlaytestTelemetryTests.cs`、`PlaytestIntegrationTests.cs`、`PlaytestStoreTests.cs`；既有 `ServerIntegrationTests.cs` 改 partial，沿用真 WS fixture。
+- README、GDD、PLAYTEST_CHECKLIST 與本文件。既有大改檔備份在 `C:\Users\xnikz\.claude\backups\2026-10-13\playtest-telemetry\`。
+- 不 commit、不 push、不部署、不寫 .git；本輪 Dev／InMemory 測試不使用使用者的訪客帳號。
+- 最終驗證完成，本輪客戶端已退出，Dev 伺服器已停止。SQL 僅寫檔，真 Supabase 仍待使用者／Claude 驗證。
+
+
+### 最終本機 GM 實際輸出
+
+GET /admin/playtest/summary
+
+```json
+[
+  {
+    "playerId": "dev-PlaytestPreview",
+    "displayName": "PlaytestPreview",
+    "firstLoginMs": 1791825470231,
+    "lastOnlineMs": 1791825485815,
+    "totalPlaySeconds": 15,
+    "loginDays": 1,
+    "questIndex": 1,
+    "keepLevel": 2,
+    "lastEvent": "session.end",
+    "online": false
+  }
+]
+```
+
+GET /admin/playtest/errors
+
+```json
+[
+  {
+    "message": "PLAYTEST_SAMPLE: harmless local error for reporting verification",
+    "count": 1,
+    "players": 1,
+    "lastAtMs": 1791825483190
+  }
+]
+```
+
+GET /admin/playtest/feedback
+
+```json
+[
+  {
+    "id": "73ccd958861545dd945e16d13c720e17",
+    "playerId": "dev-PlaytestPreview",
+    "kind": "feedback",
+    "atMs": 1791825483176,
+    "data": {
+      "displayName": "PlaytestPreview",
+      "keepLevel": 2,
+      "questIndex": 1,
+      "sequence": 4,
+      "text": "封測測試：升級前置清楚，希望採集目標更容易找到。",
+      "screen": "city",
+      "sessionPlaySeconds": 12,
+      "totalPlaySeconds": 12,
+      "totalPlaySecondsKnown": true
+    }
+  }
+]
+```

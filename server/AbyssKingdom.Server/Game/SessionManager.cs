@@ -57,9 +57,10 @@ public sealed partial class SessionManager : BackgroundService
     private readonly JsonSerializerOptions _json;
 
     private readonly SemaphoreSlim _allianceGate;
+    private readonly PlaytestTelemetry? _telemetry;
 
     public SessionManager(IPlayerStore store, IClock clock, JsonSerializerOptions json, ILogger<SessionManager> log, WorldService world, IAllianceStore allianceStore,
-        AllianceSynchronization? synchronization = null)
+        AllianceSynchronization? synchronization = null, PlaytestTelemetry? telemetry = null)
     {
         _json = json;
         _world = world;
@@ -69,6 +70,7 @@ public sealed partial class SessionManager : BackgroundService
         _clock = clock;
         _log = log;
         _allianceGate = sync.Operations;
+        _telemetry = telemetry;
     }
 
     public int OnlineCount => _online.Count;
@@ -130,6 +132,9 @@ public sealed partial class SessionManager : BackgroundService
     private List<MarchEvent> AdvanceMarches(CityState city, string playerId, long nowMs)
     {
         var events = MarchLogic.Advance(city, nowMs, _world, playerId);
+        _telemetry?.Observe(playerId, _world.NameOf(playerId), city);
+        if (events.Any(e => e.CampTarget != null || e.BattleWon || e.BattleLost))
+            _telemetry?.Record(playerId, _world.NameOf(playerId), "first.camp", city);
         foreach (var ev in events)
             if (ev.AttackTarget != null || ev.CampTarget != null) _sieging[(playerId, ev.MarchId)] = 0;
         return events;

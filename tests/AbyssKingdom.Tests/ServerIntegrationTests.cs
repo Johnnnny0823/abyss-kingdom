@@ -19,7 +19,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 namespace AbyssKingdom.Tests;
 
 /// <summary>端到端測試：真的啟動伺服器、用 WebSocket 連線，模擬客戶端行為。</summary>
-public static class ServerIntegrationTests
+public static partial class ServerIntegrationTests
 {
     const long T0 = 1_700_000_000_000;
 

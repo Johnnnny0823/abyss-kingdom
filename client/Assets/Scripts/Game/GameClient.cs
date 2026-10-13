@@ -53,6 +53,14 @@ namespace AbyssKingdom.Client.Game
 
         /// <summary>給玩家看的通知（訊息, 是否為錯誤）。</summary>
         public event Action<string, bool> Notice;
+        public event Action<int, bool> FeedbackReceived;
+        public event Action LoginCompleted;
+        public int SendFeedback(string text, string screen) => _conn.Send(MessageTypes.FeedbackSend, new FeedbackRequest { Text = text, Screen = screen });
+        public void ReportClientError(string message, string stack)
+        {
+            if (!IsLoggedIn || !_conn.IsConnected) return;
+            _conn.Send(MessageTypes.ClientError, new ClientErrorRequest { Message = message, Stack = stack });
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -61,6 +69,7 @@ namespace AbyssKingdom.Client.Game
             var go = new GameObject("GameClient");
             DontDestroyOnLoad(go);
             go.AddComponent<GameClient>();
+            go.AddComponent<ClientErrorReporter>();
             GameUI.Create();
         }
 
@@ -300,11 +309,15 @@ namespace AbyssKingdom.Client.Game
                     var ok = msg.DataAs<LoginOk>();
                     PlayerId = ok.PlayerId;
                     PlayerName = ok.DisplayName;
+                    LoginCompleted?.Invoke();
                     Alliance = null; _fullChatRefreshPending = true;
                     _territoryRevision = -1; TerritoryFlags.Clear(); TerritoryVersion++;
                     SyncClock(ok.ServerTimeMs);
                     Notice?.Invoke($"歡迎回來，{ok.DisplayName} 領主", false);
                     _conn.Send(MessageTypes.AllianceGet);
+                    break;
+                case MessageTypes.FeedbackReceived:
+                    FeedbackReceived?.Invoke(msg.ReqId, msg.DataAs<FeedbackReceivedMessage>().Accepted);
                     break;
                 case MessageTypes.CityState:
                     var state = msg.DataAs<CityStateMessage>();
@@ -451,6 +464,7 @@ namespace AbyssKingdom.Client.Game
                     break;
                 case MessageTypes.Error:
                     var err = msg.DataAs<ErrorMessage>();
+                    FeedbackReceived?.Invoke(msg.ReqId, false);
                     Notice?.Invoke(DisplayNames.Error(err.Code, err.Detail), true);
                     break;
             }

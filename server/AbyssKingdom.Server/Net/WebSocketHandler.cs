@@ -16,6 +16,8 @@ namespace AbyssKingdom.Server.Net;
 /// <summary>包裝一條 WebSocket：送訊息時加鎖（WebSocket 不允許同時多個 Send）。</summary>
 public sealed class WsConnection : IClientConnection
 {
+    public string TelemetryId { get; } = Guid.NewGuid().ToString("N");
+    public string? TelemetryPlayerId { get; set; }
     private readonly WebSocket _socket;
     private readonly JsonSerializerOptions _json;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -79,8 +81,9 @@ public sealed class WebSocketHandler
     private readonly IClock _clock;
     private readonly JsonSerializerOptions _json;
     private readonly ILogger<WebSocketHandler> _log;
+    private readonly PlaytestTelemetry _telemetry;
 
-    public WebSocketHandler(SessionManager sessions, IAuthVerifier auth, IClock clock, JsonSerializerOptions json, ILogger<WebSocketHandler> log, WorldService world, AllianceService alliances)
+    public WebSocketHandler(SessionManager sessions, IAuthVerifier auth, IClock clock, JsonSerializerOptions json, ILogger<WebSocketHandler> log, WorldService world, AllianceService alliances, PlaytestTelemetry telemetry)
     {
         _sessions = sessions;
         _auth = auth;
@@ -89,6 +92,7 @@ public sealed class WebSocketHandler
         _log = log;
         _world = world;
         _alliances = alliances;
+        _telemetry = telemetry;
     }
 
     public async Task RunAsync(WebSocket socket, CancellationToken ct)
@@ -137,6 +141,7 @@ public sealed class WebSocketHandler
         }
         finally
         {
+            if (conn.TelemetryPlayerId != null) _telemetry.End(conn.TelemetryPlayerId, conn.TelemetryId);
             if (session != null) await _sessions.LogoutAsync(session, conn);
         }
     }
@@ -178,6 +183,24 @@ public sealed class WebSocketHandler
 
         switch (type)
         {
+            case MessageTypes.ClientError:
+                var clientError = Deserialize<ClientErrorRequest>(data);
+                if (clientError != null) _telemetry.ClientError(session.PlayerId, session.Record.DisplayName, clientError.Message, clientError.Stack);
+                break;
+            case MessageTypes.FeedbackSend:
+                var feedback = Deserialize<FeedbackRequest>(data);
+                string? feedbackError = _telemetry.ValidateFeedback(session.PlayerId, feedback?.Text, feedback?.Screen);
+                if (feedbackError != null) { await SendError(conn, reqId, ErrorCodes.BadRequest, feedbackError); break; }
+                var feedbackCity = await _sessions.ReadCityAsync(session.PlayerId, ct);
+                bool accepted = _telemetry.Record(session.PlayerId, session.Record.DisplayName, "feedback", feedbackCity, new()
+                {
+                    ["text"] = PlaytestTelemetry.Clean(feedback!.Text, 1000), ["screen"] = feedback.Screen,
+                    ["sessionPlaySeconds"] = _telemetry.SessionSeconds(session.PlayerId),
+                    ["totalPlaySeconds"] = _telemetry.TotalSeconds(session.PlayerId),
+                    ["totalPlaySecondsKnown"] = _telemetry.HistoricTotalsKnown
+                });
+                await conn.SendAsync(MessageTypes.FeedbackReceived, reqId, new FeedbackReceivedMessage { Accepted = accepted });
+                break;
             case MessageTypes.AllianceGet:
                 try { await SendAlliance(conn, session, reqId, ct); }
                 catch (Exception ex) when (ex is not OperationCanceledException)
@@ -600,6 +623,8 @@ public sealed class WebSocketHandler
 
         var name = SanitizeName(req.DisplayName) ?? "探窟者";
         var newSession = await _sessions.LoginAsync(auth.PlayerId, name, conn, ct);
+        conn.TelemetryPlayerId = newSession.PlayerId;
+        _telemetry.Start(newSession.PlayerId, newSession.Record.DisplayName, conn.TelemetryId);
         await conn.SendAsync(MessageTypes.LoginOk, reqId, new LoginOk
         {
             PlayerId = newSession.PlayerId,
@@ -630,7 +655,19 @@ public sealed class WebSocketHandler
         {
             var now = _clock.NowMs;
             done = CityLogic.Advance(session.Record.City, now, out trained, out healed);
+            var beforeUpgrade = session.Record.City.Upgrade;
+            int beforeQuest = session.Record.City.QuestIndex;
             error = action(session.Record.City, now);
+            if (error == null)
+            {
+                var city = session.Record.City;
+                if (beforeUpgrade == null && city.Upgrade != null)
+                    _telemetry.Record(session.PlayerId, session.Record.DisplayName, "building.upgrade.start", city,
+                        new() { ["building"] = city.Upgrade.Building.ToString(), ["targetLevel"] = city.Upgrade.TargetLevel });
+                if (city.QuestIndex > beforeQuest)
+                    _telemetry.Record(session.PlayerId, session.Record.DisplayName, "quest.claim", city, new() { ["questNumber"] = beforeQuest + 1 });
+                _telemetry.Observe(session.PlayerId, session.Record.DisplayName, city);
+            }
             if (done != null || trained != null || healed != null || error == null) session.Dirty = true;
         }
         finally
@@ -821,6 +858,9 @@ public sealed class WebSocketHandler
     private async Task SendAlliance(WsConnection conn, PlayerSession session, int reqId, CancellationToken ct)
     {
         var directory = await _alliances.SnapshotAsync(ct);
+        foreach (var alliance in directory.Alliances.Where(a => !a.PendingCreate))
+            foreach (var member in alliance.Members)
+                _telemetry.Record(member.PlayerId, member.DisplayName, "first.alliance", atMs: member.JoinedAtMs > 0 ? member.JoinedAtMs : null);
         var pending = directory.Alliances.FirstOrDefault(a => a.PendingCreate && a.Members.Any(m => m.PlayerId == session.PlayerId));
         var mine = directory.Alliances.FirstOrDefault(a => !a.PendingCreate && a.Members.Any(m => m.PlayerId == session.PlayerId));
         var role = mine?.Members.FirstOrDefault(m => m.PlayerId == session.PlayerId)?.Role;

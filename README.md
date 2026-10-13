@@ -118,3 +118,8 @@ WebSocket `/ws`，每則訊息為 JSON：`{ "type": "...", "reqId": 1, "data": {
 | ← | `world.cities` | `{ cities: [{ x, y, name, power, mine, allied, shielded, keepLevel }] }`（`allied` 由伺服器依盟籍判定；自己／同盟淺藍，非同盟紅色，不公開帳號 ID） |
 | ← | `world.camps` | `{ camps: [{ x, y, backAt }] }`（`backAt` = 重生時間，伺服器 Unix 毫秒） |
 | ← | `error` | `{ code, detail }`（`city.upgrade` 前置不足：`detail = KeepPrerequisiteMissing`，共用 `UpgradeResult` 附加值 6；不扣資源、不新增升級隊列） |
+| → | `client.error` | `{ message, stack }`（登入後，訊息 1,200 字、stack 前五行／800 字；每登入二十筆，同訊息六十秒去重；不能上報遊戲事件） |
+| → | `feedback.send` | `{ text, screen: "city" / "world" }`（一至一千字；滑動六十秒最多三則，screen 為客戶端畫面資訊，主堡／任務／秒數由伺服器附加） |
+| ← | `feedback.received` | `{ accepted }`（reqId 對應回饋；accepted 表示排入背景佇列，資料庫寫入為 best effort） |
+
+封測 GM 均需 `X-Admin-Token`：`GET /admin/playtest/summary`、`events?playerId=<server-player-id>`、`errors`、`feedback`。Supabase 啟用前須人工執行 `db/003_playtest_events.sql`；完整說明見 [交接文件](docs/HANDOFF-PLAYTEST-TELEMETRY.md)。

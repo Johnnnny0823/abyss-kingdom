@@ -38,6 +38,27 @@ public static class AdminEndpoints
         if (string.IsNullOrEmpty(token)) return;
         if (token.Length < 24) throw new InvalidOperationException("Admin:Token 太短（至少 24 個字元）");
         app.Logger.LogWarning("Admin endpoints enabled");
+        app.MapGet("/admin/playtest/summary", async (HttpContext ctx, PlaytestTelemetry telemetry, SessionManager sessions) =>
+        {
+            if (!Authorized(ctx, token)) return Results.Unauthorized();
+            return Results.Json(await telemetry.SummaryAsync(sessions, ctx.RequestAborted));
+        });
+        app.MapGet("/admin/playtest/events", async (string? playerId, HttpContext ctx, PlaytestTelemetry telemetry) =>
+        {
+            if (!Authorized(ctx, token)) return Results.Unauthorized();
+            if (string.IsNullOrWhiteSpace(playerId)) return Results.BadRequest(new { error = "playerId required" });
+            return Results.Json(await telemetry.EventsAsync(playerId, ctx.RequestAborted));
+        });
+        app.MapGet("/admin/playtest/errors", async (HttpContext ctx, PlaytestTelemetry telemetry) =>
+        {
+            if (!Authorized(ctx, token)) return Results.Unauthorized();
+            return Results.Json(await telemetry.ErrorsAsync(ctx.RequestAborted));
+        });
+        app.MapGet("/admin/playtest/feedback", async (HttpContext ctx, PlaytestTelemetry telemetry) =>
+        {
+            if (!Authorized(ctx, token)) return Results.Unauthorized();
+            return Results.Json((await telemetry.EventsAsync(null, ctx.RequestAborted)).Where(e => e.Kind == "feedback").OrderByDescending(e => e.AtMs));
+        });
 
         app.MapPost("/admin/grant/{playerId}", async (string playerId, AdminGrant grant, HttpContext ctx, SessionManager sessions) =>
         {

@@ -416,6 +416,8 @@ namespace AbyssKingdom.Client.UI
                 case "QueueBusy": return "隊列忙碌中";
                 case "KeepLevelTooLow": return "需要先升級主堡";
                 case "KeepPrerequisiteMissing": return "主堡升級前置未達成，請先升級指定建築";
+                case "InvalidFeedback": return "請填寫 1～1,000 字的回饋";
+                case "FeedbackRateLimited": return "每分鐘最多送出三則回饋，請稍後再試";
                 case "AlreadyMaxLevel": return "已達最高等級";
                 case "BarracksRequired": return "需要先建造兵營";
                 case "ExceedsBatchLimit": return "超過單批訓練上限";
@@ -523,6 +525,15 @@ namespace AbyssKingdom.Client.UI
         public const string AlliedCityDescription = "同聯盟的主城，可以從聯盟頁派援軍協防，不能互相攻城。";
 
         public static string KeepPrerequisiteHeading(int target) => $"主堡 Lv.{target} 前置（點擊前往）";
+        public const string FeedbackTitle = "封測回饋";
+        public const string FeedbackButton = "回饋";
+        public const string FeedbackPrompt = "哪裡卡住或看不懂？請勿填入姓名、電話、帳號金鑰等個人資料（最多 1,000 字）。";
+        public const string FeedbackSend = "送出";
+        public const string FeedbackThanks = "已收到，謝謝";
+        public const string FeedbackWaiting = "傳送中…";
+        public const string FeedbackRetry = "暫時無法收到回饋，請稍後重試";
+        public const string OpenLogFolder = "開啟紀錄資料夾";
+        public const string LogFolderDescription = "開啟本機遊戲紀錄所在資料夾；不會自動上傳 Player.log。";
         public static string KeepPrerequisiteLine(BuildingType building, int required, int current) =>
             $"{(current >= required ? "✓" : "未達成")} {Buildings[building]} Lv.{required}（目前 Lv.{current}）";
 

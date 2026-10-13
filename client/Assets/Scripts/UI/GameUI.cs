@@ -48,6 +48,8 @@ namespace AbyssKingdom.Client.UI
         private const int HudPages = 4;
         private static readonly string[] PageNames = { "主將", "遠征", "兵營", "背包", "出征", "醫館", "聯盟" };
         private AlliancePanel _alliance;
+        private FeedbackPanel _feedback;
+        private VisualElement _feedbackModal;
         private HospitalPanel _hospital;
         private QueueView _hudHealQueue, _healQueue;
         private VisualElement _healPanel;
@@ -115,6 +117,7 @@ namespace AbyssKingdom.Client.UI
             OverlayBefore = _toasts;
 
             G.Notice += ShowToast;
+            G.FeedbackReceived += (reqId, accepted) => _feedback?.Received(reqId, accepted);
             // 測試用：-continent 開大地圖、-heroes／-expedition 直接開面板、-building <名稱>／-tile <x> <y> 直接選取
             var args = Environment.GetCommandLineArgs();
             if (Array.IndexOf(args, "-continent") >= 0) _world.SetMode(WorldScene.Mode.Surface);
@@ -328,6 +331,7 @@ namespace AbyssKingdom.Client.UI
             }
             right.Add(Btn("全圖", OpenOverview, "hud-btn", "hud-btn-map"));
             right.Add(Btn("聯盟", () => { G.RequestAlliance(); OpenPage(PageAlliance); }, "hud-btn"));
+            right.Add(Btn(DisplayNames.FeedbackButton, OpenFeedback, "hud-btn"));
             hud.Add(right);
             game.Add(hud);
 
@@ -715,6 +719,7 @@ namespace AbyssKingdom.Client.UI
                 case PageAlliance: _alliance.Refresh(); break;
             }
             if (_dialog != null) RefreshDialog(city, now);
+            _feedback?.Refresh();
             if (_overviewModal != null && _overviewModal.panel != null) _overview.Refresh(city, G.Cities, now, _continent.Selected, SurfaceViewQuad(), G.TerritoryFlags, G.Alliance?.MyAllianceId);
         }
 
@@ -724,6 +729,14 @@ namespace AbyssKingdom.Client.UI
             _selBuilding = type;
             _world.SetMode(WorldScene.Mode.City);
             _world.FocusOn(WorldScene.Mode.City, _world.City.PositionOf(type));
+        }
+
+        private void OpenFeedback()
+        {
+            _feedbackModal?.RemoveFromHierarchy();
+            _feedback = new FeedbackPanel(() => _world.Current == WorldScene.Mode.City ? "city" : "world",
+                () => { _feedbackModal?.RemoveFromHierarchy(); _feedbackModal = null; _feedback = null; });
+            _feedbackModal = OpenModal(_feedback.Root);
         }
 
         private void RefreshItems(CityState city)
