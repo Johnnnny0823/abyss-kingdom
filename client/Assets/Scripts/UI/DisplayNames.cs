@@ -440,6 +440,28 @@ namespace AbyssKingdom.Client.UI
                 case "TooManyMarches": return "同時最多 3 支行軍";
                 case "AlreadyThere": return "已經在這裡了";
                 case "Sieging": return "正在攻城，戰鬥結算完才能召回";
+                case "UnknownMarch": return "這支行軍已結束或不存在，請重新整理行軍列表";
+                case "NotStationed": return "部隊還在行軍途中，抵達後才能執行此操作";
+                case "UnknownBuilding": return "找不到這座建築，請重新選取";
+                case "UnknownTroop": return "找不到這個兵種，請重新選擇";
+                case "UnknownQueue": return "找不到這個隊列，請重新選擇";
+                case "UnknownItem": return "找不到這個道具，請重新選擇";
+                case "UnknownHero": return "找不到這位主將，請重新選擇";
+                case "UnknownGear": return "找不到這件裝備，請重新整理背包";
+                case "NotEquipped": return "這件裝備尚未穿戴";
+                case "NotExpItem": return "請選擇主將經驗書";
+                case "NotScroll": return "請選擇對應的索譜";
+                case "TrialFailed": return "印證試煉未通過，培養主將後再挑戰";
+                case "TeamTooLarge": return "每支隊伍最多五位主將";
+                case "NotFound": return "目標已不存在，請重新整理";
+                case "MilitaryRejected": return "部隊尚不符合出征條件，請檢查主將與兵力";
+                case "NoQueue": return "目前沒有進行中的隊列";
+                case "WrongQueue": return "此隊列無法接受聯盟幫助";
+                case "NotRequested": return "尚未請求聯盟幫助";
+                case "AlreadyHelped": return "你已幫助過此隊列";
+                case "SelfHelp": return "不能幫助自己的隊列";
+                case "HelpLimit": return "此隊列的聯盟幫助已達上限";
+                case "Finished": return "此隊列已完成";
                 case "NotDone": return "任務還沒完成";
                 case "NoQuest": return "這一章的任務都完成了";
                 case "NotReady": return "修練值還沒滿，還不能挑戰印證試煉";
@@ -492,7 +514,28 @@ namespace AbyssKingdom.Client.UI
                 case "Conflict": return "領地與其他聯盟生效或施工中的領地重疊";
                 case "Disconnected": return "領地必須連接生效盟旗；第一旗須在同區盟友主城 10 格內。撤旗也不能斷開領地";
             }
-            return $"{code}：{detail}";
+            // Raw diagnostics remain in the connection log, not in the player toast.
+            switch (code)
+            {
+                case "not_logged_in": return "尚未登入，請重新登入";
+                case "auth_failed": return "登入驗證失敗，請重新登入";
+                case "bad_request": return "操作資料不完整，請重新操作";
+                case "unknown_type": return "此版本不支援這項操作，請更新遊戲";
+                case "upgrade_rejected": return "建築暫時無法升級，請檢查條件";
+                case "train_rejected": return "暫時無法訓練，請檢查兵營與資源";
+                case "cancel_rejected": return "此隊列目前無法取消";
+                case "speedup_rejected": return "此隊列目前無法加速";
+                case "hero_rejected": return "主將暫時無法培養，請檢查條件";
+                case "gear_rejected": return "裝備操作未成功，請重新整理背包";
+                case "expedition_rejected": return "遠征操作未成功，請檢查隊伍與關卡";
+                case "domain_rejected": return "四股索操作未成功，請檢查修練條件";
+                case "map_rejected": return "大地圖操作未成功，請重新選擇目標";
+                case "move_rejected": return "建築無法放置於此處";
+                case "heal_rejected": return "暫時無法治療，請檢查傷兵與資源";
+                case "quest_rejected": return "任務尚未完成或獎勵已領取";
+                case "alliance_rejected": return "聯盟操作未成功，請重新整理聯盟頁";
+                default: return "操作未成功，請稍後再試";
+            }
         }
 
         public static string RallyState(string state) => state switch
@@ -525,6 +568,13 @@ namespace AbyssKingdom.Client.UI
         public const string AlliedCityDescription = "同聯盟的主城，可以從聯盟頁派援軍協防，不能互相攻城。";
 
         public static string KeepPrerequisiteHeading(int target) => $"主堡 Lv.{target} 前置（點擊前往）";
+        public const string BuildHospitalFirst = "先建造醫館";
+        public const string GoHospital = "前往醫館";
+        public const string CampWaitForArmy = "部隊仍在外，請等返城再整備出征";
+        public const string CampBuildHospital = "先建造醫館，再治療傷兵";
+        public const string CampHealFirst = "先治療傷兵，恢復兵力再打營地";
+        public const string CampTrainFirst = "可用部隊不足 50 人，先到兵營補兵再出征";
+        public static string ResourceIconHint(ResourceType resource) => Resources[resource] + "：點擊查看說明";
         public const string FeedbackTitle = "封測回饋";
         public const string FeedbackButton = "回饋";
         public const string FeedbackPrompt = "哪裡卡住或看不懂？請勿填入姓名、電話、帳號金鑰等個人資料（最多 1,000 字）。";

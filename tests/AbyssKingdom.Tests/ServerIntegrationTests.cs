@@ -663,9 +663,9 @@ public static partial class ServerIntegrationTests
     {
         await using var server = new TestServer();
         await server.StartAsync();
-        var camp = SurfaceLogic.Features().First(f => f.Type == FeatureType.MonsterCamp && f.Level == 1
-            && SurfaceLogic.Sites().Any(s => s.z == SurfaceZone.Outer && SurfaceLogic.Dist2(s.x, s.y, f.X, f.Y) < 400));
-        var site = SurfaceLogic.Sites().First(s => s.z == SurfaceZone.Outer && SurfaceLogic.Dist2(s.x, s.y, camp.X, camp.Y) < 400);
+        var camp = SurfaceLogic.Features().First(f => f.Type == FeatureType.MonsterCamp && f.Level == 2
+            && SurfaceLogic.Sites().Any(s => s.z == SurfaceZone.Middle && SurfaceLogic.Dist2(s.x, s.y, f.X, f.Y) < 400));
+        var site = SurfaceLogic.Sites().First(s => s.z == SurfaceZone.Middle && SurfaceLogic.Dist2(s.x, s.y, camp.X, camp.Y) < 400);
 
         await using var c = new TestClient();
         await c.ConnectAsync(server.WsUri);

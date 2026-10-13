@@ -56,7 +56,7 @@ public static class CampTests
     [Test]
     public static void TinyTeam_Loses_CasualtiesSplitIntoWoundedAndDead()
     {
-        var (c, camp) = Setup(1);
+        var (c, camp) = Setup(2); // Lv.1 now deliberately supports the tutorial's small army.
         var w = new SimpleFieldRegistry();
         var (ev, m) = Attack(c, camp, HeroId.Hold, new() { [TroopType.Shield] = 20 }, w);
         Assert.True(ev.BattleLost, "20 兵打不贏");

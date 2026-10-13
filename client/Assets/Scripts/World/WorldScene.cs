@@ -205,6 +205,22 @@ namespace AbyssKingdom.Client.World
             return tm;
         }
 
+        private Material _nameplateMaterial;
+        public TextMesh Nameplate(Transform parent, Vector3 pos, float size, Color color)
+        {
+            var text = Text(parent, pos, size, color);
+            if (_nameplateMaterial == null)
+                _nameplateMaterial = new Material(Shader.Find("Sprites/Default")) { color = new Color(0.045f, 0.065f, 0.085f) };
+            var plate = Prim(PrimitiveType.Quad, Color.white, Vector3.zero, Vector3.one, text.transform);
+            plate.name = "NameplateBackdrop";
+            var renderer = plate.GetComponent<Renderer>();
+            renderer.sharedMaterial = _nameplateMaterial;
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            text.gameObject.AddComponent<NameplateBackdrop>().Initialize(text.GetComponent<Renderer>(), plate.transform);
+            return text;
+        }
+
         /// <summary>讓物件永遠面向鏡頭（例如 2D 部隊圖）。</summary>
         public void AddBillboard(Transform t) => _billboards.Add(t);
 
@@ -294,6 +310,20 @@ namespace AbyssKingdom.Client.World
             // 被區塊剔除（未啟用）的不用轉：大地圖上大部分名牌與部隊圖都在畫面外
             foreach (var t in _billboards)
                 if (t.gameObject.activeInHierarchy) t.rotation = rot;
+        }
+    }
+
+    /// <summary>Use the rendered glyph bounds, including CJK names; no material instances per label.</summary>
+    internal sealed class NameplateBackdrop : MonoBehaviour
+    {
+        private Renderer _text;
+        private Transform _plate;
+        public void Initialize(Renderer text, Transform plate) { _text = text; _plate = plate; }
+        private void LateUpdate()
+        {
+            var b = _text.localBounds;
+            _plate.localPosition = new Vector3(b.center.x, b.center.y, b.max.z + 0.008f);
+            _plate.localScale = new Vector3(Mathf.Max(0.01f, b.size.x + 0.06f), b.size.y + 0.04f, 1);
         }
     }
 }

@@ -10,6 +10,7 @@
     <ProjectReference Include="..\..\server\AbyssKingdom.Server\AbyssKingdom.Server.csproj" />
     <ProjectReference Include="..\..\tools\AiPlaytest\AiPlaytest.csproj" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Compile Include="../../client/Assets/Scripts/UI/DisplayNames.cs" Link="DisplayNames.cs" />
   </ItemGroup>
 
   <PropertyGroup>

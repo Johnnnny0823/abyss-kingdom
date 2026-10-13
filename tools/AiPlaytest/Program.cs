@@ -14,6 +14,7 @@ var repository = new DirectoryInfo(AppContext.BaseDirectory);
 while (repository != null && !File.Exists(Path.Combine(repository.FullName, "CLAUDE.md"))) repository = repository.Parent;
 if (repository == null) throw new InvalidOperationException("Repository root not found.");
 string output = Path.Combine(repository.FullName, "artifacts", "ai-playtest"); Directory.CreateDirectory(output);
+if (args.Contains("--fixes-1")) { output += "-fixes-1"; Directory.CreateDirectory(output); }
 await app.StartAsync();
 if (args.Contains("--host"))
 {
@@ -27,7 +28,7 @@ try
     if (args.Contains("--queue-check")) { output += "-offline"; Directory.CreateDirectory(output); }
     foreach (string profile in profiles)
     {
-        long beginning = clock.NowMs; int? completedMinute = null; int actions = 0, idle = 0;
+        long beginning = clock.NowMs; double? completedMinute = null; int actions = 0, idle = 0;
         var timeline = new List<object>(); var player = new SocketPlayer(); await player.LoginAsync(profile);
         for (int turn = 0; turn < 120; turn++)
         {
@@ -55,7 +56,7 @@ try
                 var response = await player.SendAsync(intent.Type, intent.Data);
                 await player.SendAsync(MessageTypes.CityGet, null, MessageTypes.CityState); actions++;
                 timeline.Add(new { minute = turn / 2.0, intent.Type, intent.Data, intent.Reason, response, city = player.City });
-                if (player.City.QuestIndex == QuestConfig.Chapter1.Length && completedMinute == null) completedMinute = turn / 2;
+                if (player.City.QuestIndex == QuestConfig.Chapter1.Length && completedMinute == null) completedMinute = turn / 2.0;
                 if (response.GetProperty("type").GetString() == MessageTypes.Error) break;
             }
             if (actions == beforeActions) idle++;

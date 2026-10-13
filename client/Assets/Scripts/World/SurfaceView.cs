@@ -539,7 +539,7 @@ namespace AbyssKingdom.Client.World
                 {
                     if (c.castle != null) UnityEngine.Object.Destroy(c.castle);
                     var castle = Castle(ChunkOf(pin.X, pin.Y), CityPos(pin.X, pin.Y), pin.Mine, pin.Allied, tier);
-                    var name = _w.Text(castle.transform, new Vector3(0, 0.95f, 0), 0.03f, CityColor(pin));
+                    var name = _w.Nameplate(castle.transform, new Vector3(0, 0.95f, 0), 0.03f, CityColor(pin));
                     c = (castle, name, pin.Mine, pin.Allied, tier);
                     _castles[key] = c;
                 }

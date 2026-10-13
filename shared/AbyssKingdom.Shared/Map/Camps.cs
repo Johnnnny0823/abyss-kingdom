@@ -12,12 +12,24 @@ namespace AbyssKingdom.Shared.Map
         /// <summary>被擊敗後多久重新出現。</summary>
         public const long RespawnMs = 10 * 60_000;
 
-        /// <summary>營地強度對應遠征第幾關：Lv.1 ≈ 第 2 關、Lv.2 ≈ 第 4 關、Lv.3 ≈ 第 7 關。</summary>
+        /// <summary>陣容公式來源：第 2／4／7 關；Lv.1 另調為新手 50 兵可勝的弱化陣容。</summary>
         public static int StageOf(int level) => level <= 1 ? 2 : level == 2 ? 4 : 7;
 
         /// <summary>魔物陣容：Lv.N 有 N 支小隊（沿用遠征的魔物數值公式）。</summary>
-        public static List<EnemySquad> Lineup(int level, int tile) =>
-            ExpeditionConfig.Lineup(StageOf(level), level, tile % 3, 100);
+        public static List<EnemySquad> Lineup(int level, int tile)
+        {
+            var lineup = ExpeditionConfig.Lineup(StageOf(level), level, tile % 3, 100);
+            // First tutorial battle: 50 Shield troops with a level-one starter hero.
+            // Keep the expedition formula and all level-two/three camps unchanged.
+            if (level == 1) foreach (var squad in lineup)
+            {
+                squad.Count = 20;
+                squad.Attack /= 2;
+                squad.Defense /= 2;
+                squad.Hp /= 2;
+            }
+            return lineup;
+        }
 
         public static Dictionary<ResourceType, long> ResourceLoot(int level) => new Dictionary<ResourceType, long>
         {

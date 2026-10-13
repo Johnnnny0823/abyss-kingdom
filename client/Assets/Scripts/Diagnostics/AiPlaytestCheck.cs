@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using AbyssKingdom.Client.Game;
 using AbyssKingdom.Client.Net;
@@ -8,6 +10,8 @@ using AbyssKingdom.Client.UI;
 using AbyssKingdom.Client.World;
 using AbyssKingdom.Playtesting;
 using AbyssKingdom.Shared.City;
+using AbyssKingdom.Shared.Heroes;
+using AbyssKingdom.Shared.Map;
 using AbyssKingdom.Shared.Protocol;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -18,7 +22,7 @@ namespace AbyssKingdom.Client.Diagnostics
     public sealed class AiPlaytestCheck : MonoBehaviour
     {
         private string _output;
-        private static object Field(object o, string n) => o.GetType().GetField(n, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(o);
+        private static object Field(object o, string n) => o.GetType().GetField(n, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).GetValue(o);
         private static object Call(object o, string n, params object[] args) => o.GetType().GetMethod(n, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(o, args);
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Boot()
@@ -77,6 +81,8 @@ namespace AbyssKingdom.Client.Diagnostics
                 Call(ui, "OpenResourceInfo", resource); yield return Capture(ui, "resource-" + resource);
                 foreach (var overlay in ui.GetComponent<UIDocument>().rootVisualElement.Query<VisualElement>(className: "overlay").ToList()) overlay.RemoveFromHierarchy();
             }
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-aiplaytest-fixes-1") >= 0)
+                yield return FixesRegression(ui, game, connection, world);
             long beginning = game.ServerNowMs; int lastQuest = -1, turn = 0;
             while (Array.IndexOf(Environment.GetCommandLineArgs(), "-aiplaytest-smoke") < 0 && game.ServerNowMs - beginning < 60 * 60_000)
             {
@@ -114,6 +120,124 @@ namespace AbyssKingdom.Client.Diagnostics
             File.WriteAllText(Path.Combine(_output, "final-city.json"), JsonConvert.SerializeObject(game.City));
             Debug.Log("AI_PLAYTEST_UI COMPLETE questIndex=" + game.City.QuestIndex); Application.Quit();
         }
+        private void Check(bool passed, string name)
+        {
+            File.AppendAllText(Path.Combine(_output, "fixes-checks.jsonl"), JsonConvert.SerializeObject(new { name, passed }) + "\n");
+            if (!passed) { Debug.LogError("PLAYTEST_FIX_CHECK FAILED: " + name); Application.Quit(2); }
+        }
+
+        private IEnumerator WaitForCity(GameConnection connection, Func<bool> ready)
+        {
+            float end = Time.realtimeSinceStartup + 120;
+            while (!ready() && Time.realtimeSinceStartup < end)
+            { connection.Send(MessageTypes.CityGet); yield return new WaitForSecondsRealtime(.5f); }
+            Check(ready(), "server state reached before timeout");
+        }
+
+        private IEnumerator AuditCosts(GameUI ui, string context)
+        {
+            var root = ui.GetComponent<UIDocument>().rootVisualElement;
+            var costs = context == "building" ? (VisualElement)Field(ui, "_cardHost") :
+                (VisualElement)Field(Field(ui, context == "training" ? "_training" : "_hospital"), "Root");
+            var icons = costs.Query<VisualElement>(className: "icon-small").ToList().Where(icon =>
+            {
+                for (var e = icon; e != null; e = e.parent) if (e.resolvedStyle.display == DisplayStyle.None) return false;
+                return true;
+            }).ToList();
+            Check(icons.Count > 0, context + " has visible resource costs");
+            foreach (var icon in icons)
+            {
+                using (var click = ClickEvent.GetPooled()) { click.target = icon; icon.SendEvent(click); }
+                Check(root.Query<VisualElement>(className: "overlay").ToList().Count == 1, context + " opens exactly one dialog");
+                Check(icon.tooltip.StartsWith(root.Q<Label>(className: "res-info-name").text), context + " names the clicked resource");
+                yield return Capture(ui, "cost-" + context + "-" + icons.IndexOf(icon));
+                foreach (var overlay in root.Query<VisualElement>(className: "overlay").ToList()) overlay.RemoveFromHierarchy();
+            }
+        }
+
+        private IEnumerator BuildForCheck(GameClient game, GameConnection connection, BuildingType building)
+        {
+            connection.Send(MessageTypes.CityUpgrade, new UpgradeRequest { Building = building });
+            yield return new WaitForSecondsRealtime(.5f);
+            if (game.City.Upgrade != null && game.City.Upgrade.FinishAtMs > game.ServerNowMs)
+                connection.Send(MessageTypes.CitySpeedup, new SpeedupRequest { Queue = QueueType.Building });
+            yield return WaitForCity(connection, () => game.City.GetLevel(building) > 0);
+        }
+
+        private IEnumerator FixesRegression(GameUI ui, GameClient game, GameConnection connection, WorldScene world)
+        {
+            Call(ui, "ClosePage");
+            Call(ui, "FocusBuilding", BuildingType.Hospital);
+            yield return new WaitForSecondsRealtime(.3f);
+            Check(((Button)Field(ui, "_trainBtn")).resolvedStyle.display == DisplayStyle.None, "Hospital zero hides treatment entrance");
+            yield return Capture(ui, "hospital-zero-card");
+            yield return AuditCosts(ui, "building");
+
+            world.FocusOn(WorldScene.Mode.City, new Vector3(5, 0, -5));
+            typeof(Clickable).GetMethod("SimulateSingleClick", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(((Button)Field(Field(ui, "_quest"), "_go")).clickable, new object[] { null, 0 });
+            yield return Capture(ui, "quest-focus");
+            var position = world.Cam.WorldToViewportPoint(world.City.PositionOf(BuildingType.Keep));
+            Check(position.x > .3f && position.x < .7f && position.y > .3f && position.y < .7f,
+                "Quest navigation moves camera from distant pan to building");
+
+            yield return BuildForCheck(game, connection, BuildingType.Barracks);
+            Call(ui, "OpenPage", 2); yield return new WaitForSecondsRealtime(.3f);
+            yield return AuditCosts(ui, "training");
+            connection.Send(MessageTypes.CityTrain, new TrainRequest { Troop = TroopType.Shield, Count = 10 });
+            yield return new WaitForSecondsRealtime(.5f);
+            if (game.City.Training != null && game.City.Training.FinishAtMs > game.ServerNowMs)
+                connection.Send(MessageTypes.CitySpeedup, new SpeedupRequest { Queue = QueueType.Training });
+            yield return WaitForCity(connection, () => game.City.GetTroops(TroopType.Shield) >= 10);
+            Call(ui, "ClosePage");
+
+            // A deliberately under-strength, legal march produces real wounded soldiers; no GM grants.
+            var home = SurfaceLogic.CityCenter(game.City.Surface);
+            var camp = SurfaceLogic.Features().Where(f => f.Type == FeatureType.MonsterCamp && f.Level == 2)
+                .OrderBy(f => SurfaceLogic.Dist2(home.x, home.y, f.X, f.Y)).First();
+            connection.Send(MessageTypes.MapMarch, new MapMarchRequest { Hero = HeroId.Hold, X = camp.X, Y = camp.Y,
+                Troops = new Dictionary<TroopType, long> { [TroopType.Shield] = 5 } });
+            yield return WaitForCity(connection, () => game.City.Surface.Marches.Count > 0);
+            yield return WaitForCity(connection, () => game.City.Surface.Marches.Count == 0 && CityLogic.WoundedTotal(game.City) > 0);
+            Check(game.City.Stats.CampsWon == 0, "Deliberately under-strength Lv.2 attack loses and produces real wounded");
+
+            Call(ui, "GoToQuest", QuestConfig.Chapter1[8]);
+            yield return Capture(ui, "recover-build-hospital");
+            Check(((Button)Field(ui, "_hospitalBtn")).text == DisplayNames.BuildHospitalFirst, "Wounded HUD asks to build Hospital");
+            Check((BuildingType?)Field(ui, "_selBuilding") == BuildingType.Hospital, "Wounded quest navigation selects Hospital plot");
+            typeof(Clickable).GetMethod("SimulateSingleClick", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(((Button)Field(ui, "_hospitalBtn")).clickable, new object[] { null, 0 });
+            Check((BuildingType?)Field(ui, "_selBuilding") == BuildingType.Hospital && world.Current == WorldScene.Mode.City,
+                "Wounded HUD button selects the unbuilt Hospital plot");
+            yield return BuildForCheck(game, connection, BuildingType.Hospital);
+            Call(ui, "GoToQuest", QuestConfig.Chapter1[8]);
+            yield return Capture(ui, "recover-heal");
+            Check((int)Field(ui, "_page") == 5, "Wounded quest navigation opens treatment");
+            foreach (var slider in ui.GetComponent<UIDocument>().rootVisualElement.Query<SliderInt>().ToList()) slider.value = slider.highValue;
+            yield return new WaitForSecondsRealtime(.3f);
+            yield return AuditCosts(ui, "healing");
+            connection.Send(MessageTypes.CityHeal, new HealRequest { Troops = new Dictionary<TroopType, long>(game.City.Wounded) });
+            yield return new WaitForSecondsRealtime(.5f);
+            if (game.City.Healing != null && game.City.Healing.FinishAtMs > game.ServerNowMs)
+                connection.Send(MessageTypes.CitySpeedup, new SpeedupRequest { Queue = QueueType.Healing });
+            yield return WaitForCity(connection, () => game.City.Healing == null && CityLogic.WoundedTotal(game.City) == 0);
+            Call(ui, "GoToQuest", QuestConfig.Chapter1[8]);
+            yield return Capture(ui, "recover-train");
+            Check((int)Field(ui, "_page") == 2, "After treatment, under-fifty army navigates to training");
+            connection.Send(MessageTypes.CityTrain, new TrainRequest { Troop = TroopType.Shield, Count = 50 });
+            yield return new WaitForSecondsRealtime(.5f);
+            yield return WaitForCity(connection, () => game.City.Training == null || game.City.Training.FinishAtMs - game.ServerNowMs <= CityConfig.FreeSpeedupMs);
+            if (game.City.Training != null && game.City.Training.FinishAtMs > game.ServerNowMs)
+                connection.Send(MessageTypes.CitySpeedup, new SpeedupRequest { Queue = QueueType.Training });
+            yield return WaitForCity(connection, () => game.City.GetTroops(TroopType.Shield) >= 50);
+            Call(ui, "GoToQuest", QuestConfig.Chapter1[8]);
+            yield return Capture(ui, "recover-ready-camp");
+            Check(world.Current == WorldScene.Mode.Surface, "Recovered army navigates to camp again");
+            Call(ui, "ClosePage"); Call(ui, "FocusBuilding", BuildingType.Keep);
+            yield return Capture(ui, "city-nameplates");
+            Call(ui, "ToggleHome"); yield return Capture(ui, "world-nameplates"); Call(ui, "ToggleHome");
+        }
+
         private IEnumerator Capture(GameUI ui, string name)
         {
             var panel = ui.GetComponent<UIDocument>().panelSettings; var rt = RenderTexture.GetTemporary(1280, 800, 24, RenderTextureFormat.ARGB32);

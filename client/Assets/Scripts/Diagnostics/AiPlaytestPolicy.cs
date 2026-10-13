@@ -66,6 +66,22 @@ namespace AbyssKingdom.Playtesting
                         if (gathering != null || profile == "quest") return gathering;
                         break;
                     case QuestGoal.CampsWon:
+                        if (c.Surface.Marches.Count == 0)
+                        {
+                            if (CityLogic.WoundedTotal(c) > 0 || c.Healing != null)
+                            {
+                                if (c.GetLevel(BuildingType.Hospital) == 0) return Upgrade(c, BuildingType.Hospital);
+                                if (c.Healing == null) return new PlayIntent(MessageTypes.CityHeal,
+                                    new HealRequest { Troops = new Dictionary<TroopType, long>(c.Wounded) }, "quest recover wounded");
+                                return null;
+                            }
+                            if (CityConfig.AllTroops.Sum(c.GetTroops) < 50)
+                            {
+                                if (c.Training == null && CityLogic.CanTrain(c, TroopType.Shield, 50) == TrainResult.Ok)
+                                    return new PlayIntent(MessageTypes.CityTrain, new TrainRequest { Troop = TroopType.Shield, Count = 50 }, "quest replenish army");
+                                return null;
+                            }
+                        }
                         var camping = March(c, FeatureType.MonsterCamp);
                         if (camping != null || profile == "quest") return camping;
                         break;

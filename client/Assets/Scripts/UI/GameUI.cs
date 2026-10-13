@@ -25,7 +25,7 @@ namespace AbyssKingdom.Client.UI
 
         private static GameClient G => GameClient.Instance;
 
-        private VisualElement _root, _login, _game, _toasts, _dialog;
+        private VisualElement _root, _login, _game, _toasts, _dialog, _resourceModal;
         private TextField _urlField, _nameField;
         private Label _loginStatus, _playerName, _troopTotal, _powerDelta, _shieldLabel;
         private long _lastTotalPower;
@@ -54,6 +54,7 @@ namespace AbyssKingdom.Client.UI
         private QueueView _hudHealQueue, _healQueue;
         private VisualElement _healPanel;
         private Label _woundedLabel;
+        private Button _hospitalBtn;
         private VisualElement[] _pageRoots;
         private VisualElement _pageOverlay, _pageBody;
         private Label _pageTitle;
@@ -93,6 +94,7 @@ namespace AbyssKingdom.Client.UI
 
         private void OnEnable()
         {
+            ResourceInfoRequested = OpenResourceInfo;
             _root = GetComponent<UIDocument>().rootVisualElement;
             _root.Clear();
             _root.styleSheets.Add(Resources.Load<StyleSheet>("UI/Game"));
@@ -180,6 +182,7 @@ namespace AbyssKingdom.Client.UI
 
         private void OnDisable()
         {
+            if (ResourceInfoRequested == OpenResourceInfo) ResourceInfoRequested = null;
             if (G != null) G.Notice -= ShowToast;
         }
 
@@ -315,7 +318,8 @@ namespace AbyssKingdom.Client.UI
             _healPanel.Add(healHead);
             _hudHealQueue = new QueueView(QueueType.Healing, OpenSpeedupDialog);
             _healPanel.Add(_hudHealQueue.Root);
-            _healPanel.Add(Btn("前往醫館", () => OpenPage(PageHospital), "btn-small"));
+            _hospitalBtn = Btn(DisplayNames.GoHospital, GoToHospital, "btn-small");
+            _healPanel.Add(_hospitalBtn);
             left.Add(_healPanel);
             var marchPanel = El("panel", "hud-panel");
             _marchList = new MarchList();
@@ -462,6 +466,7 @@ namespace AbyssKingdom.Client.UI
         /// <summary>點上方資源列：顯示這種資源的名稱、由來、用途、取得方式，以及目前的產量與上限。</summary>
         private void OpenResourceInfo(ResourceType r)
         {
+            _resourceModal?.RemoveFromHierarchy();
             var city = G.Predicted();
             VisualElement overlay = null;
             var box = El("dialog", "res-info");
@@ -481,7 +486,7 @@ namespace AbyssKingdom.Client.UI
                 box.Add(Lbl($"被掠奪時保護：{PvpConfig.Protected(warehouse):N0}", "res-info-stat"));
             }
             box.Add(Lbl("取得方式：城內生產建築、大地圖資源田採集、擊敗怪物營地、任務獎勵。倉庫滿了就停止生產；採集與戰利品帶回城不受上限限制。", "muted", "res-info-desc"));
-            overlay = OpenModal(box);
+            _resourceModal = overlay = OpenModal(box);
         }
 
         /// <summary>點城內核心區外：懸崖、擴張區的霧或荒地，說明是什麼、什麼時候開放。</summary>
@@ -583,8 +588,8 @@ namespace AbyssKingdom.Client.UI
                     if (_world.Current != WorldScene.Mode.City) ToggleHome();
                     ClosePage();
                     // 四座生產建築：選最低的那一座
-                    _selBuilding = q.Goal == QuestGoal.BuildingLevel ? q.Building
-                        : new[] { BuildingType.Sawmill, BuildingType.Quarry, BuildingType.Farm, BuildingType.CrystalMine }.OrderBy(b => city.GetLevel(b)).First();
+                    FocusBuilding(q.Goal == QuestGoal.BuildingLevel ? q.Building
+                        : new[] { BuildingType.Sawmill, BuildingType.Quarry, BuildingType.Farm, BuildingType.CrystalMine }.OrderBy(b => city.GetLevel(b)).First());
                     break;
                 case QuestGoal.TroopsTrained:
                     OpenPage(PageBarracks);
@@ -598,6 +603,25 @@ namespace AbyssKingdom.Client.UI
                 case QuestGoal.GatherTrips:
                 case QuestGoal.CampsWon:
                 {
+                    // Returning troops are not available yet; don't send the player to train duplicates.
+                    if (q.Goal == QuestGoal.CampsWon && city.Surface.Marches.Count > 0)
+                    {
+                        OpenPage(PageMarch);
+                        ShowToast(DisplayNames.CampWaitForArmy, false);
+                        break;
+                    }
+                    if (q.Goal == QuestGoal.CampsWon && (CityLogic.WoundedTotal(city) > 0 || city.Healing != null))
+                    {
+                        GoToHospital();
+                        ShowToast(city.GetLevel(BuildingType.Hospital) == 0 ? DisplayNames.CampBuildHospital : DisplayNames.CampHealFirst, false);
+                        break;
+                    }
+                    if (q.Goal == QuestGoal.CampsWon && CityConfig.AllTroops.Sum(city.GetTroops) < 50)
+                    {
+                        OpenPage(PageBarracks);
+                        ShowToast(DisplayNames.CampTrainFirst, false);
+                        break;
+                    }
                     if (!city.Surface.Placed) break;
                     if (_world.Current != WorldScene.Mode.Surface) ToggleHome();
                     ClosePage();
@@ -690,7 +714,7 @@ namespace AbyssKingdom.Client.UI
                     }
                     card.Refresh(city);
                     bool barracks = _selBuilding == BuildingType.Barracks && city.GetLevel(BuildingType.Barracks) > 0;
-                    Show(_trainBtn, barracks || _selBuilding == BuildingType.Hospital);
+                    Show(_trainBtn, barracks || (_selBuilding == BuildingType.Hospital && city.GetLevel(BuildingType.Hospital) > 0));
                     _trainBtn.text = barracks ? "訓練" : "治療";
                 }
             }
@@ -707,6 +731,7 @@ namespace AbyssKingdom.Client.UI
             long woundedTotal = CityLogic.WoundedTotal(city);
             Show(_healPanel, woundedTotal > 0 || city.Healing != null);
             _woundedLabel.text = $"傷兵 {woundedTotal:N0}";
+            _hospitalBtn.text = city.GetLevel(BuildingType.Hospital) == 0 ? DisplayNames.BuildHospitalFirst : DisplayNames.GoHospital;
             _marchList.Refresh(city, now);
             switch (_page)
             {
@@ -721,6 +746,12 @@ namespace AbyssKingdom.Client.UI
             if (_dialog != null) RefreshDialog(city, now);
             _feedback?.Refresh();
             if (_overviewModal != null && _overviewModal.panel != null) _overview.Refresh(city, G.Cities, now, _continent.Selected, SurfaceViewQuad(), G.TerritoryFlags, G.Alliance?.MyAllianceId);
+        }
+
+        private void GoToHospital()
+        {
+            if (G.Predicted()?.GetLevel(BuildingType.Hospital) > 0) OpenPage(PageHospital);
+            else { ClosePage(); FocusBuilding(BuildingType.Hospital); }
         }
 
         private void FocusBuilding(BuildingType type)

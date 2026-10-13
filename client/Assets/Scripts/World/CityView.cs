@@ -181,7 +181,7 @@ namespace AbyssKingdom.Client.World
                         glow.GetComponent<Renderer>().sharedMaterial = _w.Glow;
                         glow.transform.localRotation = Quaternion.Euler(45, 45, 0);
                     }
-                    _w.Text(t, new Vector3(0, top3 + (upgrading ? 0.45f : 0.2f), 0), 0.034f, Color.white).text =
+                    _w.Nameplate(t, new Vector3(0, top3 + (upgrading ? 0.45f : 0.2f), 0), 0.034f, Color.white).text =
                         level > 0 ? $"{buildingName} Lv.{level}" : $"{buildingName}（未建造）";
                     return t;
                 }
@@ -201,7 +201,7 @@ namespace AbyssKingdom.Client.World
                     glow.GetComponent<Renderer>().sharedMaterial = _w.Glow;
                     glow.transform.localRotation = Quaternion.Euler(45, 45, 0);
                 }
-                _w.Text(t, new Vector3(0, h + (upgrading ? 0.45f : 0.2f), 0), 0.034f, Color.white).text =
+                _w.Nameplate(t, new Vector3(0, h + (upgrading ? 0.45f : 0.2f), 0), 0.034f, Color.white).text =
                     level > 0 ? $"{buildingName} Lv.{level}" : $"{buildingName}（未建造）";
                 return t;
             }
@@ -218,7 +218,7 @@ namespace AbyssKingdom.Client.World
                     glow.GetComponent<Renderer>().sharedMaterial = _w.Glow;
                     glow.transform.localRotation = Quaternion.Euler(45, 45, 0);
                 }
-                _w.Text(t, new Vector3(0, top + (upgrading ? 0.5f : 0.25f), 0), 0.034f, Color.white).text =
+                _w.Nameplate(t, new Vector3(0, top + (upgrading ? 0.5f : 0.25f), 0), 0.034f, Color.white).text =
                     level > 0 ? $"{buildingName} Lv.{level}" : $"{buildingName}（未建造）";
                 return t;
             }
@@ -262,7 +262,7 @@ namespace AbyssKingdom.Client.World
             }
 
             var name = AbyssKingdom.Client.UI.DisplayNames.Buildings[type];
-            _w.Text(t, new Vector3(0, 0.55f + 0.06f * level + f * 0.3f, 0), 0.034f, Color.white).text =
+            _w.Nameplate(t, new Vector3(0, 0.55f + 0.06f * level + f * 0.3f, 0), 0.034f, Color.white).text =
                 level > 0 ? $"{name} Lv.{level}" : $"{name}（未建造）";
             return t;
         }

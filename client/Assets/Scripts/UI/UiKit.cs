@@ -12,6 +12,7 @@ namespace AbyssKingdom.Client.UI
     {
         /// <summary>彈出視窗要插入的地方（GameUI 啟動時設定）：插在 OverlayBefore（通知層）之前。</summary>
         public static VisualElement OverlayHost, OverlayBefore;
+        public static Action<ResourceType> ResourceInfoRequested;
 
         public static VisualElement El(params string[] classes)
         {
@@ -40,6 +41,12 @@ namespace AbyssKingdom.Client.UI
         {
             var icon = new IconElement(IconElement.For(r), small ? 18 : 28);
             icon.AddToClassList(small ? "icon-small" : "icon");
+            icon.tooltip = DisplayNames.ResourceIconHint(r);
+            icon.RegisterCallback<ClickEvent>(e =>
+            {
+                ResourceInfoRequested?.Invoke(r);
+                e.StopPropagation(); // HUD resource chips also handle clicks on their amount.
+            });
             return icon;
         }
 
