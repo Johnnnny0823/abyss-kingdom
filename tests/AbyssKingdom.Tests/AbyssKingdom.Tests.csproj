@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\shared\AbyssKingdom.Shared\AbyssKingdom.Shared.csproj" />
     <ProjectReference Include="..\..\server\AbyssKingdom.Server\AbyssKingdom.Server.csproj" />
+    <ProjectReference Include="..\..\tools\AiPlaytest\AiPlaytest.csproj" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
