@@ -3,6 +3,44 @@
 「深淵探勘 × 4X 策略」SLG（PC 先行，Steam＋自架下載；手遊之後）。一人 + AI（Vibe Coding）開發，零成本起步。
 企劃書與技術架構請看 Claude Docs 上的《深淵王國》SLG 手遊企劃書。
 
+> 三百年前，大陸中央塌陷出垂直裂口「永暗之喉」，底下壓著一層層死去神祇的世界。
+> 玩家是新任的「端座領主」，在裂口周圍建城、與深淵立約，而每個賽季都有一層新的神話從深淵翻湧上地表。
+
+**目錄**：[遊戲特色](#遊戲特色) · [技術架構](#技術架構) · [目前進度](#目前進度) · [資料夾結構](#資料夾結構) · [快速開始](#快速開始本機) · [設定](#設定環境變數) · [連線協定](#連線協定mvp)
+
+## 遊戲特色
+
+| 支柱 | 內容 |
+| --- | --- |
+| 生存經營 | 城建、居民、主將養成（品質、等級、裝備、升星），對抗深淵低語 |
+| 大世界大戰略 | 地表行軍、採集、打怪、攻城；聯盟、集結、援軍、聯盟旗幟與領地 |
+| 賽季神話 | 每季翻湧上一層新的神話地層：新的魔物系列與全服合力討伐的巨型 BOSS；主城與主將跨季保留 |
+
+參考作品：王國之歌（Top Heroes）、寒霜啟示錄、萬國覺醒。完整設定見 [GDD](docs/design/GDD.md)。
+
+## 技術架構
+
+```mermaid
+flowchart LR
+    C["Unity 6 客戶端<br/>UI Toolkit"] -- "WebSocket /ws<br/>JSON 訊息" --> S
+    subgraph S["遊戲伺服器 · .NET 8（模組化單體）"]
+        A["Auth<br/>Dev / Firebase"]
+        G["Game<br/>上線玩家、每秒推進"]
+        N["Net<br/>訊息分派"]
+        P["Persistence<br/>Memory / Supabase"]
+    end
+    SH["shared/<br/>純 C# 共用規則"] -.-> C
+    SH -.-> S
+    P --> DB[("Supabase<br/>PostgreSQL")]
+    A --> FB["Firebase Auth"]
+    T["Cloudflare Tunnel<br/>wss://"] --> S
+```
+
+- **伺服器權威**：所有數值、計時、戰鬥都在伺服器計算；客戶端只送「意圖」，用共用規則做顯示預測
+- **確定性規則**：`shared/` 只用整數與傳入的時間，不用 `DateTime.Now`、亂數或浮點數，伺服器與 Unity 編譯同一份程式碼
+- **部署**：本機 Docker（`docker-compose.yml`）＋ Cloudflare Quick Tunnel 對外提供 `wss://`，見 [docs/DEPLOY.md](docs/DEPLOY.md)
+- **CI**：GitHub Actions 在每次 push／PR 執行 `dotnet build` 與自動測試
+
 ## 目前進度
 
 城建（訓練、取消、加速、背包）、主將（品質、等級、裝備、戰力、升星、四股索、淵脈）、確定性戰鬥核心、遠征第一章已完成；伺服器部署在本機 Docker＋Cloudflare Tunnel，Windows 版可下載試玩。
@@ -22,6 +60,8 @@ server/AbyssKingdom.Server/   遊戲伺服器（模組化單體）
 tests/AbyssKingdom.Tests/     自動測試（不需任何套件）
 client/                       Unity 6 專案（Scripts/Game：連線與狀態；Scripts/UI：UI Toolkit 介面、DisplayNames 顯示名稱表）
 db/                           Supabase 資料表 SQL
+tools/                        AI 試玩機器人、新手流程模擬、美術與 Blender 工具
+art/                          美術原始檔
 docs/                         安裝、帳號、開發流程說明
 ```
 
