@@ -14,9 +14,19 @@ PC 先行（Steam＋自架下載），手機版之後推出 · 一人 + AI 開�
 
 ---
 
-**目錄**：[這是什麼遊戲](#這是什麼遊戲) · [遊戲畫面](#遊戲畫面) · [遊戲美術](#遊戲美術) · [目前做到哪裡](#目前做到哪裡) · [技術架構](#技術架構) · [快速開始](#快速開始本機) · [設定](#設定環境變數) · [文件導覽](#文件導覽)
+**目錄**：[專案定位](#-專案定位) · [這是什麼遊戲](#-這是什麼遊戲) · [遊戲畫面](#-遊戲畫面) · [遊戲美術](#-遊戲美術) · [目前做到哪裡](#-目前做到哪裡) · [技術架構](#-技術架構) · [程式語言與實作](#-程式語言與實作) · [實作對照](#-實作對照) · [技術選型與演進](#-技術選型與演進) · [專案反思](#-專案反思) · [快速開始（本機）](#-快速開始本機) · [文件導覽](#-文件導覽)
 
-## 這是什麼遊戲
+## 📌 專案定位
+
+這是我**一個人從零開始、和 AI 協作完成**的多人連線策略遊戲，目標是上架 Steam。目標不只是「做出遊戲畫面」，而是：
+
+1. 做出真正的「伺服器權威」多人遊戲：數值、計時、戰鬥都由伺服器計算，客戶端改不了結果
+2. 一份遊戲規則讓伺服器與客戶端共用，並用 280 多個自動測試守住規則與難度曲線
+3. 從企劃（設計文件）、程式、3D 美術管線、配音、部署到封測工具，整條流程自己打通
+
+我負責的部分：遊戲企劃與世界觀、系統設計、全端程式（C# 伺服器／Unity 客戶端）、美術管線（Python + Blender）、部署與測試流程。開發時以 AI（Claude、Codex）當作協作工程師，由我決定方向、拆分工作、撰寫驗收標準並驗收成果。
+
+## 🎮 這是什麼遊戲
 
 三百年前，大陸中央塌陷，裂開一道看不見底的深淵「**永暗之喉**」。每當一位神祇死去，祂的整個世界便剝落沉入喉中，一層壓著一層，成了神話的地層。
 
@@ -39,7 +49,7 @@ PC 先行（Steam＋自架下載），手機版之後推出 · 一人 + AI 開�
 | **鏡頭** | 俯視斜角 2.5D，3D 建築與大地圖 |
 | **差異化** | 垂直深淵世界觀＋賽季神話、淵脈五行克制與四印養成、城內自由擺放建築 |
 
-## 遊戲畫面
+## 🖼️ 遊戲畫面
 
 <table>
   <tr>
@@ -63,7 +73,7 @@ PC 先行（Steam＋自架下載），手機版之後推出 · 一人 + AI 開�
   </tr>
 </table>
 
-## 遊戲美術
+## 🎨 遊戲美術
 
 > 遊戲內實際使用的美術素材（`client/Assets/Resources/Art`），不是實機截圖。
 
@@ -75,7 +85,7 @@ PC 先行（Steam＋自架下載），手機版之後推出 · 一人 + AI 開�
 
 ![城內建築](docs/screenshots/buildings.jpg)
 
-## 目前做到哪裡
+## 📈 目前做到哪裡
 
 | 系統 | 狀態 |
 |---|---|
@@ -92,7 +102,7 @@ PC 先行（Steam＋自架下載），手機版之後推出 · 一人 + AI 開�
 
 完整路線與數值見 [GDD 第 6 節](docs/design/GDD.md)；封測前的待辦見 [封測清單](docs/PLAYTEST_CHECKLIST.md)。
 
-## 技術架構
+## 🏗️ 技術架構
 
 ```mermaid
 flowchart LR
@@ -116,7 +126,114 @@ flowchart LR
 - **AI 試玩**：`tools/AiPlaytest` 用四種玩家角色（照任務走、勤勞、隨便點、離線回來）以真實協定自動玩前 60 分鐘，找出卡關與錯誤。
 - **部署**：Docker Compose＋Cloudflare Tunnel（封測前暫用），之後搬到雲端主機。
 
-## 資料夾結構
+## 🧰 程式語言與實作
+
+整個專案約 **3.2 萬行程式碼**，以 C# 為主幹，其他語言各自負責美術管線、資料庫、著色器與自動化。
+
+| 語言 | 行數（約） | 用在哪裡 |
+|---|---|---|
+| C# | 26,700 | 共用遊戲規則、遊戲伺服器、Unity 客戶端、測試、AI 試玩工具 |
+| Python | 4,100 | Blender 程序化 3D 建模、2D 美術切圖、遮罩與圖示 |
+| ShaderLab / HLSL | 150 | 建築與 2D 精靈的發光、旗幟飄動效果 |
+| USS | 600 | UI Toolkit 介面樣式 |
+| SQL | 60 | Supabase 資料表與權限 |
+| PowerShell | 100 | Azure 文字轉語音產生開場配音 |
+| YAML / Dockerfile | 80 | CI 與容器部署 |
+
+### C#：一份規則，伺服器與客戶端共用
+
+C# 分成四個部分，彼此透過同一份共用規則溝通：
+
+1. **共用規則**（`shared/AbyssKingdom.Shared`，約 5,300 行）
+   - 純 C#、`netstandard2.1`、不引用任何套件與 `UnityEngine`，所以伺服器（.NET 8）和 Unity 能編譯同一份程式。
+   - **確定性**：數值一律用 `long` 整數、時間由外部傳入 Unix 毫秒，不呼叫 `DateTime.Now`、不用浮點數；戰鬥亂數由伺服器給種子。同樣的輸入在伺服器和客戶端一定算出同樣結果，客戶端可以拿來做「顯示預測」而不會和伺服器不一致。
+   - 內容：城建（`City/CityLogic.cs` 升級、訓練、治療、隊列加速）、主將與裝備（`Heroes/`）、回合制戰鬥（`Battle/Battle.cs`）、大地圖尋路（`Map/Marches.cs` 在關隘與環形山脈之間跑 Dijkstra）、聯盟規則（`Social/`）、通訊協定（`Protocol/`）。
+2. **遊戲伺服器**（`server/AbyssKingdom.Server`，ASP.NET Core 8，約 4,600 行）
+   - **伺服器權威**：客戶端只送「意圖」（例如 `city.upgrade`），伺服器用共用規則檢查並計算，再推回 `city.state`。
+   - **WebSocket**（`Net/WebSocketHandler.cs`）：JSON 訊息依 `type` 分派，伺服器也會主動推播（升級完成、被攻打）。
+   - **並行安全**：每位玩家一個 `SemaphoreSlim`（`PlayerSession.Gate`），同一玩家的修改一次只跑一個；跨玩家操作（援軍、集結）不同時持有兩把鎖，避免死結。
+   - **存檔**（`Persistence/`）：介面同時有記憶體版與 Supabase 版；Supabase 版直接用 `HttpClient` 呼叫 PostgREST（`on_conflict` + `Prefer: resolution=merge-duplicates` 做 upsert），整座城存成一筆 `jsonb`。
+   - **可靠性**：扣款、派兵、發獎都先寫「持久化意圖」，存檔失敗會重試但不會重複扣款或重複發獎。
+3. **Unity 客戶端**（`client/Assets/Scripts`，Unity 6，約 10,500 行）
+   - 介面全部用 **UI Toolkit** 以程式碼建立（`UI/GameUI.cs`），沒有拖拉的 Prefab；玩家看到的文字集中在 `UI/DisplayNames.cs`，內部 enum 保持英文，改名不會壞存檔。
+   - 3D 場景（`World/`）：俯視斜角鏡頭、城內格子擺放與拖曳建築、800×800 格大地圖的分區塊建造與視野剔除、深淵坑、城外迷霧。
+   - 登入（`Net/FirebaseGuestAuth.cs`）：Firebase 的 Unity SDK 桌面版不能上線，所以改用 **REST API** 做匿名登入與 refresh token 換發。
+   - 診斷工具（`Diagnostics/`）：加啟動參數就能自動操作並截圖，例如 `-cityfogcheck`、`-aiplaytest`；本 README 的開場動畫就是用 `-readmecapture` 逐格錄下來的。
+4. **測試與工具**（`tests/`、`tools/`，約 6,300 行）
+   - **自製測試框架**（`tests/AbyssKingdom.Tests/TestFramework.cs`）：用 Reflection 找出所有 `[Test]` 方法執行，不依賴 NuGet。283 個測試涵蓋規則、難度曲線、真實 WebSocket 端到端與存檔故障注入。
+   - **AI 試玩**（`tools/AiPlaytest`）：在同一個程序裡開一台隔離的伺服器，換上可以手動快轉的時鐘，用四種玩家角色以真實協定自動玩前 60 分鐘。
+   - **新手節奏模擬**（`tools/NewbieSim`）：模擬新玩家前 30 分鐘的操作次數，調數值前後都跑一次比較。
+
+### Python：美術管線自動化
+
+1. **Blender 程序化建模**（`tools/blender/`，`bpy` API）
+   - 用程式組出 3D 建築與大地圖物件：圓錐、立方體、二十面體等基本形狀拼成主堡、礦場、山脈，`city3d_common.py` 負責合併網格、烘焙貼圖、匯出 FBX。
+   - 主要的產生腳本都有對應的 `verify_*.py`：重新讀回匯出的 FBX，檢查三角形數、材質數、尺寸與 SHA256，確保模型符合規格（底面 1×1、單一材質、1024 貼圖）。
+   - 旗布的頂點色寫入「固定邊 0 → 自由端 1」的權重，給著色器做飄動。
+2. **2D 美術處理**（`tools/art/`，Pillow）
+   - `slice_sheet.py`：AI 產生的角色整張圖自動去背、用連通區塊切成單張立繪與頭像。
+   - `make_fx_masks.py`：依顏色與形狀自動產生建築的特效遮罩（契印、窗燈、布料），給 2.5D 動態著色器使用。
+   - `make_item_icons.py`：用 Pillow 程序化畫出背包道具的佔位圖示（先畫 4 倍大再縮小，邊緣才平滑），之後再換成正式美術。
+
+### ShaderLab / HLSL：讓建築「活起來」
+
+- `Building3D.shader`：只算漫射光（Gamma 色彩空間下高光會讓整棟發灰），並依貼圖上的**保留色格**自動發光：契印 `#B8FFF1` 與晶簇 `#37BCAE` 青綠呼吸、窗燈 `#F6B647` 燭光閃爍。旗布依頂點色權重在頂點著色器裡做波動，旗桿和建築不動。
+- `LivingSprite.shader`：2D 建築圖讀取 R／G／B 三張遮罩通道，分別做契印呼吸、暖光閃爍和布料擺動。
+
+### SQL、USS、PowerShell、YAML
+
+- **SQL**（`db/`）：Supabase 資料表（玩家、聯盟、封測紀錄），全部開啟 **Row Level Security**，客戶端不能直連資料庫，只有伺服器用 service key 存取。
+- **USS**（`client/Assets/Resources/UI/Game.uss`）：UI Toolkit 的樣式表，定義灰藍石板＋暖金的介面主題、面板與按鈕。
+- **PowerShell**（`tools/tts/gen_intro_voice.ps1`）：呼叫 Azure 文字轉語音，用 SSML 的 `<prosody>` 調整聲調與語速，產生開場四段旁白。
+- **YAML / Dockerfile**：GitHub Actions 每次推送都建置並跑全部測試；`docker-compose.yml` 一次啟動遊戲伺服器與 Cloudflare Tunnel。
+
+## 🔍 實作對照
+
+1. `shared/AbyssKingdom.Shared/City/CityLogic.cs`：建築升級的條件檢查（資源、隊列、主堡等級、主堡升級前置）與扣款排隊
+2. `shared/AbyssKingdom.Shared/Battle/Battle.cs`：確定性回合制戰鬥，伺服器給種子，結果可重現
+3. `shared/AbyssKingdom.Shared/Map/Marches.cs`：大地圖行軍尋路，跨分區時自動繞經關隘
+4. `server/AbyssKingdom.Server/Net/WebSocketHandler.cs`：所有訊息的入口與分派
+5. `server/AbyssKingdom.Server/Game/SessionManager.cs`：上線玩家、每秒推進、存檔與玩家鎖
+6. `server/AbyssKingdom.Server/Game/Alliance*.cs`：聯盟、聊天、幫助、援軍、集結
+7. `client/Assets/Scripts/UI/GameUI.cs`：主畫面 HUD、資訊卡、各面板
+8. `client/Assets/Scripts/World/`：`WorldScene`（鏡頭與輸入）、`CityView`（城內）、`SurfaceView`（大地圖）、`CityFrontier`（迷霧與懸崖）
+9. `client/Assets/Scripts/UI/IntroSequence.cs`：開場運鏡，四段旁白的長度跟著音檔走
+10. `tools/blender/generate_city3d.py`：8 種建築 × 3 種外觀的 3D 模型
+
+## ⚙️ 技術選型與演進
+
+### 1) 深淵的呈現方式
+
+- **初期**：深淵做成「層網狀」地圖，節點與廊道組成，加上迷霧與力場，並做了 3D 剖面原型。
+- **觀察**：玩家逐層往下會分散，地圖變空、衝突消失；每一層都要做一整塊新地圖，成本太高。
+- **演進**：改成「所有人都在地表大陸，深淵每季噴出一層新神話」，舊的層網程式與存檔搬移程式整批刪除。
+
+### 2) 建築美術
+
+- **初期**：Blender 灰盒 → AI 產生的 2D 建築圖，加上著色器做 2.5D 動態。
+- **觀察**：2D 圖在自由擺放、旋轉鏡頭時立體感不足。
+- **演進**：照 2D 圖用 Python 程序化建 3D 模型，保留「沒有模型就自動退回 2D」的備案，隨時可以切換。
+
+### 3) 登入與部署
+
+- **初期**：Firebase Unity SDK、雲端免費主機。
+- **觀察**：SDK 的桌面版不能上線；免費主機申請被拒。
+- **演進**：改用 Firebase REST API 做訪客登入；伺服器先跑在本機 Docker，以 Cloudflare Tunnel 對外提供 `wss://`，同一份 `docker-compose.yml` 之後可直接搬上雲端。
+
+### 4) 驗證方式
+
+- **初期**：單元測試＋人工截圖。
+- **觀察**：測試全過，但沒有人真的從頭玩過，新手在第 8 個任務就會卡住，這是測試抓不到的。
+- **演進**：加上 AI 自動試玩（四種玩家角色、伺服器時鐘快轉），以及遊玩紀錄、錯誤回報與遊戲內回饋，為朋友封測做準備。
+
+## 🧠 專案反思
+
+1. 遊戲規則最容易出錯的地方是「伺服器和客戶端算出不一樣的結果」，所以共用規則只用整數與傳入的時間，從根本避免不同步。
+2. 測試全部通過不代表好玩，也不代表新手玩得下去；自動化試玩補上「流程有沒有斷掉」，真人封測才能回答「好不好玩」。
+3. 一人開發最怕方向反覆，所以每個設定都寫進設計文件（GDD），推翻舊決定時連同程式一起刪乾淨，不留兩套規則。
+4. 和 AI 協作時，交接文件與驗收標準要寫清楚；多個 AI 同時改同一個專案時，要先分清楚各自的範圍再提交。
+
+## 📦 資料夾結構
 
 ```
 shared/AbyssKingdom.Shared/   共用遊戲規則：City（城建）、Heroes、Battle、Expedition、Map（大地圖）、Social（聯盟）、Protocol
@@ -129,7 +246,7 @@ art/                          美術原始檔
 docs/                         設計文件、交接、部署、封測
 ```
 
-## 快速開始（本機）
+## 🚀 快速開始（本機）
 
 先照 [docs/SETUP.md](docs/SETUP.md) 安裝 .NET 8 SDK 與 Unity 6。
 
@@ -144,7 +261,7 @@ dotnet run --project server/AbyssKingdom.Server
 #    面板出現後輸入名字 → 「連線並登入」
 ```
 
-## 設定（環境變數）
+## 🔧 設定（環境變數）
 
 | 變數 | 說明 | 預設 |
 | --- | --- | --- |
@@ -159,7 +276,7 @@ dotnet run --project server/AbyssKingdom.Server
 
 啟用 S6 聯盟前，Supabase 需先套用 `db/002_alliances.sql`；封測紀錄需套用 `db/003_playtest_events.sql`。目前聯盟資料由單一遊戲伺服器序列化寫入；不要以多個遊戲伺服器實例同時提供聯盟寫入。
 
-## 文件導覽
+## 📚 文件導覽
 
 | 文件 | 內容 |
 |---|---|
@@ -171,11 +288,11 @@ dotnet run --project server/AbyssKingdom.Server
 | [docs/DEPLOY.md](docs/DEPLOY.md) | 部署方式 |
 | [docs/art/MODEL_SPEC.md](docs/art/MODEL_SPEC.md) | 3D 模型規格 |
 
-## 開發方式
+## 🤝 開發方式
 
 一人 + AI（Vibe Coding）開發：每次只做一個小功能，規則改動一定附測試，設定與數值改動同步寫進 GDD。開發規則見 [CLAUDE.md](CLAUDE.md)。
 
-## 版權與聲明
+## ⚠️ 版權與聲明
 
 - 世界觀只借用「垂直深淵探勘」的概念，名詞、角色、造型、劇情與美術皆為原創；神話素材只取結構與概念（詳見 GDD 2.5）。
 - 開場旁白為 AI 合成語音（以「雲哲」zh-TW-YunJheNeural 為基礎降調 -15%）。目前的音檔是開發用版本，上架前會以正式授權的 Azure 文字轉語音重新產生。
