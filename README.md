@@ -18,6 +18,18 @@
 
 參考作品：王國之歌（Top Heroes）、寒霜啟示錄、萬國覺醒。完整設定見 [GDD](docs/design/GDD.md)。
 
+### 遊戲美術
+
+> 以下是遊戲內實際使用的美術素材（`client/Assets/Resources/Art`），不是實機截圖。
+
+主將：
+
+![主將立繪](docs/screenshots/heroes.jpg)
+
+城內建築：
+
+![城內建築](docs/screenshots/buildings.jpg)
+
 ## 技術架構
 
 ```mermaid
