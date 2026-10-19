@@ -30,11 +30,14 @@ namespace AbyssKingdom.Client.Diagnostics
         {
             Directory.CreateDirectory(_output);
             float deadline = Time.realtimeSinceStartup + 120;
-            while (GameClient.Instance == null || !GameClient.Instance.IsLoggedIn || FindAnyObjectByType<IntroSequence>() != null || WorldScene.Instance == null)
+            while (GameClient.Instance == null || !GameClient.Instance.IsLoggedIn || WorldScene.Instance == null || FindAnyObjectByType<GameUI>() == null)
             {
                 if (Time.realtimeSinceStartup > deadline) { Debug.LogError("CITYFOG_CHECK login/intro timeout"); Application.Quit(2); yield break; }
                 yield return null;
             }
+            // 新帳號登入後才開始播開場：先等一下，再等開場播完
+            yield return new WaitForSecondsRealtime(3);
+            while (FindAnyObjectByType<IntroSequence>() != null) yield return null;
             var w = WorldScene.Instance;
             w.SetMode(WorldScene.Mode.City);
             yield return Shot(w, Vector3.zero, "city_center.png");
