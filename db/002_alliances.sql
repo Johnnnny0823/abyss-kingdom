@@ -7,3 +7,5 @@ create table if not exists public.alliance_directory (
 
 alter table public.alliance_directory enable row level security;
 revoke all on public.alliance_directory from anon, authenticated;
+-- Supabase project has "Automatically expose new tables" off, so the server role needs an explicit grant.
+grant select, insert, update, delete on public.alliance_directory to service_role;

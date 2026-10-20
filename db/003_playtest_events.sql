@@ -11,4 +11,6 @@ create index if not exists playtest_events_player_time on public.playtest_events
 create index if not exists playtest_events_kind_time on public.playtest_events(kind, at_ms);
 alter table public.playtest_events enable row level security;
 revoke all on public.playtest_events from anon, authenticated;
+-- The project has "Automatically expose new tables" off, so the server role needs an explicit grant.
+grant select, insert, update, delete on public.playtest_events to service_role;
 -- No public policies. Only the server's service_role may access this table.

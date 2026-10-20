@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Procedural Fantasy Keep — Three.js</title>
+  <style>
+    :root {
+      --gold: #D8A93A;
+      --gold-bright: #F7D16D;
+      --blue-slate: #2F4FB0;
+      --teal-glow: #37BCAE;
+      --bg-panel: rgba(16, 20, 30, 0.85);
+      --text-light: #EEF2F7;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #141824;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: var(--text-light);
+    }
+
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    /* Top-left Stats & Info Panel */
+    #stats-panel {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(216, 169, 58, 0.45);
+      border-radius: 10px;
+      padding: 12px 16px;
+      min-width: 225px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    #stats-panel h1 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--gold-bright);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #stats-panel h1::before {
+      content: '❖';
+      color: var(--teal-glow);
+      font-size: 16px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12.5px;
+      margin: 4px 0;
+      color: #CBD5E1;
+    }
+
+    .stat-value {
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-weight: 600;
+      color: #FFFFFF;
+    }
+
+    .hint-bar {
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 11.5px;
+      color: #8CE8DC;
+    }
+
+    /* Bottom-center Controls Bar */
+    #ui-bar {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(216, 169, 58, 0.45);
+      border-radius: 12px;
+      padding: 10px 14px;
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
+      z-index: 10;
+    }
+
+    .ui-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding-right: 10px;
+      border-right: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .ui-group:last-child {
+      padding-right: 0;
+      border-right: none;
+    }
+
+    .group-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #94A3B8;
+      margin-right: 4px;
+    }
+
+    button {
+      background: rgba(35, 45, 68, 0.9);
+      color: var(--text-light);
+      border: 1px solid rgba(216, 169, 58, 0.35);
+      border-radius: 7px;
+      padding: 7px 12px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.16s ease;
+    }
+
+    button:hover {
+      background: rgba(47, 79, 176, 0.75);
+      border-color: var(--gold-bright);
+      transform: translateY(-1px);
+    }
+
+    button.active {
+      background: linear-gradient(135deg, #2F4FB0, #1D3587);
+      border-color: var(--gold-bright);
+      color: #FFFFFF;
+      box-shadow: 0 0 12px rgba(55, 188, 174, 0.35);
+    }
+
+    button.export-btn {
+      background: linear-gradient(135deg, #9F721C, #D8A93A);
+      color: #10141E;
+      border-color: #FBE29A;
+    }
+
+    button.export-btn:hover {
+      background: linear-gradient(135deg, #B58524, #ECC04F);
+    }
+  </style>
+
+  <!-- Pin exact Three.js v0.170.0 and official addons via Import Map -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <!-- On-screen Geometry & Performance Stats -->
+  <div id="stats-panel">
+    <h1>Royal Arcane Keep</h1>
+    <div class="stat-row">
+      <span>Triangles:</span>
+      <span class="stat-value" id="stat-tris">0</span>
+    </div>
+    <div class="stat-row">
+      <span>Draw Calls:</span>
+      <span class="stat-value" id="stat-calls">0</span>
+    </div>
+    <div class="stat-row">
+      <span>Frame Rate:</span>
+      <span class="stat-value" id="stat-fps">60 FPS</span>
+    </div>
+    <div class="stat-row">
+      <span>Gate State:</span>
+      <span class="stat-value" id="stat-gate">Closed</span>
+    </div>
+    <div class="hint-bar">Click the wooden front gate to open / close</div>
+  </div>
+
+  <!-- Interactive UI Controls -->
+  <div id="ui-bar">
+    <div class="ui-group">
+      <span class="group-label">Lighting</span>
+      <button id="btn-day" class="active">Day</button>
+      <button id="btn-night">Night</button>
+    </div>
+
+    <div class="ui-group">
+      <span class="group-label">Upgrade Tier</span>
+      <button id="btn-tier1">Tier 1</button>
+      <button id="btn-tier2">Tier 2</button>
+      <button id="btn-tier3" class="active">Tier 3</button>
+    </div>
+
+    <div class="ui-group">
+      <span class="group-label">Camera</span>
+      <button id="btn-rotate">Auto-Rotate: Off</button>
+      <button id="btn-gate">Toggle Gate</button>
+    </div>
+
+    <div class="ui-group">
+      <button id="btn-export" class="export-btn">Export glTF (.glb)</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

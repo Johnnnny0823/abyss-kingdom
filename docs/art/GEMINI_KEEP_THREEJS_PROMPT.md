@@ -78,3 +78,48 @@ Keep_3.png; list what still differs and fix it before moving on.
 
 - **放進作品集**：可以發佈成網頁（例如 GitHub Pages），README 放動圖與「在線上看 3D 主堡」的連結。這個作品同時展示 JavaScript、HTML5 和 3D 圖學，對實習的「網頁開發類」加分。
 - **放進遊戲**：用頁面上的「Export glTF」匯出 `.glb`。Unity 要讀 glTF 需要另外裝套件（例如 glTFast），而且遊戲的規格是 4,000～5,000 個三角形（`docs/art/MODEL_SPEC.md` 5b）。網頁版是「高細節展示版」，**不能直接拿來當遊戲模型**，要再減面。
+
+## 第二輪：修正提示詞（2026-10-20，Claude 檢查第一版後）
+
+第一版存在 `web/keep3d/`。Claude 已經先修了兩個讓畫面全白的錯誤（見提示詞第 1 點），其他照下面貼給 Gemini。
+
+```
+Thanks, this is a strong first version. I ran it; please fix the following (keep everything
+else as is):
+
+1. Two runtime bugs I already patched locally - keep these fixes:
+   - buildDormer(): `gRight` was never defined (ReferenceError stopped the whole build).
+     Reuse the gLeft geometry for the right bargeboard.
+   - buildGate(): mergeGeometries failed because BoxGeometry/CylinderGeometry are indexed but
+     OctahedronGeometry/ExtrudeGeometry are not. Convert every geometry with toNonIndexed()
+     before merging.
+
+2. The layout is mirrored. Standing in front of the gate and facing the keep, the colonnade and
+   gallery must be on the viewer's RIGHT, which in this scene is the -X side (front is -Z).
+   Negate the X of the whole layout (keep at +X/back, colonnade and gallery at -X), and move the
+   default camera to (-36, 33, -42) so the gate is on the left half of the screen and the
+   colonnade side is visible on the right half, like Keep_3.png.
+
+3. Roof slates stick out like spikes and float off the roof. Each slate row must lie flush on the
+   pyramid face it belongs to (rotate by the face's real slope, offset slightly along the face
+   normal, rows overlapping like shingles). Same for the gallery roof.
+
+4. Stone looks almost white. Darken the stone albedo to around #7E8089 with more variation
+   between blocks, lower tone mapping exposure to about 0.9, and keep gold only as thin trims.
+
+5. Remove the large flat gold slabs on top of the walls and the left wall-walk; wall tops and
+   walkways are stone. Gold is for trims, finials, frames and banner rods only.
+
+6. The ivy looks like green balls. Replace it with small leaf quads (2-sided planes, a few leaf
+   shapes) clustered flat against the walls, hanging downward in strands.
+
+7. The stats panel stays at 0 triangles / 0 draw calls. Read renderer.info right after
+   renderer.render() each frame (or set renderer.info.autoReset = false and reset manually) so
+   the numbers are real.
+
+8. Make the front staircase clearly visible from the default camera (wider and slightly longer),
+   with the two gate pillars standing on either side of its top landing.
+
+After the fixes, take screenshots from the default camera, from the back, and from the right
+side, compare with Keep_3.png and keep_plan.svg, and list anything that still differs.
+```
