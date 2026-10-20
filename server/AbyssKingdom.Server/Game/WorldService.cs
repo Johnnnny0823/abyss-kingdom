@@ -44,14 +44,18 @@ public sealed partial class WorldService : IFieldRegistry, ITerritoryRegistry, I
     private readonly SemaphoreSlim _lock = new(1, 1);
     private readonly Dictionary<int, Owner> _sites = new();
     private readonly Dictionary<string, int> _byPlayer = new();
-    private readonly Random _rng = new();
+    private readonly Random _rng;
+    private readonly Func<ulong> _battleSeed;
     private bool _loaded;
 
     private readonly IAllianceStore? _territoryStore;
-    public WorldService(IPlayerStore store, ILogger<WorldService> log, IAllianceStore? territoryStore = null, AllianceSynchronization? synchronization = null)
+    public WorldService(IPlayerStore store, ILogger<WorldService> log, IAllianceStore? territoryStore = null, AllianceSynchronization? synchronization = null,
+        Random? siteRandom = null, Func<ulong>? battleSeed = null)
     {
         _store = store;
         _log = log;
+        _rng = siteRandom ?? new Random();
+        _battleSeed = battleSeed ?? (() => BitConverter.ToUInt64(System.Security.Cryptography.RandomNumberGenerator.GetBytes(8)));
         _territoryStore = territoryStore == null ? null : (synchronization ?? new AllianceSynchronization()).BindStore(territoryStore);
     }
 
@@ -247,7 +251,7 @@ public sealed partial class WorldService : IFieldRegistry, ITerritoryRegistry, I
             }).ToList();
     }
 
-    public ulong NextSeed() => BitConverter.ToUInt64(System.Security.Cryptography.RandomNumberGenerator.GetBytes(8));
+    public ulong NextSeed() => _battleSeed();
 
     /// <summary>某一格的即時狀態（給資訊卡看）。</summary>
     public TileInfoMessage TileInfo(int x, int y, string viewerId, long nowMs)

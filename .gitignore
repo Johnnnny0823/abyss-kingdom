@@ -34,3 +34,6 @@ Thumbs.db
 
 # CodeGraph 本機索引（每台電腦自己建）
 .codegraph/
+
+# Generated simulated analytics data (never commit player event exports)
+analytics/data/

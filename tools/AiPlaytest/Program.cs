@@ -6,6 +6,12 @@ using AbyssKingdom.Shared.Protocol;
 using AbyssKingdom.Playtesting;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
+if (args.Any(a => a == "--simulate" || a.StartsWith("--population") || a.StartsWith("--days")))
+{
+    await PopulationSimulation.RunAsync(PopulationOptions.Parse(args));
+    return;
+}
+
 long start = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 var clock = LocalClock.Create("Dev", "InMemory", start);
 var app = GameServer.Build(new[] { "--Auth:Mode=Dev", "--Storage:Mode=InMemory", "--Logging:LogLevel:Default=Warning" },

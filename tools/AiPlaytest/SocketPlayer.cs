@@ -10,11 +10,11 @@ public sealed class SocketPlayer : IAsyncDisposable
     readonly ClientWebSocket _socket = new();
     int _request;
     public CityState City { get; private set; } = null!;
-    public async Task LoginAsync(string name)
+    public async Task LoginAsync(string name, string? displayName = null)
     {
         _socket.Options.Proxy = null;
         await _socket.ConnectAsync(new Uri("ws://127.0.0.1:5090/ws"), default);
-        await SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:aiplay-" + name, DisplayName = "AI-" + name }, MessageTypes.LoginOk);
+        await SendAsync(MessageTypes.Login, new LoginRequest { Token = "dev:aiplay-" + name, DisplayName = displayName ?? "AI-" + name }, MessageTypes.LoginOk);
         await SendAsync(MessageTypes.CityGet, null, MessageTypes.CityState);
     }
     public async Task<JsonElement> SendAsync(string type, object? data, string? expected = null)

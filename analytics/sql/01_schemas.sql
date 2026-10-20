@@ -1,0 +1,5 @@
+-- 建立原始層、星狀倉儲與分析層。UTC 儲存時間，日曆採 Asia/Taipei。
+CREATE SCHEMA IF NOT EXISTS staging;
+CREATE SCHEMA IF NOT EXISTS dw;
+CREATE SCHEMA IF NOT EXISTS mart;
+SET TIME ZONE 'UTC';
